@@ -1,0 +1,19 @@
+.intro {
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  color: var(--text);
+  margin: 0;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.note {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+}

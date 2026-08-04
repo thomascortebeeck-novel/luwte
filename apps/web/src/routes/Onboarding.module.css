@@ -1,0 +1,51 @@
+.statement {
+  font-size: var(--text-xl);
+  line-height: var(--leading-xl);
+  color: var(--text);
+  margin: 0;
+}
+
+.explanation {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
+.hourSelect {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-2);
+  font: inherit;
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  width: 100%;
+}
+
+.label {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
+/* BRAND 3.6 — position, not a count. No numbers, nothing to complete. */
+.progress {
+  display: flex;
+  gap: 6px;
+}
+
+.pip {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.pip[data-current] {
+  background: var(--self);
+}

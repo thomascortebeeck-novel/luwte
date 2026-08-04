@@ -50,6 +50,25 @@ const child = spawn(commandLine, {
   env: { ...process.env, JAVA_TOOL_OPTIONS: javaToolOptions },
 });
 
+/**
+ * The emulators are Java grandchildren behind a shell, so killing this
+ * wrapper leaves them holding ports 8080 and 9099 and the next run dies with
+ * "Could not start Firestore Emulator, port taken". Kill the whole tree.
+ */
+function killTree() {
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  if (process.platform === 'win32' && child.pid) {
+    spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' });
+  } else {
+    child.kill('SIGTERM');
+  }
+}
+
+for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
+  process.on(signal, killTree);
+}
+process.on('exit', killTree);
+
 child.on('exit', (code, signal) => {
   process.exit(signal ? 1 : (code ?? 0));
 });

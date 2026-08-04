@@ -1,0 +1,13 @@
+.tagline {
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
+  color: var(--text-quiet);
+  margin: 0 0 var(--space-2);
+}
+
+.note {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+}

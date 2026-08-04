@@ -149,14 +149,26 @@ rest when `functions` and `apps/console` make per-package tasks real.
 
 ## Current state
 
-**Phase 0 — Foundations: complete.** 90 tests, typecheck, lint and build all
-green. Next up is Phase 1 (auth, accounts, onboarding, consent), which is the
-first phase needing a real Firebase project and a JDK for the emulators.
+**Phases 0 and 1 complete.** 106 unit tests plus 17 security-rules tests.
+`pnpm verify` green. Next is Phase 2, the daily check-in.
 
 What exists: the monorepo, both dictionaries, the copy-lint and brand guards,
-design tokens in both themes, five primitives plus `ScaleInput`, the PWA
-shell, the crisis screen, and `/styleguide`. No Firebase project is required
-to run any of it.
+design tokens in both themes, seven primitives plus `ScaleInput`, the PWA
+shell, the crisis screen, `/styleguide`, and the whole account flow —
+sign-in (email link or password), four onboarding screens, GDPR Art. 9
+consent, and an empty Today.
+
+Phase 0 needs no Firebase project. Phase 1 onwards needs `pnpm emulators`.
+
+### Verified against the emulators, 2026-08-04
+
+- Auth holds `email` and auth machinery only — no `displayName`, no
+  `photoUrl`, no custom claims. PRD 5.5 option 1 holds in practice.
+- The consent record stores version, grants, locale, `grantedAt` and a null
+  `withdrawnAt`, keyed by version so re-consenting to the same version
+  cannot silently duplicate.
+- Nothing is pre-ticked on the consent screen and the action stays disabled
+  until both required items are granted.
 
 ### Decisions worth knowing before changing code
 
@@ -174,6 +186,7 @@ to run any of it.
 
 | Date | Change |
 |---|---|
+| 2026-08-04 | Phase 1 complete. Firebase client with offline persistence, security rules with 17 table-driven tests, sign-in (email link + password), four onboarding screens, GDPR Art. 9 consent, empty Today, route gate. Walked end to end against the emulators in Dutch and English. Copy-lint and the brand guard each caught a false positive in their own rules — both narrowed and given regression tests. |
 | 2026-08-04 | Firestore confirmed over the house Postgres stack — settled. Created `luwte-dev` and `luwte-prod`, aliased in `.firebaserc`, `dev` active. JDK 21 installed. Diagnosed and worked around a Windows AF_UNIX failure that killed the Firestore emulator; `pnpm emulators` now wraps it. Emulators verified starting and stopping cleanly. |
 | 2026-08-04 | Aligned with the house stack: `apps/app` → `apps/web` (`@luwte/web`), Turborepo added, `pnpm verify` gate. Clarified that the JRE is for the Firebase emulators only — no JVM in build or runtime. Recorded the Firestore-vs-Postgres divergence (D11 in PLAN.md) as reversible until Phase 1 lands. Pushed `phase-0-foundations` to GitHub. |
 | 2026-08-04 | Phase 0 complete. Monorepo, i18n (nl/en), copy-lint, design tokens, primitives, ScaleInput, PWA shell, crisis screen, styleguide. 90 tests green. Found and fixed a light-mode AA contrast failure on the primary button; added `contrast.test.ts`. Logged a known issue: amber-as-text in light mode is 3.82:1, to resolve when the feed lands in Phase 6 (see docs/BRAND-QA.md). |

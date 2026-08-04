@@ -95,7 +95,9 @@ holding screen: `/crisis` and `/styleguide`.
 ## Commands
 
 ```bash
-pnpm dev         # the app, with hot reload
+pnpm dev         # the app, with hot reload — needs pnpm emulators alongside
+pnpm emulators   # Firebase emulators (auth, firestore, hosting, UI on :4000)
+pnpm test:rules  # security rules, against a throwaway emulator
 pnpm verify      # the full gate: lint, typecheck, test, build
 pnpm test        # vitest across the workspace
 pnpm typecheck   # tsc, strict, whole repo
