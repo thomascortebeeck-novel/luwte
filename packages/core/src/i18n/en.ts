@@ -169,4 +169,23 @@ export const en: Dictionary = {
   practiceGratitude: 'Write down something that went alright today.',
   practiceBreathing: 'Breathe slowly for a minute.',
   practiceWalk: 'Step outside for a moment.',
+
+  // Insights
+  insightsTitle: 'Overview',
+  insightsWindow2: '2 weeks',
+  insightsWindow6: '6 weeks',
+  insightsWindow12: '12 weeks',
+  insightsEmpty: 'Nothing to show yet. That will come.',
+  insightsChartLabel: 'Chart of your mood, energy, flatness and sleep',
+  diaryTitle: 'What you wrote down',
+  diaryEmpty: "You haven't written anything down yet.",
+  adherenceLabel: 'Medication taken',
+
+  // Report — printed, taken to an appointment
+  reportTitle: 'For your appointment',
+  reportOpen: 'Make an overview',
+  reportPrint: 'Save or print',
+  reportExplanation:
+    'This makes a sheet you can take with you or send on. It is made on your own device and goes nowhere else.',
+  reportPeriod: 'Period',
 };

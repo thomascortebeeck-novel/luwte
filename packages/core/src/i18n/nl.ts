@@ -173,4 +173,23 @@ export const nl = {
   practiceGratitude: 'Schrijf iets op dat vandaag meeviel.',
   practiceBreathing: 'Adem een minuut traag in en uit.',
   practiceWalk: 'Ga even naar buiten.',
+
+  // Insights
+  insightsTitle: 'Overzicht',
+  insightsWindow2: '2 weken',
+  insightsWindow6: '6 weken',
+  insightsWindow12: '12 weken',
+  insightsEmpty: 'Nog niets om te tonen. Dat komt vanzelf.',
+  insightsChartLabel: 'Grafiek van je stemming, energie, vlakheid en slaap',
+  diaryTitle: 'Wat je opschreef',
+  diaryEmpty: 'Je hebt nog niets opgeschreven.',
+  adherenceLabel: 'Medicatie genomen',
+
+  // Report — printed, taken to an appointment
+  reportTitle: 'Voor je afspraak',
+  reportOpen: 'Maak een overzicht',
+  reportPrint: 'Opslaan of afdrukken',
+  reportExplanation:
+    'Dit maakt een blad dat je kan meenemen of doorsturen. Het wordt op je eigen toestel gemaakt en gaat nergens anders heen.',
+  reportPeriod: 'Periode',
 } as const satisfies Record<string, string>;

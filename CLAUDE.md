@@ -149,10 +149,13 @@ rest when `functions` and `apps/console` make per-package tasks real.
 
 ## Current state
 
-**Phases 0, 1, 2 and 3 complete.** 214 unit tests plus 33 security-rules
-tests. `pnpm verify` green, CI green. Next is Phase 4 — Insights, the diary
-archive and the PDF export, which is **Milestone A**: the point where the
-product produces the thing that changes an appointment.
+**Phases 0 to 4 complete — Milestone A reached.** 238 unit tests plus 33
+security-rules tests. `pnpm verify` green, CI green.
+
+The product now produces the thing that changes an appointment: a chart with
+medication changes as vertical rules, adherence as a count, and the person's
+own diary lines, printable to A4. Next is Phase 5 (calendar and suggestions),
+but the PRD's own advice is to pause here and use it.
 
 What exists: the monorepo, both dictionaries, the copy-lint and brand guards,
 design tokens in both themes, seven primitives plus `ScaleInput`, the PWA
@@ -162,6 +165,18 @@ a diary line, the weekly akathisia screen, and the hopelessness path to the
 crisis screen.
 
 Phase 0 needs no Firebase project. Phase 1 onwards needs `pnpm emulators`.
+
+### Nothing in development needs billing. Keep it that way.
+
+`luwte-dev` runs entirely on the emulator suite — auth, firestore, functions,
+pubsub, hosting, UI — all local, all free. The app makes **no callable
+function calls and uses no Cloud Storage**, so there is no deployed service it
+depends on.
+
+The report is printed by the browser rather than rendered by a Cloud Function
+(D16), which removed the last thing that would have required Blaze on dev.
+Before adding anything that needs billing, check whether it can be done on the
+device instead — for Article 9 data that is usually the better answer anyway.
 
 ### Cloud Functions, and why Blaze is not needed to build them
 
@@ -229,6 +244,7 @@ midnight.
 
 | Date | Change |
 |---|---|
+| 2026-08-04 | Phase 4 complete — **Milestone A**. Insights chart (2/6/12 weeks, medication changes as vertical rules, `--zeeglas` only, series told apart by opacity), diary archive in the serif, adherence as a count rather than a percentage, and a printable A4 report. The report renders in the browser rather than in a Cloud Function (D16), so health data never leaves the device and dev needs no billing. |
 | 2026-08-04 | Phase 3 complete. Medication with a `changeLog` written from the first entry, keyed `doses` so an offline tick is idempotent, the medication screen, and optional practices as plain text with no completion state. Today now follows PRD 6.2 order: windline, check-in, medication, practices. |
 | 2026-08-04 | The windline (BRAND 3.7) — unrest per day in `packages/core/src/windline.ts`, geometry in `packages/ui/src/windline/`. A missed day is bridged from its neighbours so the line never shows a gap. Both amplitude and frequency follow unrest, because amplitude alone reads as a chart with a y-axis. Now sits at the top of Today. GitHub Actions runs the full gate plus the rules matrix on every PR. |
 | 2026-08-04 | Notification preferences (four categories, all individually disableable), a settings screen, and Google Calendar export via a prefilled template link — deliberately no OAuth, no calendar scopes, no stored token. `sendCheckinReminder` written and verified loading in the emulator; not deployed, since Blaze stays off `luwte-dev` by decision. |

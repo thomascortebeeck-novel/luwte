@@ -5,7 +5,9 @@ import { CheckIn } from './routes/CheckIn';
 import { Consent } from './routes/Consent';
 import { Crisis } from './routes/Crisis';
 import { Gate } from './routes/Gate';
+import { Insights } from './routes/Insights';
 import { Medication } from './routes/Medication';
+import { Report } from './routes/Report';
 import { Onboarding } from './routes/Onboarding';
 import { Settings } from './routes/Settings';
 import { SignIn } from './routes/SignIn';
@@ -75,6 +77,22 @@ export function App() {
           element={
             <Gate>
               <Medication />
+            </Gate>
+          }
+        />
+        <Route
+          path="/insights"
+          element={
+            <Gate>
+              <Insights />
+            </Gate>
+          }
+        />
+        <Route
+          path="/report"
+          element={
+            <Gate>
+              <Report />
             </Gate>
           }
         />

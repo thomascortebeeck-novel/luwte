@@ -236,6 +236,7 @@ first (§10), usage sensing (§9).
 | D12 | A JRE is required for the Firebase emulators only. Nothing in the build or runtime touches the JVM. |
 | D14 | **Google Calendar by prefilled template link, not the Calendar API.** No OAuth consent, no calendar scopes, no stored refresh token, no new data processor, no DPIA entry. The person presses save in Google's own UI or does not. The cost is that luwte cannot read, update or remove events — which for "put this in my diary" is the whole job. Two-way sync would need its own decision. |
 | D15 | **Blaze stays off `luwte-dev`** (Thomas, 2026-08-04). Functions are developed against the emulator, which needs no billing, and deployed only when there is a reason to. |
+| D16 | **The report is rendered in the browser, not by `generateReport`.** Supersedes PRD 5.4 for that one function. The health data never leaves the device: no upload, no server-side render, no PDF in a bucket, no signed URL to leak — a materially better position for Article 9 data, and it removes the last reason dev would need billing. The cost: the person passes through the browser's print dialog, and the clinician console cannot generate it server-side later. Reversible; the data it reads is unchanged. |
 
 ---
 
