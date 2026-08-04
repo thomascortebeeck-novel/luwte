@@ -114,21 +114,28 @@ is not the stack with the most muscle memory behind it.
 | `dev` | `luwte-dev` | deployed staging only. Not used by local work. |
 | `prod` | `luwte-prod` | real family data. Blaze enabled. |
 
-Two projects, not one, because developing against the database holding a real
-person's health records is not acceptable. `firebase use dev` is the default;
-switch deliberately, never casually.
+**Local work uses none of the real projects.** Developing against the database
+holding a real person's health records is not acceptable, and `demo-luwte`
+makes it impossible rather than merely discouraged.
 
 ## Commands
 
 ```bash
 pnpm install       # once, after corepack enable
+pnpm emulators     # Firebase emulators — run alongside pnpm dev
 pnpm dev           # apps/web on localhost:5173
 pnpm verify        # the full gate: lint, typecheck, test, build
+pnpm test:rules    # the access-control matrix, against a real emulator
 pnpm test          # vitest, whole workspace
 pnpm typecheck     # tsc, strict, whole repo
 pnpm lint          # eslint
 pnpm build         # turbo run build
 ```
+
+`pnpm test:rules` is **not** part of `pnpm verify`, because it needs Java and
+an emulator. CI runs both. Run it yourself after touching
+`firestore/firestore.rules` — that file is the access-control design, and a
+mistake there is the most expensive kind in this product.
 
 `lint`, `typecheck` and `test` run once at the root, not per package: one
 ESLint config, one tsconfig, one Vitest config over `{apps,packages}/*/src`.
@@ -153,22 +160,31 @@ rest when `functions` and `apps/console` make per-package tasks real.
 
 ## Current state
 
-**Phases 0 to 4 complete — Milestone A reached.** 238 unit tests plus 33
-security-rules tests. `pnpm verify` green, CI green.
+**Phases 0 to 4 complete — Milestone A reached.** Circle and invite access
+control done and tested; their screens are not built yet.
 
-The product now produces the thing that changes an appointment: a chart with
+**238 unit tests plus 59 security-rules tests.** `pnpm verify` green, CI green.
+
+The product produces the thing that changes an appointment: a chart with
 medication changes as vertical rules, adherence as a count, and the person's
-own diary lines, printable to A4. Next is Phase 5 (calendar and suggestions),
-but the PRD's own advice is to pause here and use it.
+own diary lines, printable to A4.
 
-What exists: the monorepo, both dictionaries, the copy-lint and brand guards,
-design tokens in both themes, seven primitives plus `ScaleInput`, the PWA
-shell, the crisis screen, `/styleguide`, the whole account flow (sign-in,
-onboarding, GDPR Art. 9 consent), and **the daily check-in** — six questions,
-a diary line, the weekly akathisia screen, and the hopelessness path to the
-crisis screen.
+**Phases are reordered 6 → 7 → 5.** Thomas asked for the psychiatrist to see
+each patient's overview inside the app, which is the console, which needs the
+circle. The calendar is not cut, only later.
 
-Phase 0 needs no Firebase project. Phase 1 onwards needs `pnpm emulators`.
+What exists and works: the account flow (sign-in, four onboarding screens,
+GDPR Art. 9 consent), the daily check-in with the weekly akathisia screen and
+the hopelessness path to the crisis screen, Today with the windline and
+medication, the Insights chart and diary archive, the printable report,
+settings with notification preferences and Google Calendar export, the crisis
+screen, and `/styleguide`.
+
+**Next, in order:** the circle screens (invite, permissions per person,
+revoke), then the clinician console.
+
+Nothing needs a Firebase project. `pnpm emulators` plus `pnpm dev` is the
+whole setup.
 
 ### Local development touches no Firebase project at all
 
@@ -227,6 +243,46 @@ midnight.
 - Nothing is pre-ticked on the consent screen and the action stays disabled
   until both required items are granted.
 
+### The circle is the access control list — read this before touching rules
+
+PRD 5.3. Reads of check-ins, weekly items, medication and doses resolve
+through the reader's entry in `patients/{pid}/circle/{uid}`. Writes stay
+self-only: reading how someone felt is one thing, authoring it is another.
+
+**The rule that matters most: a circle member can write nothing in `circle/`
+at all.** Not "cannot grant themselves more" — cannot touch the document, so
+there is no field left to be clever with. A family member must never be able
+to widen their own access, and during an episode the temptation is real.
+
+The one exception is redeeming an invite, and it is fenced hard: the entry
+must be for yourself, name an invite that is unused, unexpired and belongs to
+this patient, and carry **exactly** the role and permissions the patient put
+in it. Without that last clause a feed-only invite could be redeemed into a
+card that sees everything.
+
+PRD 5.4 puts redemption in a Cloud Function. Doing it in rules keeps the
+project billing-free and the database enforces the invariant either way; a
+function would additionally guarantee single use under a race, where this
+relies on the client transaction. Revisit if invites become more than a family
+sharing a link.
+
+26 of the 59 rules tests are about the circle and invites. They are written as
+the attacks someone would actually try. **Add to them rather than trimming
+them.**
+
+### Still owed: medication ownership moves to the clinician
+
+Today only the patient can write `medications/**`. PRD 5.3 and 6.7 intend a
+**verified clinician** in the circle to own that list, with the patient unable
+to overwrite clinician-authored fields.
+
+So building the console requires changing that rule, and adding tests for it.
+What must never blur: *what you are prescribed* is a clinical decision, while
+*whether you took it* (`doses/**`) is always the patient's own record and
+nobody may write it for them.
+
+Explained in plain language in [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) §3.
+
 ### Decisions worth knowing before changing code
 
 - **Dark opens always**, regardless of `prefers-color-scheme` (BRAND 3.2).
@@ -262,6 +318,7 @@ midnight.
 
 | Date | Change |
 |---|---|
+| 2026-08-04 | Invite redemption fenced against privilege escalation: a redeemed circle entry must carry exactly the role and permissions the invite held. 13 more rules tests (59 total) covering escalation, self-promotion to clinician, expired and already-claimed invites, forged invites, and arriving pre-revoked to stay hidden. Added [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md), the plain-language description of the whole system, which also records that medication ownership must move to the clinician when the console lands. |
 | 2026-08-04 | Circle access control (PRD 5.3). Reads of check-ins, weekly items, medication and doses now resolve through the circle document; writes stay self-only. 13 new rules tests cover the attacks that matter — a member widening their own access, un-revoking themselves, adding themselves to a circle, reading another member's entry, or authoring someone else's check-in. Phases reordered to 6 → 7 → 5 so the clinician overview arrives sooner. |
 | 2026-08-04 | Local development moved to `demo-luwte`, a project id Firebase treats as emulator-only. The repo now needs no Firebase project to run. |
 | 2026-08-04 | Phase 4 complete — **Milestone A**. Insights chart (2/6/12 weeks, medication changes as vertical rules, `--zeeglas` only, series told apart by opacity), diary archive in the serif, adherence as a count rather than a percentage, and a printable A4 report. The report renders in the browser rather than in a Cloud Function (D16), so health data never leaves the device and dev needs no billing. |
