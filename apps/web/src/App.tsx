@@ -5,6 +5,7 @@ import { CheckIn } from './routes/CheckIn';
 import { Consent } from './routes/Consent';
 import { Crisis } from './routes/Crisis';
 import { Gate } from './routes/Gate';
+import { Medication } from './routes/Medication';
 import { Onboarding } from './routes/Onboarding';
 import { Settings } from './routes/Settings';
 import { SignIn } from './routes/SignIn';
@@ -66,6 +67,14 @@ export function App() {
           element={
             <Gate>
               <CheckIn />
+            </Gate>
+          }
+        />
+        <Route
+          path="/medication"
+          element={
+            <Gate>
+              <Medication />
             </Gate>
           }
         />

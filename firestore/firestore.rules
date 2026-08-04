@@ -65,6 +65,30 @@ service cloud.firestore {
         allow delete: if false;
       }
 
+      /*
+       * PRD 5.3 — medication is the one thing a verified clinician may write
+       * once the console exists (Phase 7). Until then it is the patient's own
+       * list, and the changeLog is appended from the very first edit so the
+       * chart has something to mark.
+       */
+      match /medications/{medId} {
+        allow read: if isSelf(patientId);
+        allow create, update: if isSelf(patientId);
+        // Deleting a medication would erase the history of taking it.
+        // Stopping one sets activeTo instead.
+        allow delete: if false;
+      }
+
+      /*
+       * A dose is keyed `yyyy-MM-dd_medId_HHmm`, so ticking it offline and
+       * syncing twice records one dose rather than two.
+       */
+      match /doses/{doseKey} {
+        allow read: if isSelf(patientId);
+        allow create, update: if isSelf(patientId);
+        allow delete: if false;
+      }
+
       match /weekly/{weekKey} {
         allow read: if isSelf(patientId);
         allow create, update: if isSelf(patientId);

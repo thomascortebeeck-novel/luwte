@@ -36,6 +36,18 @@ export {
   windlineSeries,
   type WindlineDay,
 } from './windline';
+export {
+  OPTIONAL_PRACTICES,
+  diffMedication,
+  doseId,
+  doseStatusSchema,
+  doseTimeSchema,
+  medicationChangeSchema,
+  medicationSchema,
+  type DoseStatus,
+  type Medication,
+  type MedicationChange,
+} from './model/medication';
 
 export {
   CONSENT_ITEMS,

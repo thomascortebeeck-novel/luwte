@@ -149,8 +149,10 @@ rest when `functions` and `apps/console` make per-package tasks real.
 
 ## Current state
 
-**Phases 0, 1 and 2 complete.** 136 unit tests plus 26 security-rules tests.
-`pnpm verify` green. Next is Phase 3 — Today with medication and the windline.
+**Phases 0, 1, 2 and 3 complete.** 214 unit tests plus 33 security-rules
+tests. `pnpm verify` green, CI green. Next is Phase 4 — Insights, the diary
+archive and the PDF export, which is **Milestone A**: the point where the
+product produces the thing that changes an appointment.
 
 What exists: the monorepo, both dictionaries, the copy-lint and brand guards,
 design tokens in both themes, seven primitives plus `ScaleInput`, the PWA
@@ -227,6 +229,7 @@ midnight.
 
 | Date | Change |
 |---|---|
+| 2026-08-04 | Phase 3 complete. Medication with a `changeLog` written from the first entry, keyed `doses` so an offline tick is idempotent, the medication screen, and optional practices as plain text with no completion state. Today now follows PRD 6.2 order: windline, check-in, medication, practices. |
 | 2026-08-04 | The windline (BRAND 3.7) — unrest per day in `packages/core/src/windline.ts`, geometry in `packages/ui/src/windline/`. A missed day is bridged from its neighbours so the line never shows a gap. Both amplitude and frequency follow unrest, because amplitude alone reads as a chart with a y-axis. Now sits at the top of Today. GitHub Actions runs the full gate plus the rules matrix on every PR. |
 | 2026-08-04 | Notification preferences (four categories, all individually disableable), a settings screen, and Google Calendar export via a prefilled template link — deliberately no OAuth, no calendar scopes, no stored token. `sendCheckinReminder` written and verified loading in the emulator; not deployed, since Blaze stays off `luwte-dev` by decision. |
 | 2026-08-04 | Phase 2 complete, minus the reminder function (needs Blaze on dev). Europe/Brussels date logic tested across both DST transitions; check-in and weekly models, rules and rules tests; six-question check-in with diary line and weekly akathisia screen; top-of-scale hopelessness goes to the crisis screen with no notification to anyone. Walked end to end against the emulators and checked at the database. Added `docs/EMAIL-SETUP.md` for the admin-only email configuration. |

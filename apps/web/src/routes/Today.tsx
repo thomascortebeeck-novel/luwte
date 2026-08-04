@@ -4,6 +4,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { readCheckin } from '../firebase/checkins';
 import { readWindlineDays } from '../firebase/history';
+import {
+  readActiveMedications,
+  readDoseStatuses,
+  setDose,
+  type MedicationRecord,
+} from '../firebase/medication';
+import { MedicationSection, PracticesSection } from './TodaySections';
+import type { DoseStatus } from '@luwte/core';
 import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
 import { useLocale } from '../providers/LocaleProvider';
@@ -25,6 +33,8 @@ export function Today() {
   const [note, setNote] = useState<string | null>(null);
   const [done, setDone] = useState<boolean | null>(null);
   const [history, setHistory] = useState<(WindlineDay | null)[]>([]);
+  const [medications, setMedications] = useState<MedicationRecord[]>([]);
+  const [statuses, setStatuses] = useState<Record<string, DoseStatus>>({});
 
   useEffect(() => {
     if (!user) return;
@@ -39,7 +49,21 @@ export function Today() {
     void readWindlineDays(user.uid, today)
       .then(setHistory)
       .catch(() => setHistory([]));
+    void readActiveMedications(user.uid)
+      .then(setMedications)
+      .catch(() => setMedications([]));
+    void readDoseStatuses(user.uid, today)
+      .then(setStatuses)
+      .catch(() => setStatuses({}));
   }, [user, today]);
+
+  const toggleDose = (medId: string, time: string, next: DoseStatus) => {
+    if (!user) return;
+    const id = setDose(user.uid, today, medId, time, next);
+    // Optimistic, because the write is queued locally and may not reach the
+    // server for hours. Waiting would make a tap feel broken.
+    setStatuses((prev) => ({ ...prev, [id]: next }));
+  };
 
   const series = useMemo(() => windlineSeries(history), [history]);
 
@@ -70,11 +94,19 @@ export function Today() {
           {note ? <HumanText>{note}</HumanText> : null}
         </>
       ) : (
-        <>
-          <p className={styles.prompt}>{t('checkinEntry')}</p>
-          <p className={styles.line}>{t('todayEmpty')}</p>
-        </>
+        <p className={styles.prompt}>{t('checkinEntry')}</p>
       )}
+
+      {/* PRD 6.2 ordering: medication first because it is time-critical,
+          activities by start time when Phase 5 lands, then the practices. */}
+      <MedicationSection
+        medications={medications}
+        statuses={statuses}
+        dateKey={today}
+        onToggle={toggleDose}
+      />
+
+      <PracticesSection />
     </Screen>
   );
 }
