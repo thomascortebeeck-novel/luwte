@@ -1,0 +1,51 @@
+.windows {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.caveat {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
+.header {
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
+  color: var(--text);
+  margin: 0;
+}
+
+.empty {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
+.adherence {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+.diary {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.diaryDate {
+  display: block;
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-quiet);
+  margin-bottom: 2px;
+}

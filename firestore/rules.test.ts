@@ -17,7 +17,8 @@ import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
  *   pnpm test:rules
  */
 
-const PROJECT_ID = 'luwte-rules-test';
+// `demo-` guarantees the emulator never reaches a live project.
+const PROJECT_ID = 'demo-luwte-rules';
 const JONAS = 'uid-jonas';
 const OTHER = 'uid-someone-else';
 

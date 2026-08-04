@@ -1,0 +1,99 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: 200px;
+  overflow: visible;
+}
+
+/* BRAND 6.6 — faint gridlines. Present, never assertive. */
+.grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+/*
+ * BRAND 6.6 — --zeeglas only. Four series are told apart by opacity rather
+ * than by hue, because a second colour would either mean "another human was
+ * here" (--amber) or introduce the traffic-light reading the whole product
+ * refuses.
+ */
+.series {
+  fill: none;
+  stroke: var(--self);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.series[data-metric='mood'] {
+  opacity: 1;
+}
+.series[data-metric='flatness'] {
+  opacity: 0.75;
+  stroke-dasharray: 5 3;
+}
+.series[data-metric='energy'] {
+  opacity: 0.5;
+}
+.series[data-metric='sleepHours'] {
+  opacity: 0.35;
+  stroke-dasharray: 1 3;
+}
+
+/*
+ * A medication change. Drawn as a quiet annotation rather than in an accent:
+ * --self would compete with the person's own lines, and --amber means another
+ * human was present, which is not yet true while the patient enters these
+ * themselves. When a clinician authors changes in Phase 7, that rule becomes
+ * --amber and this comment is the reason why.
+ */
+.marker {
+  stroke: var(--text-quiet);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--text-quiet);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch {
+  width: 14px;
+  height: 2px;
+  background: var(--self);
+  border-radius: 999px;
+}
+
+.markerNotes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--text-quiet);
+  font-variant-numeric: tabular-nums;
+}

@@ -78,6 +78,9 @@ export function Today() {
           <Button full onClick={() => navigate('/checkin')}>
             {done ? t('checkinEdit') : t('checkinStart')}
           </Button>
+          <Button variant="quiet" onClick={() => navigate('/insights')}>
+            {t('insightsTitle')}
+          </Button>
           <Button variant="quiet" onClick={() => navigate('/settings')}>
             {t('settingsTitle')}
           </Button>

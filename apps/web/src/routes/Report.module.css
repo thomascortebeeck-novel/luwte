@@ -1,0 +1,78 @@
+/*
+ * PRD 6.6 — the sheet a person takes to an appointment.
+ *
+ * Rendered by the browser's own print-to-PDF rather than by a Cloud Function.
+ * That means the health data never leaves the device: no upload, no render on
+ * a server, no file sitting in Cloud Storage behind a signed URL. It also
+ * means no billing is needed to produce it.
+ */
+
+.explanation {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.meta {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+.heading {
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
+  color: var(--text);
+  margin: 0;
+}
+
+.diary {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.diaryDate {
+  display: block;
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-quiet);
+}
+
+@media print {
+  /*
+   * Printing forces light: a deep blue-green page would drink a cartridge and
+   * arrive unreadable on a psychiatrist's desk. This is the one place the
+   * dark default is deliberately abandoned.
+   */
+  :global(html),
+  :global(body) {
+    background: #ffffff;
+    color: #16201e;
+  }
+
+  .noPrint {
+    display: none;
+  }
+
+  .sheet {
+    gap: 16px;
+  }
+
+  @page {
+    size: A4;
+    margin: 18mm;
+  }
+}

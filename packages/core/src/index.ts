@@ -37,6 +37,19 @@ export {
   type WindlineDay,
 } from './windline';
 export {
+  INSIGHTS_METRICS,
+  INSIGHTS_WINDOWS,
+  normaliseForChart,
+  positionOf,
+  windowDateKeys,
+  windowDays,
+  type InsightsMarker,
+  type InsightsMetric,
+  type InsightsMetricId,
+  type InsightsPoint,
+  type InsightsWindow,
+} from './insights';
+export {
   OPTIONAL_PRACTICES,
   diffMedication,
   doseId,
