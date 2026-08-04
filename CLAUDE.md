@@ -92,10 +92,30 @@ pnpm build         # production build of apps/app
 
 ## Current state
 
-**Phase 0 — Foundations.** In progress.
+**Phase 0 — Foundations: complete.** 90 tests, typecheck, lint and build all
+green. Next up is Phase 1 (auth, accounts, onboarding, consent), which is the
+first phase needing a real Firebase project and a JDK for the emulators.
+
+What exists: the monorepo, both dictionaries, the copy-lint and brand guards,
+design tokens in both themes, five primitives plus `ScaleInput`, the PWA
+shell, the crisis screen, and `/styleguide`. No Firebase project is required
+to run any of it.
+
+### Decisions worth knowing before changing code
+
+- **Dark opens always**, regardless of `prefers-color-scheme` (BRAND 3.2).
+- **Dutch opens always**, regardless of browser language. Same asymmetry
+  argument: a Dutch speaker who is unwell and lands in English is stuck; an
+  English-speaking supporter taps once. Only a remembered, explicit choice
+  moves either one.
+- `--on-self` exists because light-mode `--diep-l` on `--zeeglas-l` is 4.20:1
+  and fails AA. The primary button label is white in light mode.
+- `resolveLocale` treats anything not clearly English as Dutch.
+- Check-in dates will be keyed in `Europe/Brussels`, not UTC (Phase 2).
 
 ## Changelog
 
 | Date | Change |
 |---|---|
+| 2026-08-04 | Phase 0 complete. Monorepo, i18n (nl/en), copy-lint, design tokens, primitives, ScaleInput, PWA shell, crisis screen, styleguide. 90 tests green. Found and fixed a light-mode AA contrast failure on the primary button; added `contrast.test.ts`. Logged a known issue: amber-as-text in light mode is 3.82:1, to resolve when the feed lands in Phase 6 (see docs/BRAND-QA.md). |
 | 2026-08-04 | Repo created. PLAN.md roadmap approved: web-first v1, family pilot, clinician console in scope, Dutch + English. Phase 0 plan written and started. |

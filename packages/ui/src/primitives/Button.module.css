@@ -24,7 +24,7 @@
 .primary {
   border-radius: var(--radius-action);
   background: var(--self);
-  color: var(--bg);
+  color: var(--on-self);
 }
 
 .quiet {

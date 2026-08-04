@@ -28,6 +28,8 @@
   --text-quiet: var(--nevel);
   --self: var(--zeeglas);
   --human: var(--amber);
+  /* Text drawn on top of --self, e.g. the primary button label. */
+  --on-self: var(--diep);
 
   color-scheme: dark;
 }
@@ -48,6 +50,12 @@
   --text-quiet: var(--nevel-l);
   --self: var(--zeeglas-l);
   --human: var(--amber-l);
+  /*
+   * Not --diep-l. Light-mode --diep-l on --zeeglas-l is 4.20:1, under the AA
+   * floor of 4.5. BRAND 3.3 says to fix contrast by changing the text rather
+   * than the background, so the label goes white and reaches 4.92:1.
+   */
+  --on-self: #ffffff;
 
   color-scheme: light;
 }

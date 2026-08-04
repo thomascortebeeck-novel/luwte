@@ -2,6 +2,10 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+**Status: complete, 2026-08-04.** All nine tasks executed. 90 tests,
+typecheck, lint and build green. Two deviations from the plan as written,
+both recorded in the Deviations section at the end.
+
 **Goal:** An empty but entirely real product — monorepo, design system, both
 languages, copy-lint, a working crisis screen, and a styleguide — with
 nothing faked.
@@ -1345,10 +1349,46 @@ git commit -m "chore: firebase config, brand QA checklist and README"
 
 ## Phase 0 exit criteria
 
-- [ ] `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` all pass
-- [ ] `/styleguide` renders correctly in dark and light
-- [ ] Copy-lint fails the build on a cheerful, comparative, or exclaimed string
-- [ ] The crisis screen works with the network off and its numbers dial
-- [ ] Both languages render every string with no missing keys
-- [ ] `docs/BRAND-QA.md` exists and every Phase 0 screen passes it
-- [ ] No Firebase project is required to run any of the above
+- [x] `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` all pass
+- [x] `/styleguide` renders correctly in dark and light
+- [x] Copy-lint fails the build on a cheerful, comparative, or exclaimed string
+- [x] The crisis screen works with the network off and its numbers dial
+- [x] Both languages render every string with no missing keys
+- [x] `docs/BRAND-QA.md` exists and every Phase 0 screen passes it
+- [x] No Firebase project is required to run any of the above
+
+---
+
+## Deviations from the plan as written
+
+**1. Two guards were added that the plan did not call for.**
+
+`packages/ui/src/contrast.test.ts` computes WCAG contrast for every
+foreground/background pair actually rendered. It was written because the
+light-mode primary button turned out to be `--diep-l` on `--zeeglas-l`, which
+measures **4.20:1** and fails AA. Fixed with a new `--on-self` token that is
+white in light mode (4.92:1), per BRAND 3.3's instruction to change the text
+rather than the background.
+
+`packages/ui/src/brand.test.ts` reads the stylesheets directly and fails on a
+font-weight over 500, any red or green colour keyword, or spring/slide
+keyframes. Cheap, and it holds rules that are otherwise only remembered.
+
+**2. Locale no longer follows the browser.**
+
+The plan had `resolveLocale(navigator.language)` seeding the provider, which
+opened the app in English on an English-configured machine. Changed to open
+in Dutch always, with only an explicit remembered choice moving it. The
+reasoning is asymmetric cost: a Dutch speaker who is unwell and lands in
+English is stuck, an English-speaking supporter taps once.
+
+**3. Copy-lint gained a ninth rule.** `wordmark-lowercase`. BRAND 1 says the
+wordmark is always lowercase; BRAND 4.2's health-import string writes
+"Luwte" mid-sentence. The explicit rule wins and the dictionaries use
+`luwte` throughout. Worth confirming with Thomas.
+
+**4. Not done, deliberately.** `.firebaserc` is absent — it is written by
+`firebase use --add` once a real project exists, and a placeholder project id
+would only produce confusing 404s. The `console` hosting target is also
+absent from `firebase.json` until Phase 7 creates `apps/console`, so that a
+deploy cannot fail on a directory that does not exist.

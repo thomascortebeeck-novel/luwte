@@ -1,8 +1,5 @@
 {
   "extends": "./tsconfig.base.json",
-  "compilerOptions": {
-    "types": ["vite/client", "vite-plugin-pwa/client"]
-  },
   "include": [
     "packages/*/src/**/*",
     "apps/*/src/**/*",

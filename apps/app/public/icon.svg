@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="luwte">
+  <!-- The windline: agitated on the left, settling towards the right.
+       Abstract by rule (BRAND 3.8) — no faces, no mascots, no growth metaphors. -->
+  <rect width="512" height="512" rx="112" fill="#131A19" />
+  <path
+    d="M96 256c12-26 20 26 32 0s20 26 32 0 20 22 32 4 22 14 34 2 24 4 36 0 44 0 76 0 116 0"
+    fill="none"
+    stroke="#8FC4AE"
+    stroke-width="10"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
