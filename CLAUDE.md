@@ -70,27 +70,49 @@ Remote: `https://github.com/thomascortebeeck-novel/luwte.git`
 
 The Firebase Emulator Suite ships as Java binaries — Firestore, Auth, Pub/Sub
 and Storage emulators are all JVM processes, so `firebase emulators:start`
-needs a JRE regardless of the codebase language. Install before Phase 1:
-`winget install --id Microsoft.OpenJDK.21 -e`. Nothing in Phase 0 needs it.
+needs a JRE regardless of the codebase language. JDK 21 is installed at
+`C:\Program Files\Microsoft\jdk-21.0.12.8-hotspot`.
 
 The other Novel repos never need this because they keep data in Postgres and
 use Firebase only for auth and FCM.
 
-### Divergence from the house stack — revisit before Phase 1 ends
+**Always start the emulators with `pnpm emulators`, never `firebase
+emulators:start`.** Java's NIO selector needs an AF_UNIX socket in the system
+temp directory, and on this machine AF_UNIX `connect` inside
+`%LOCALAPPDATA%\Temp` fails with "Invalid argument" — `bind` succeeds,
+`connect` does not — so the emulator dies with "failed to create a child
+event loop". `scripts/emulators.mjs` redirects the socket to a repo-local
+`.emulator-tmp/`. Not a JDK version issue: 17 and 21 fail identically and
+both work once redirected.
+
+Note the `TEMP` seen inside Claude Code's shell is the 8.3 short form
+(`C:\Users\THOMAS~1\...`) while the real user variable is the long path. Both
+fail here, so the wrapper is needed either way.
+
+### Firestore, decided 2026-08-04 — do not relitigate
 
 The other Novel repos are Postgres + Express on Cloud Run, with Firebase for
-auth and push only. luwte instead follows the PRD's Firestore design.
+auth and push only. luwte deliberately diverges and follows the PRD's
+Firestore design. Thomas confirmed this after being shown the trade-off.
 
-The reason to keep Firestore: PRD 5.3 makes the circle document the access
-control list, and security rules resolve every read through it. That model —
-plus offline-first writes for the check-in (PRD 5.6) — is what Firestore is
-genuinely good at, and it removes an API tier from a solo part-time build.
+Why: PRD 5.3 makes the circle document the access control list, with security
+rules resolving every read through it, and PRD 5.6 needs offline-first writes
+for the check-in. Firestore is genuinely good at both, and it removes an API
+tier from a solo part-time build.
 
-The reason to reconsider: it is not the stack Thomas has muscle memory for,
-and security rules are their own skill.
+The cost is real and accepted: security rules are their own skill, and this
+is not the stack with the most muscle memory behind it.
 
-Switching is cheap while there is no data layer, and expensive once Phase 1
-lands. Raise it before Phase 1 is finished, not after.
+### Firebase projects
+
+| Alias | Project ID | Use |
+|---|---|---|
+| `dev` | `luwte-dev` | development and deployed testing. The default. |
+| `prod` | `luwte-prod` | real family data. Blaze billing needed before Functions. |
+
+Two projects, not one, because developing against the database holding a real
+person's health records is not acceptable. `firebase use dev` is the default;
+switch deliberately, never casually.
 
 ## Commands
 
@@ -152,6 +174,7 @@ to run any of it.
 
 | Date | Change |
 |---|---|
+| 2026-08-04 | Firestore confirmed over the house Postgres stack — settled. Created `luwte-dev` and `luwte-prod`, aliased in `.firebaserc`, `dev` active. JDK 21 installed. Diagnosed and worked around a Windows AF_UNIX failure that killed the Firestore emulator; `pnpm emulators` now wraps it. Emulators verified starting and stopping cleanly. |
 | 2026-08-04 | Aligned with the house stack: `apps/app` → `apps/web` (`@luwte/web`), Turborepo added, `pnpm verify` gate. Clarified that the JRE is for the Firebase emulators only — no JVM in build or runtime. Recorded the Firestore-vs-Postgres divergence (D11 in PLAN.md) as reversible until Phase 1 lands. Pushed `phase-0-foundations` to GitHub. |
 | 2026-08-04 | Phase 0 complete. Monorepo, i18n (nl/en), copy-lint, design tokens, primitives, ScaleInput, PWA shell, crisis screen, styleguide. 90 tests green. Found and fixed a light-mode AA contrast failure on the primary button; added `contrast.test.ts`. Logged a known issue: amber-as-text in light mode is 3.82:1, to resolve when the feed lands in Phase 6 (see docs/BRAND-QA.md). |
 | 2026-08-04 | Repo created. PLAN.md roadmap approved: web-first v1, family pilot, clinician console in scope, Dutch + English. Phase 0 plan written and started. |

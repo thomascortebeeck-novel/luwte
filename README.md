@@ -62,6 +62,25 @@ winget install --id Microsoft.OpenJDK.21 -e
 The alternative is running rules tests against a throwaway cloud Firebase
 project — no Java, but slower, billable, and awkward to wire into CI.
 
+### Always start the emulators through the wrapper
+
+```bash
+pnpm emulators                 # emulators:start
+pnpm emulators:exec --only firestore "pnpm test"
+```
+
+Not `firebase emulators:start` directly. On this machine the Firestore
+emulator dies at startup with *"failed to create a child event loop"*,
+because Java's NIO selector is built on an AF_UNIX socket created in the
+system temp directory, and AF_UNIX `connect` inside `%LOCALAPPDATA%\Temp`
+fails with "Invalid argument" — `bind` succeeds, `connect` does not. Any
+other directory works.
+
+`scripts/emulators.mjs` points `jdk.net.unixdomain.tmpdir` at a repo-local
+`.emulator-tmp/` and is otherwise a passthrough. It is not a JDK version
+problem: 17 and 21 both fail identically, and both are fine once redirected.
+Most likely an endpoint-security filter on the temp directory.
+
 ## Getting started
 
 ```bash
