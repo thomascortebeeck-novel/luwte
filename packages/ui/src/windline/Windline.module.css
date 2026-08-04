@@ -1,0 +1,24 @@
+.wrap {
+  width: 100%;
+  /* Deliberately short. It is a horizon line, not a chart. */
+  height: 56px;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/*
+ * The person's own data, so the cold accent. Fine stroke: BRAND 3.7 asks for
+ * a single fine line, and weight here would read as emphasis.
+ */
+.stroke {
+  fill: none;
+  stroke: var(--self);
+  stroke-width: 1.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

@@ -21,4 +21,12 @@ export const paths = {
   weeklies: (patientId: string) => `patients/${patientId}/weekly`,
   /** weekKey is the ISO week, yyyy-'W'ww. */
   weekly: (patientId: string, weekKey: string) => `patients/${patientId}/weekly/${weekKey}`,
+
+  medications: (patientId: string) => `patients/${patientId}/medications`,
+  medication: (patientId: string, medId: string) =>
+    `patients/${patientId}/medications/${medId}`,
+
+  doses: (patientId: string) => `patients/${patientId}/doses`,
+  /** doseId is `yyyy-MM-dd_medId_HHmm`. */
+  dose: (patientId: string, id: string) => `patients/${patientId}/doses/${id}`,
 } as const;

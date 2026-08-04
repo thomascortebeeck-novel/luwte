@@ -151,4 +151,22 @@ export const en: Dictionary = {
     'This opens Google Calendar with everything filled in. luwte gets no access to your calendar and stores nothing.',
   calendarEventTitle: 'luwte',
   calendarEventDetails: 'A moment to look back on your day.',
+
+  // Medication
+  medicationEmpty: 'What you take goes here, if you fill it in.',
+  medicationAdd: 'Add medication',
+  medicationName: 'Name',
+  medicationDose: 'Dose',
+  medicationTimes: 'When',
+  medicationPurpose: 'What it is for',
+  medicationPurposeHint: 'In plain words. Your doctor can add to this later.',
+  medicationSave: 'Save',
+  medicationTaken: 'Taken',
+  medicationHistory: 'What changed',
+
+  // Optional practices — offered, never tracked
+  practicesTitle: 'If you feel like it',
+  practiceGratitude: 'Write down something that went alright today.',
+  practiceBreathing: 'Breathe slowly for a minute.',
+  practiceWalk: 'Step outside for a moment.',
 };

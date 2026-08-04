@@ -248,6 +248,76 @@ describe('patients/{patientId}/weekly', () => {
   });
 });
 
+describe('patients/{patientId}/medications', () => {
+  const medication = {
+    name: 'Quetiapine',
+    dose: '200 mg',
+    times: ['08:00', '20:00'],
+    purpose: 'Om je gedachten rustiger te maken.',
+    activeFrom: new Date(),
+    activeTo: null,
+    changeLog: [],
+  };
+
+  it('lets a person keep their own medication list', async () => {
+    await assertSucceeds(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1'), medication),
+    );
+  });
+
+  it("stops another signed-in person reading someone's medication", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'medications', 'med1'), medication);
+    });
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'medications', 'med1')));
+  });
+
+  it('refuses deletion, because it would erase the history of taking it', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'medications', 'med1'), medication);
+    });
+    await assertFails(deleteDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1')));
+  });
+
+  it('allows stopping a medication by setting activeTo', async () => {
+    await setDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1'), medication);
+    await assertSucceeds(
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1'), {
+        activeTo: new Date(),
+      }),
+    );
+  });
+});
+
+describe('patients/{patientId}/doses', () => {
+  const dose = { medId: 'med1', status: 'taken', takenAt: new Date() };
+
+  it('lets a person tick their own dose', async () => {
+    await assertSucceeds(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'doses', '2026-08-04_med1_0800'), dose),
+    );
+  });
+
+  it('stops another person reading or writing it', async () => {
+    await assertFails(
+      setDoc(doc(asOther(), 'patients', JONAS, 'doses', '2026-08-04_med1_0800'), dose),
+    );
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'doses', '2026-08-04_med1_0800'), dose);
+    });
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'doses', '2026-08-04_med1_0800')));
+  });
+
+  it('refuses deletion', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'doses', '2026-08-04_med1_0800'), dose);
+    });
+    await assertFails(
+      deleteDoc(doc(asJonas(), 'patients', JONAS, 'doses', '2026-08-04_med1_0800')),
+    );
+  });
+});
+
 describe('everything else', () => {
   it('is denied by default', async () => {
     await assertFails(getDoc(doc(asJonas(), 'checkins', 'anything')));

@@ -7,3 +7,5 @@ export { Hairline } from './primitives/Hairline';
 export { HumanText, type HumanTextProps } from './primitives/HumanText';
 export { Screen, type ScreenProps } from './primitives/Screen';
 export { ScaleInput, type ScaleInputProps, type ScaleValue } from './ScaleInput';
+export { Windline } from './windline/Windline';
+export { windlinePath, type WindlineGeometry } from './windline/path';

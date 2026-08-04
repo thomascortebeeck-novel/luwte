@@ -1,0 +1,104 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.sectionTitle {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  font-weight: 400;
+}
+
+.empty {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
+/* An empty state that is also the way in. An invitation, not a prompt. */
+.addLink {
+  min-height: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  text-decoration: none;
+}
+
+.dose {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+  padding: var(--space-1) var(--space-2);
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  border: 0;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-family: var(--font-ui);
+  color: var(--text);
+  cursor: pointer;
+  /*
+   * BRAND 3.6 / PRD 6.2 — a completed item greys in place. It does not move,
+   * shrink, reorder or disappear, because motion on completion reads as
+   * reward mechanics. Only the colour settles.
+   */
+  transition: opacity var(--dur-quick) var(--ease-settle);
+}
+
+.dose[data-taken] {
+  opacity: 0.5;
+}
+
+.time {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-quiet);
+  font-size: var(--text-sm);
+  min-width: 5ch;
+}
+
+.doseText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.purpose {
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--text-quiet);
+}
+
+/* The person's own action, so the mark is the cold accent. */
+.mark {
+  margin-left: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  flex: none;
+}
+
+.dose[data-taken] .mark {
+  background: var(--self);
+  border-color: var(--self);
+}
+
+/*
+ * PRD 6.2 — optional practices. No checkbox, no completion state, nothing
+ * recorded. They are text, deliberately: anything tappable would imply
+ * something is expected.
+ */
+.practice {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+  padding: 2px 0;
+}

@@ -155,4 +155,22 @@ export const nl = {
     'Dit opent Google Agenda met alles al ingevuld. luwte krijgt geen toegang tot je agenda en bewaart niets.',
   calendarEventTitle: 'luwte',
   calendarEventDetails: 'Even stilstaan bij je dag.',
+
+  // Medication
+  medicationEmpty: 'Hier komt wat je neemt, als je het invult.',
+  medicationAdd: 'Medicatie toevoegen',
+  medicationName: 'Naam',
+  medicationDose: 'Dosis',
+  medicationTimes: 'Wanneer',
+  medicationPurpose: 'Waarvoor het is',
+  medicationPurposeHint: 'In gewone woorden. Je dokter kan dit later aanvullen.',
+  medicationSave: 'Bewaren',
+  medicationTaken: 'Genomen',
+  medicationHistory: 'Wat er veranderde',
+
+  // Optional practices — offered, never tracked
+  practicesTitle: 'Als je zin hebt',
+  practiceGratitude: 'Schrijf iets op dat vandaag meeviel.',
+  practiceBreathing: 'Adem een minuut traag in en uit.',
+  practiceWalk: 'Ga even naar buiten.',
 } as const satisfies Record<string, string>;
