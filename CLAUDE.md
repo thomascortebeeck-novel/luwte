@@ -107,8 +107,9 @@ is not the stack with the most muscle memory behind it.
 
 | Alias | Project ID | Use |
 |---|---|---|
-| `dev` | `luwte-dev` | development and deployed testing. The default. |
-| `prod` | `luwte-prod` | real family data. Blaze billing needed before Functions. |
+| — | `demo-luwte` | **local development.** Not a real project; emulator-only by the `demo-` prefix. |
+| `dev` | `luwte-dev` | deployed staging only. Not used by local work. |
+| `prod` | `luwte-prod` | real family data. Blaze enabled. |
 
 Two projects, not one, because developing against the database holding a real
 person's health records is not acceptable. `firebase use dev` is the default;
@@ -166,12 +167,26 @@ crisis screen.
 
 Phase 0 needs no Firebase project. Phase 1 onwards needs `pnpm emulators`.
 
+### Local development touches no Firebase project at all
+
+The dev config uses the project id **`demo-luwte`**. Firebase treats any
+`demo-` prefixed id as emulator-only: the SDKs and the emulator suite both
+refuse to contact live Google services for it. A missing or mistyped
+`VITE_USE_EMULATORS` therefore fails loudly instead of silently writing to a
+database holding a real person's health records.
+
+Consequence worth knowing: **clone the repo, `pnpm emulators`, `pnpm dev`, and
+everything works.** No Firebase project, no login, no billing.
+
+`luwte-dev` is now only useful as a deployed staging target — somewhere to try
+a real build that is not the project holding real family data. It is free on
+Spark and nothing breaks if it is deleted; local work does not use it.
+
 ### Nothing in development needs billing. Keep it that way.
 
-`luwte-dev` runs entirely on the emulator suite — auth, firestore, functions,
-pubsub, hosting, UI — all local, all free. The app makes **no callable
-function calls and uses no Cloud Storage**, so there is no deployed service it
-depends on.
+The emulator suite covers auth, firestore, functions, pubsub, hosting and the
+UI — all local, all free. The app makes **no callable function calls and uses
+no Cloud Storage**, so there is no deployed service it depends on.
 
 The report is printed by the browser rather than rendered by a Cloud Function
 (D16), which removed the last thing that would have required Blaze on dev.
