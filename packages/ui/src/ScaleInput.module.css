@@ -1,0 +1,89 @@
+/*
+ * The 1 to 7 input. Six of these are the entire daily check-in, so it has to
+ * be quick, forgiving of poor fine motor control, and free of any suggestion
+ * that one end is better than the other.
+ *
+ * Direction comes from size — the dot grows left to right — and never from
+ * hue. Every option is the same colour. There is no bad score in this product.
+ */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.option {
+  flex: 1 1 0;
+  /* BRAND 5 — sedating medication affects fine motor control. */
+  min-height: var(--tap-min);
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-input);
+  cursor: pointer;
+  transition: opacity var(--dur-quick) var(--ease-settle);
+}
+
+.dot {
+  display: block;
+  border-radius: 999px;
+  background: var(--line);
+  transition:
+    background-color var(--dur-quick) var(--ease-settle),
+    box-shadow var(--dur-quick) var(--ease-settle);
+}
+
+.option:nth-child(1) .dot {
+  width: 8px;
+  height: 8px;
+}
+.option:nth-child(2) .dot {
+  width: 10px;
+  height: 10px;
+}
+.option:nth-child(3) .dot {
+  width: 12px;
+  height: 12px;
+}
+.option:nth-child(4) .dot {
+  width: 14px;
+  height: 14px;
+}
+.option:nth-child(5) .dot {
+  width: 16px;
+  height: 16px;
+}
+.option:nth-child(6) .dot {
+  width: 18px;
+  height: 18px;
+}
+.option:nth-child(7) .dot {
+  width: 20px;
+  height: 20px;
+}
+
+/* The person's own input, so it is drawn in the cold accent. */
+.option[data-selected] .dot {
+  background: var(--self);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--self) 18%, transparent);
+}
+
+.anchors {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--text-quiet);
+}

@@ -1,0 +1,7 @@
+/*
+ * Self-hosted. No runtime request ever leaves for fonts.googleapis.com —
+ * an IP address sent to a third party on every launch is not a defensible
+ * position for an app holding GDPR Article 9 data.
+ */
+@import '@fontsource-variable/schibsted-grotesk/index.css';
+@import '@fontsource-variable/newsreader/index.css';

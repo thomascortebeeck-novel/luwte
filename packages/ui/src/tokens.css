@@ -1,0 +1,165 @@
+/*
+ * BRAND.md sections 3.3 to 3.6, verbatim.
+ *
+ * Components consume the semantic aliases (--bg, --surface, --text,
+ * --text-quiet, --line, --self, --human) rather than the named colours, so a
+ * component never has to know which theme is active.
+ *
+ * The two-accent rule is structural, not decorative:
+ *   --self  (zeeglas, cold) is the person's own input and their own data.
+ *   --human (amber, warm)   is anywhere another human has been.
+ * Never mix them. Never use --human for a system message.
+ */
+
+:root,
+:root[data-theme='dark'] {
+  --diep: #131a19; /* background — deep still water */
+  --luwte-1: #1c2524; /* raised surface, cards */
+  --luwte-2: #27322f; /* hairlines, dividers, inactive */
+  --mist: #e3e9e6; /* primary text */
+  --nevel: #8b9a95; /* secondary text, labels */
+  --zeeglas: #8fc4ae; /* COLD accent — the person's own data */
+  --amber: #d9b27c; /* WARM accent — anything another human did */
+
+  --bg: var(--diep);
+  --surface: var(--luwte-1);
+  --line: var(--luwte-2);
+  --text: var(--mist);
+  --text-quiet: var(--nevel);
+  --self: var(--zeeglas);
+  --human: var(--amber);
+
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --diep-l: #eaeeec;
+  --luwte-1-l: #f4f7f5;
+  --luwte-2-l: #d5ddda;
+  --mist-l: #16201e;
+  --nevel-l: #5d6c68;
+  --zeeglas-l: #3e7c63;
+  --amber-l: #9a6f32;
+
+  --bg: var(--diep-l);
+  --surface: var(--luwte-1-l);
+  --line: var(--luwte-2-l);
+  --text: var(--mist-l);
+  --text-quiet: var(--nevel-l);
+  --self: var(--zeeglas-l);
+  --human: var(--amber-l);
+
+  color-scheme: light;
+}
+
+:root {
+  /* BRAND 3.4 — the split is the point. Sans is the app talking; serif is a
+     person talking. Never serif for headings, buttons or system copy. */
+  --font-ui:
+    'Schibsted Grotesk Variable', 'Schibsted Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-human: 'Newsreader Variable', Newsreader, Georgia, serif;
+
+  --text-xs: 13px;
+  --leading-xs: 1.5;
+  --text-sm: 15px;
+  --leading-sm: 1.6;
+  --text-base: 17px; /* larger than typical, deliberately */
+  --leading-base: 1.65;
+  --text-lg: 22px;
+  --leading-lg: 1.4;
+  --text-xl: 30px;
+  --leading-xl: 1.25;
+  --text-2xl: 42px; /* the check-in question, standing alone */
+  --leading-2xl: 1.15;
+
+  /* BRAND 3.5 — 8px base scale. */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+
+  --radius-card: 12px;
+  --radius-input: 10px;
+  --radius-action: 999px;
+
+  /* BRAND 5 — sedating medication affects fine motor control. This is a
+     functional requirement, not a compliance checkbox. */
+  --tap-min: 48px;
+
+  /* BRAND 3.6 — decelerating, arriving softly. Fade and settle, never slide. */
+  --ease-settle: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur-quick: 400ms;
+  --dur-slow: 600ms;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  font-weight: 400;
+  /* BRAND 3.4 — tabular figures so charts and lists do not jitter. */
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* BRAND 3.4 — no bold anywhere. Bold is emphasis, emphasis is pressure.
+   Hierarchy comes from size and colour. */
+b,
+strong,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 500;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  line-height: var(--leading-lg);
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--self);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* BRAND 3.6 / BRAND 5 — prefers-reduced-motion fully respected, including
+   the windline. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

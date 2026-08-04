@@ -44,6 +44,12 @@ importers:
       prettier:
         specifier: ^3.4.2
         version: 3.9.6
+      react:
+        specifier: ^19.2.8
+        version: 19.2.8
+      react-dom:
+        specifier: ^19.2.8
+        version: 19.2.8(react@19.2.8)
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
@@ -59,10 +65,10 @@ importers:
   packages/ui:
     dependencies:
       '@fontsource-variable/newsreader':
-        specifier: ^5.1.1
+        specifier: ^5.3.0
         version: 5.3.0
       '@fontsource-variable/schibsted-grotesk':
-        specifier: ^5.1.1
+        specifier: ^5.3.0
         version: 5.3.0
       react:
         specifier: ^19.0.0

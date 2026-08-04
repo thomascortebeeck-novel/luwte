@@ -1,0 +1,13 @@
+/*
+ * BRAND 3.4 — the split is the point. This class is the only place the serif
+ * is allowed, and it marks text a person wrote: a diary line, a comment, a
+ * gratitude note. Never a heading, never a button, never system copy.
+ */
+.human {
+  font-family: var(--font-human);
+  font-weight: 400;
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  color: var(--text);
+  margin: 0;
+}

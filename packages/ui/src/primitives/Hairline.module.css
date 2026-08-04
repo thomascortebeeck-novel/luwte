@@ -1,0 +1,7 @@
+/* BRAND 3.5 — 1px, used sparingly. Prefer space over lines. */
+.hairline {
+  height: 1px;
+  background: var(--line);
+  border: 0;
+  margin: 0;
+}

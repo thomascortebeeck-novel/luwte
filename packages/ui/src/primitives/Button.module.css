@@ -1,0 +1,39 @@
+.base {
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+  padding: 0 var(--space-3);
+  font: inherit;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  border: 0;
+  cursor: pointer;
+  /* BRAND 3.6 — opacity only. Nothing moves when a button is pressed. */
+  transition: opacity var(--dur-quick) var(--ease-settle);
+}
+
+.base:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.base:not(:disabled):hover {
+  opacity: 0.85;
+}
+
+/* BRAND 3.5 — 999px on the single primary action button, not everywhere. */
+.primary {
+  border-radius: var(--radius-action);
+  background: var(--self);
+  color: var(--bg);
+}
+
+.quiet {
+  border-radius: var(--radius-input);
+  background: transparent;
+  color: var(--text-quiet);
+  padding: 0 var(--space-2);
+}
+
+.full {
+  width: 100%;
+}
