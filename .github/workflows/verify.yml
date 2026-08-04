@@ -1,0 +1,61 @@
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A superseded run tells you nothing. Cancel it.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Version comes from the packageManager field, so CI and a laptop
+      # cannot drift apart.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # The engines floor and the Cloud Functions runtime, rather than
+          # whatever is newest — so an accidental use of a newer API fails
+          # here instead of in production.
+          node-version: 20
+          cache: pnpm
+
+      # The Firebase emulators are Java processes. Nothing in the codebase is.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # Includes copy-lint over both dictionaries, the brand guards over every
+      # stylesheet, and the WCAG contrast checks.
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Install Firebase CLI
+        run: npm install --global firebase-tools@13
+
+      # The access-control matrix, run against a real Firestore emulator.
+      # No credentials needed: the emulator accepts a throwaway project id.
+      - name: Security rules
+        run: pnpm test:rules

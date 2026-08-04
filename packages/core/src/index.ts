@@ -9,3 +9,65 @@ export {
   type Locale,
 } from './i18n/index';
 export { CRISIS_SERVICES, type CrisisService } from './crisis';
+export {
+  checkinReminderCalendarLink,
+  googleCalendarLink,
+  type CalendarEvent,
+} from './calendar';
+export {
+  DEFAULT_NOTIFICATION_SETTINGS,
+  MAX_PATIENT_CATEGORIES,
+  NOTIFICATION_CATEGORIES,
+  categoriesFor,
+  notificationSettingsSchema,
+  type NotificationAudience,
+  type NotificationCategory,
+  type NotificationSettings,
+} from './model/notifications';
+export {
+  isDueForReminder,
+  localHour,
+  selectDue,
+  type ReminderCandidate,
+} from './reminders';
+
+export {
+  CONSENT_ITEMS,
+  CONSENT_VERSION,
+  consentGrantsSchema,
+  consentRecordSchema,
+  hasRequiredConsent,
+  type ConsentGrants,
+  type ConsentItem,
+  type ConsentRecord,
+} from './model/consent';
+export { roleSchema, userSchema, type Role, type User } from './model/user';
+export {
+  DEFAULT_CHECKIN_HOUR,
+  DEFAULT_TIMEZONE,
+  patientSchema,
+  type Patient,
+} from './model/patient';
+export { paths } from './model/paths';
+export {
+  CHECKIN_STEPS,
+  HOPELESSNESS_CRISIS_THRESHOLD,
+  WEEKLY_STEPS,
+  checkinSchema,
+  scaleSchema,
+  shouldOfferCrisis,
+  weeklySchema,
+  type Checkin,
+  type Scale,
+  type Weekly,
+} from './model/checkin';
+export {
+  dateKey,
+  isBackfillable,
+  isEditable,
+  previousDateKey,
+  weekKey,
+  weekdayOf,
+  type DateKey,
+  type WeekKey,
+} from './dates';

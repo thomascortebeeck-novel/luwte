@@ -35,8 +35,16 @@ describe('lintCopy', () => {
   });
 
   it('rejects cheerfulness', () => {
-    expect(rules('Goed bezig, je kan dit')).toContain('never-cheerful');
+    expect(rules('Goed bezig')).toContain('never-cheerful');
     expect(rules('Great job, keep it up', 'en')).toContain('never-cheerful');
+  });
+
+  it('rejects a pep talk but allows an ordinary sentence that starts the same way', () => {
+    expect(rules('Je kan dit.')).toContain('never-cheerful');
+    expect(rules('Je kan dit')).toContain('never-cheerful');
+    // The app has to be able to describe a setting.
+    expect(rules('Je kan dit later uitzetten.')).toEqual([]);
+    expect(rules('Je kan dit elk moment veranderen.')).toEqual([]);
   });
 
   it('rejects comparison and progress language', () => {

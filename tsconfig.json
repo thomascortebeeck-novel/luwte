@@ -3,6 +3,7 @@
   "include": [
     "packages/*/src/**/*",
     "apps/*/src/**/*",
+    "functions/src/**/*",
     "vitest.config.ts",
     "vitest.setup.ts",
     "apps/*/vite.config.ts"

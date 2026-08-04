@@ -3,6 +3,21 @@
     "dev": "luwte-dev",
     "prod": "luwte-prod"
   },
-  "targets": {},
+  "targets": {
+    "luwte-dev": {
+      "hosting": {
+        "app": [
+          "luwte-dev"
+        ]
+      }
+    },
+    "luwte-prod": {
+      "hosting": {
+        "app": [
+          "luwte-prod"
+        ]
+      }
+    }
+  },
   "etags": {}
 }

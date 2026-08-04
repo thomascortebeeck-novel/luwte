@@ -1,0 +1,21 @@
+{
+  "name": "@luwte/functions",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --format=esm --outfile=lib/index.js --external:firebase-admin --external:firebase-functions"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.2",
+    "firebase-functions": "^6.3.0"
+  },
+  "devDependencies": {
+    "@luwte/core": "workspace:*",
+    "esbuild": "^0.24.2"
+  }
+}

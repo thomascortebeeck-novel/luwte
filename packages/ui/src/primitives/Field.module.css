@@ -1,0 +1,41 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.label {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+}
+
+.input {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-2);
+  font: inherit;
+  font-family: var(--font-ui);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  width: 100%;
+}
+
+.input::placeholder {
+  color: var(--text-quiet);
+}
+
+/*
+ * BRAND 3.3 — no red. A field that needs attention is marked by the message
+ * beside it, not by colouring it like a mistake.
+ */
+.input[aria-invalid='true'] {
+  border-color: var(--text-quiet);
+}
+
+.message {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+}

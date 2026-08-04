@@ -1,0 +1,13 @@
+.prompt {
+  font-size: var(--text-xl);
+  line-height: var(--leading-xl);
+  color: var(--text);
+  margin: 0;
+}
+
+.line {
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  color: var(--text-quiet);
+  margin: 0;
+}

@@ -67,4 +67,92 @@ export const nl = {
   scaleStep7: 'heel veel',
 
   styleguideTitle: 'Stijlgids',
+
+  // Auth
+  signInTitle: 'Welkom',
+  signInEmailLabel: 'Je e-mailadres',
+  signInSendLink: 'Stuur me een link',
+  signInLinkSent: 'Kijk in je mailbox. De link blijft een uur geldig.',
+  signInUsePassword: 'Liever een wachtwoord',
+  signInUseLink: 'Liever een link in je mail',
+  signInPasswordLabel: 'Wachtwoord',
+  signInSubmit: 'Aanmelden',
+  signInInvalidEmail: 'Dat lijkt geen e-mailadres.',
+  signInFailed: 'Aanmelden is niet gelukt. Probeer het straks nog eens.',
+  signOut: 'Afmelden',
+
+  // Onboarding
+  onboardingNext: 'Verder',
+  onboardingNameTitle: 'Hoe mogen we je noemen?',
+  onboardingNameLabel: 'Je naam',
+  onboardingHourTitle: 'Wanneer past het om even stil te staan bij je dag?',
+  onboardingHourExplanation:
+    'Eén herinnering per dag. Mis je ze, dan gebeurt er niets.',
+  onboardingFinish: 'Klaar',
+
+  // Consent
+  consentTitle: 'Waar je ja tegen zegt',
+  consentIntro:
+    'luwte bewaart gezondheidsgegevens. Daar heb je uitdrukkelijk toestemming voor nodig, en die kan je later weer intrekken.',
+  consentEssentialLabel: 'Een account en je instellingen bewaren',
+  consentEssentialExplanation:
+    'Je naam, je taal en het uur van je herinnering. Zonder dit werkt de app niet.',
+  consentHealthLabel: 'Bewaren wat je invult over hoe je je voelt',
+  consentHealthExplanation:
+    'Stemming, energie, slaap, onrust, medicatie. Dit zijn gezondheidsgegevens. Ze staan in België en niemand ziet ze tenzij jij dat kiest.',
+  consentRemindersLabel: 'Je een herinnering sturen',
+  consentRemindersExplanation:
+    'Eén melding per dag op het uur dat jij koos. Je kan dit later uitzetten.',
+  consentRequired: 'Nodig',
+  consentOptional: 'Mag je weigeren',
+  consentAccept: 'Ja, dat mag',
+  consentMissing: 'De eerste twee zijn nodig om verder te kunnen.',
+  consentWhereToChange: 'Je kan dit later veranderen bij Gegevens en privacy.',
+
+  // Check-in
+  checkinSleepHours: 'Hoeveel uur heb je geslapen?',
+  checkinHoursSuffix: 'uur',
+  checkinStart: 'Invullen',
+  checkinSave: 'Bewaren',
+  checkinBack: 'Terug',
+  checkinSkip: 'Overslaan',
+  checkinDiaryPlaceholder: 'Wat je maar wil',
+  checkinEdit: 'Aanpassen',
+  checkinDoneToday: 'Je hebt vandaag ingevuld.',
+  checkinLocked: 'Deze dag is afgesloten.',
+
+  // The weekly extra, once a week, inline after the daily items
+  weeklyIntro: 'Nog vier vragen. Die komen één keer per week.',
+  weeklyRestlessness: 'Hoe rusteloos voelde je lichaam?',
+  weeklyStiffness: 'Hoe stijf voelde je lichaam?',
+  weeklySedation: 'Hoe suf was je overdag?',
+  weeklyHopelessness: 'Hoe uitzichtloos voelde het?',
+
+  // Settings and notifications
+  settingsTitle: 'Instellingen',
+  settingsNotifications: 'Meldingen',
+  settingsNotificationsIntro:
+    'Je kan elke melding apart uitzetten. Staan ze allemaal uit, dan werkt de app gewoon verder.',
+  settingsAllowNotifications: 'Meldingen toelaten',
+  settingsNotificationsBlocked:
+    'Je browser laat geen meldingen toe. Dat kan je daar aanpassen.',
+  settingsReminderHour: 'Je herinnering',
+  settingsSaved: 'Bewaard.',
+
+  notifyCheckinLabel: 'Je dagelijkse herinnering',
+  notifyCheckinExplanation: 'Eén melding, op het uur dat jij koos. Mis je ze, dan gebeurt er niets.',
+  notifyMedicationLabel: 'Je medicatie',
+  notifyMedicationExplanation: 'Een melding op de uren die op je medicatie staan.',
+  notifyKudosLabel: 'Als iemand iets laat weten',
+  notifyKudosExplanation: 'Wanneer iemand uit je kring reageert op wat je deelde.',
+  notifySupportedActivityLabel: 'Als iemand die je volgt iets deed',
+  notifySupportedActivityExplanation:
+    'Wanneer iemand die jij steunt iets afrondde dat gepland stond. Dit werkt alleen als die persoon je zijn overzicht liet zien.',
+
+  // Calendar
+  calendarAddReminder: 'Zet in Google Agenda',
+  calendarExplanation:
+    'Dit opent Google Agenda met alles al ingevuld. luwte krijgt geen toegang tot je agenda en bewaart niets.',
+  calendarEventTitle: 'luwte',
+  calendarEventDetails: 'Even stilstaan bij je dag.',
 } as const satisfies Record<string, string>;

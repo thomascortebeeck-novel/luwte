@@ -1,0 +1,45 @@
+/*
+ * A consent or settings choice. Deliberately not a switch: a checkbox that
+ * has to be pressed is a clearer record of a decision than a toggle that can
+ * be brushed past, and GDPR Art. 9 consent has to be an act.
+ */
+.choice {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  padding: var(--space-2);
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  cursor: pointer;
+  min-height: var(--tap-min);
+}
+
+.box {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-top: 2px;
+  accent-color: var(--self);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  color: var(--text);
+}
+
+.explanation {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+}
+
+.note {
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--text-quiet);
+}

@@ -1,6 +1,8 @@
 export { applyTheme, readStoredTheme, storeTheme, type Theme } from './theme';
 export { Button, type ButtonProps } from './primitives/Button';
 export { Card, type CardProps } from './primitives/Card';
+export { Choice, type ChoiceProps } from './primitives/Choice';
+export { Field, type FieldProps } from './primitives/Field';
 export { Hairline } from './primitives/Hairline';
 export { HumanText, type HumanTextProps } from './primitives/HumanText';
 export { Screen, type ScreenProps } from './primitives/Screen';

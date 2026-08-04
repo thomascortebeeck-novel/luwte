@@ -234,6 +234,8 @@ first (§10), usage sensing (§9).
 | D11 | **Firestore confirmed 2026-08-04**, rather than the house Postgres + Express stack: PRD 5.3 makes security rules the access-control design and PRD 5.6 needs offline-first writes. Settled — not to be relitigated. |
 | D13 | Two Firebase projects, `luwte-dev` and `luwte-prod`. Developing against the database holding a real person's health records is not acceptable. |
 | D12 | A JRE is required for the Firebase emulators only. Nothing in the build or runtime touches the JVM. |
+| D14 | **Google Calendar by prefilled template link, not the Calendar API.** No OAuth consent, no calendar scopes, no stored refresh token, no new data processor, no DPIA entry. The person presses save in Google's own UI or does not. The cost is that luwte cannot read, update or remove events — which for "put this in my diary" is the whole job. Two-way sync would need its own decision. |
+| D15 | **Blaze stays off `luwte-dev`** (Thomas, 2026-08-04). Functions are developed against the emulator, which needs no billing, and deployed only when there is a reason to. |
 
 ---
 

@@ -1,0 +1,113 @@
+/*
+ * PRD 6.1 — one question per screen, large type, and nothing else competing
+ * for attention. Under 60 seconds a day is the target; every element that is
+ * not the question is a tax on that.
+ */
+
+.question {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-2xl);
+  font-weight: 400;
+  color: var(--text);
+  margin: 0;
+  /* Pushes the question off the top edge so it sits in the reading zone
+     while the answer stays in the lower third, within thumb reach. */
+  padding-top: var(--space-5);
+}
+
+.answer {
+  margin-top: auto;
+  padding-bottom: var(--space-3);
+}
+
+.hours {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.hoursInput {
+  min-height: var(--tap-min);
+  width: 6ch;
+  padding: 0 var(--space-2);
+  font: inherit;
+  font-family: var(--font-ui);
+  font-size: var(--text-xl);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+}
+
+.hoursSuffix {
+  color: var(--text-quiet);
+}
+
+/* The diary line is the person's own words, so it is set in the serif. */
+.diary {
+  width: 100%;
+  min-height: 120px;
+  padding: var(--space-2);
+  font-family: var(--font-human);
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  resize: vertical;
+}
+
+.diary::placeholder {
+  font-family: var(--font-ui);
+  color: var(--text-quiet);
+}
+
+.weeklyIntro {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
+.done {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-2xl);
+  color: var(--text);
+  margin: 0;
+}
+
+/* BRAND 3.6 — fade and settle. Nothing slides between questions. */
+.step {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  animation: settle var(--dur-quick) var(--ease-settle);
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.progress {
+  display: flex;
+  gap: 6px;
+}
+
+.pip {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.pip[data-done] {
+  background: var(--self);
+}

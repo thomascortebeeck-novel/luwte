@@ -29,8 +29,13 @@ mkdirSync(socketDir, { recursive: true });
 const existing = process.env.JAVA_TOOL_OPTIONS ?? '';
 const javaToolOptions = `${existing} -Djdk.net.unixdomain.tmpdir=${socketDir}`.trim();
 
+// Default to emulators:start, but only supply the subcommand when one was not
+// given. Replacing the default outright would turn `pnpm emulators --project x`
+// into `firebase --project x`, which has no subcommand and fails with a bare
+// "An unexpected error has occurred."
 const args = process.argv.slice(2);
-const command = args.length > 0 ? args : ['emulators:start'];
+const hasSubcommand = args[0]?.startsWith('emulators:') ?? false;
+const command = hasSubcommand ? args : ['emulators:start', ...args];
 
 // `firebase` is a .cmd shim on Windows, so it needs a shell. Passing an args
 // array alongside shell:true concatenates without escaping, which breaks any
@@ -44,6 +49,25 @@ const child = spawn(commandLine, {
   cwd: repoRoot,
   env: { ...process.env, JAVA_TOOL_OPTIONS: javaToolOptions },
 });
+
+/**
+ * The emulators are Java grandchildren behind a shell, so killing this
+ * wrapper leaves them holding ports 8080 and 9099 and the next run dies with
+ * "Could not start Firestore Emulator, port taken". Kill the whole tree.
+ */
+function killTree() {
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  if (process.platform === 'win32' && child.pid) {
+    spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' });
+  } else {
+    child.kill('SIGTERM');
+  }
+}
+
+for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
+  process.on(signal, killTree);
+}
+process.on('exit', killTree);
 
 child.on('exit', (code, signal) => {
   process.exit(signal ? 1 : (code ?? 0));

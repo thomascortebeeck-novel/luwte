@@ -21,7 +21,17 @@ function cssFiles(dir: string): string[] {
   });
 }
 
-const allCss = cssFiles(here).map((path) => ({ path, source: readFileSync(path, 'utf8') }));
+/**
+ * Comments are prose, not style. Without this a comment explaining "no red"
+ * trips the no-red rule, which is both wrong and a good way to discourage
+ * writing the rule down next to the code it governs.
+ */
+const withoutComments = (source: string) => source.replace(/\/\*[\s\S]*?\*\//g, '');
+
+const allCss = cssFiles(here).map((path) => ({
+  path,
+  source: withoutComments(readFileSync(path, 'utf8')),
+}));
 
 describe('brand tokens', () => {
   it.each([

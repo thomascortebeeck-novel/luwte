@@ -149,14 +149,48 @@ rest when `functions` and `apps/console` make per-package tasks real.
 
 ## Current state
 
-**Phase 0 — Foundations: complete.** 90 tests, typecheck, lint and build all
-green. Next up is Phase 1 (auth, accounts, onboarding, consent), which is the
-first phase needing a real Firebase project and a JDK for the emulators.
+**Phases 0, 1 and 2 complete.** 136 unit tests plus 26 security-rules tests.
+`pnpm verify` green. Next is Phase 3 — Today with medication and the windline.
 
 What exists: the monorepo, both dictionaries, the copy-lint and brand guards,
-design tokens in both themes, five primitives plus `ScaleInput`, the PWA
-shell, the crisis screen, and `/styleguide`. No Firebase project is required
-to run any of it.
+design tokens in both themes, seven primitives plus `ScaleInput`, the PWA
+shell, the crisis screen, `/styleguide`, the whole account flow (sign-in,
+onboarding, GDPR Art. 9 consent), and **the daily check-in** — six questions,
+a diary line, the weekly akathisia screen, and the hopelessness path to the
+crisis screen.
+
+Phase 0 needs no Firebase project. Phase 1 onwards needs `pnpm emulators`.
+
+### Cloud Functions, and why Blaze is not needed to build them
+
+`functions/` holds `sendCheckinReminder` (PRD 5.4). It is **written, bundled
+and verified loading in the emulator, but never deployed** — Thomas decided
+on 2026-08-04 not to put Blaze on `luwte-dev`.
+
+**The Functions emulator does not need billing.** Blaze is only required to
+deploy. So functions are developed and exercised locally as normal; the only
+thing missing is a live schedule, which no amount of local work would prove
+anyway.
+
+`@luwte/core` is bundled into the function with esbuild rather than resolved
+as a workspace dependency, because pnpm symlinks do not survive the deploy
+upload. `functions/lib/` is generated — never edit it, never commit it.
+
+**The decision of whom to disturb lives in `packages/core/src/reminders.ts`,
+not in the function.** It is a pure function with 17 tests. The Cloud Function
+is plumbing around it. `remindedOn` is what makes "never chase" true rather
+than aspirational: without it an hourly job would fire every hour until
+midnight.
+
+### Verified against the emulators, 2026-08-04
+
+- Auth holds `email` and auth machinery only — no `displayName`, no
+  `photoUrl`, no custom claims. PRD 5.5 option 1 holds in practice.
+- The consent record stores version, grants, locale, `grantedAt` and a null
+  `withdrawnAt`, keyed by version so re-consenting to the same version
+  cannot silently duplicate.
+- Nothing is pre-ticked on the consent screen and the action stays disabled
+  until both required items are granted.
 
 ### Decisions worth knowing before changing code
 
@@ -168,12 +202,28 @@ to run any of it.
 - `--on-self` exists because light-mode `--diep-l` on `--zeeglas-l` is 4.20:1
   and fails AA. The primary button label is white in light mode.
 - `resolveLocale` treats anything not clearly English as Dutch.
-- Check-in dates will be keyed in `Europe/Brussels`, not UTC (Phase 2).
+- **Check-in dates are keyed in the patient's timezone, not UTC.**
+  `packages/core/src/dates.ts`, tested across both DST transitions and the
+  ISO week-year boundary. Never use `toISOString().slice(0,10)` for a date
+  key — it is UTC and puts a 23:30 Brussels entry on the wrong day.
+- The **midnight lock is enforced in the client, not in the rules.** Security
+  rules have no timezone support, so they cannot know what "today in
+  Brussels" is. The rules enforce the boundary that matters — nobody else can
+  read or write — plus `document id == date field`, which is what makes an
+  offline write idempotent when it syncs twice.
+- The **weekly extra is anchored to the weekday the account was created.**
+  If it is missed, it returns next week. The app never chases.
+- `sleepHours` is the one check-in field shown as a number. It is a quantity,
+  not a rating; BRAND's "never a visible number" governs the subjective
+  scales, where a number invites scoring yourself.
 
 ## Changelog
 
 | Date | Change |
 |---|---|
+| 2026-08-04 | Notification preferences (four categories, all individually disableable), a settings screen, and Google Calendar export via a prefilled template link — deliberately no OAuth, no calendar scopes, no stored token. `sendCheckinReminder` written and verified loading in the emulator; not deployed, since Blaze stays off `luwte-dev` by decision. |
+| 2026-08-04 | Phase 2 complete, minus the reminder function (needs Blaze on dev). Europe/Brussels date logic tested across both DST transitions; check-in and weekly models, rules and rules tests; six-question check-in with diary line and weekly akathisia screen; top-of-scale hopelessness goes to the crisis screen with no notification to anyone. Walked end to end against the emulators and checked at the database. Added `docs/EMAIL-SETUP.md` for the admin-only email configuration. |
+| 2026-08-04 | Phase 1 complete. Firebase client with offline persistence, security rules with 17 table-driven tests, sign-in (email link + password), four onboarding screens, GDPR Art. 9 consent, empty Today, route gate. Walked end to end against the emulators in Dutch and English. Copy-lint and the brand guard each caught a false positive in their own rules — both narrowed and given regression tests. |
 | 2026-08-04 | Firestore confirmed over the house Postgres stack — settled. Created `luwte-dev` and `luwte-prod`, aliased in `.firebaserc`, `dev` active. JDK 21 installed. Diagnosed and worked around a Windows AF_UNIX failure that killed the Firestore emulator; `pnpm emulators` now wraps it. Emulators verified starting and stopping cleanly. |
 | 2026-08-04 | Aligned with the house stack: `apps/app` → `apps/web` (`@luwte/web`), Turborepo added, `pnpm verify` gate. Clarified that the JRE is for the Firebase emulators only — no JVM in build or runtime. Recorded the Firestore-vs-Postgres divergence (D11 in PLAN.md) as reversible until Phase 1 lands. Pushed `phase-0-foundations` to GitHub. |
 | 2026-08-04 | Phase 0 complete. Monorepo, i18n (nl/en), copy-lint, design tokens, primitives, ScaleInput, PWA shell, crisis screen, styleguide. 90 tests green. Found and fixed a light-mode AA contrast failure on the primary button; added `contrast.test.ts`. Logged a known issue: amber-as-text in light mode is 3.82:1, to resolve when the feed lands in Phase 6 (see docs/BRAND-QA.md). |

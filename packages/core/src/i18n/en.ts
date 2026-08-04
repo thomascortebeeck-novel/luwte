@@ -65,4 +65,90 @@ export const en: Dictionary = {
   scaleStep7: 'very much',
 
   styleguideTitle: 'Style guide',
+
+  // Auth
+  signInTitle: 'Welcome',
+  signInEmailLabel: 'Your email address',
+  signInSendLink: 'Send me a link',
+  signInLinkSent: 'Check your inbox. The link stays valid for an hour.',
+  signInUsePassword: 'Use a password instead',
+  signInUseLink: 'Use a link in my email instead',
+  signInPasswordLabel: 'Password',
+  signInSubmit: 'Sign in',
+  signInInvalidEmail: "That doesn't look like an email address.",
+  signInFailed: "Signing in didn't work. Try again later.",
+  signOut: 'Sign out',
+
+  // Onboarding
+  onboardingNext: 'Continue',
+  onboardingNameTitle: 'What should we call you?',
+  onboardingNameLabel: 'Your name',
+  onboardingHourTitle: 'When does it suit you to look back on your day?',
+  onboardingHourExplanation: 'One reminder a day. If you miss it, nothing happens.',
+  onboardingFinish: 'Done',
+
+  // Consent
+  consentTitle: 'What you are agreeing to',
+  consentIntro:
+    'luwte stores health data. That needs your explicit permission, and you can withdraw it later.',
+  consentEssentialLabel: 'Keep an account and your settings',
+  consentEssentialExplanation:
+    'Your name, your language and the hour of your reminder. The app does not work without this.',
+  consentHealthLabel: 'Store what you write about how you feel',
+  consentHealthExplanation:
+    'Mood, energy, sleep, restlessness, medication. This is health data. It is stored in Belgium and nobody sees it unless you choose that.',
+  consentRemindersLabel: 'Send you a reminder',
+  consentRemindersExplanation:
+    'One notification a day, at the hour you chose. You can turn this off later.',
+  consentRequired: 'Needed',
+  consentOptional: 'You may decline',
+  consentAccept: 'Yes, that is fine',
+  consentMissing: 'The first two are needed to continue.',
+  consentWhereToChange: 'You can change this later under Data and privacy.',
+
+  // Check-in
+  checkinSleepHours: 'How many hours did you sleep?',
+  checkinHoursSuffix: 'hours',
+  checkinStart: 'Fill it in',
+  checkinSave: 'Save',
+  checkinBack: 'Back',
+  checkinSkip: 'Skip',
+  checkinDiaryPlaceholder: 'Whatever you like',
+  checkinEdit: 'Change it',
+  checkinDoneToday: 'You filled today in.',
+  checkinLocked: 'This day is closed.',
+
+  // The weekly extra, once a week, inline after the daily items
+  weeklyIntro: 'Four more questions. They come once a week.',
+  weeklyRestlessness: 'How restless did your body feel?',
+  weeklyStiffness: 'How stiff did your body feel?',
+  weeklySedation: 'How drowsy were you during the day?',
+  weeklyHopelessness: 'How hopeless did it feel?',
+
+  // Settings and notifications
+  settingsTitle: 'Settings',
+  settingsNotifications: 'Notifications',
+  settingsNotificationsIntro:
+    'You can turn each notification off separately. With all of them off, the app still works.',
+  settingsAllowNotifications: 'Allow notifications',
+  settingsNotificationsBlocked: 'Your browser is not allowing notifications. You can change that there.',
+  settingsReminderHour: 'Your reminder',
+  settingsSaved: 'Saved.',
+
+  notifyCheckinLabel: 'Your daily reminder',
+  notifyCheckinExplanation: 'One notification, at the hour you chose. If you miss it, nothing happens.',
+  notifyMedicationLabel: 'Your medication',
+  notifyMedicationExplanation: 'A notification at the times listed on your medication.',
+  notifyKudosLabel: 'When someone responds',
+  notifyKudosExplanation: 'When someone in your circle responds to what you shared.',
+  notifySupportedActivityLabel: 'When someone you follow did something',
+  notifySupportedActivityExplanation:
+    'When someone you support finished something they had planned. This only works if that person shared their overview with you.',
+
+  // Calendar
+  calendarAddReminder: 'Put it in Google Calendar',
+  calendarExplanation:
+    'This opens Google Calendar with everything filled in. luwte gets no access to your calendar and stores nothing.',
+  calendarEventTitle: 'luwte',
+  calendarEventDetails: 'A moment to look back on your day.',
 };

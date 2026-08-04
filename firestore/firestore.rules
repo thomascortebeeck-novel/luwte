@@ -1,17 +1,87 @@
 rules_version = '2';
 
-// Phase 0 stub. Phase 1 replaces this with the PRD 5.3 matrix, where the
-// circle document IS the access control list and every read of patient data
-// resolves through it.
-//
-// The row that matters most, when it is written: circle/** is writable by the
-// patient only. A family member must never be able to widen their own access,
-// and during an episode the temptation to do so is real.
-//
-// Until then nothing is readable and nothing is writable. A permissive
-// default on health data is not a mistake worth risking.
+/*
+ * Phase 1 — self-only access.
+ *
+ * PRD 5.3 makes the circle document the access control list, and every read
+ * of patient data will resolve through it. The circle does not exist yet, so
+ * this ruleset grants a person access to their own data and to nothing else.
+ * Phase 6 adds the circle rows on top; the self rows below do not change.
+ *
+ * The rule that matters most, when the circle arrives: circle/** stays
+ * writable by the patient only. A family member must never be able to widen
+ * their own access, and during an episode the temptation to do so is real.
+ *
+ * Default deny is the last match in the file. Anything not named here is
+ * refused.
+ */
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // Identity and settings. Nothing clinical lives here.
+    match /users/{uid} {
+      allow read, create, update: if isSelf(uid);
+      // Account deletion goes through the GDPR Art. 17 Cloud Function, which
+      // cascades. A client-side delete would orphan the subtree.
+      allow delete: if false;
+    }
+
+    match /patients/{patientId} {
+      allow read, create, update: if isSelf(patientId);
+      allow delete: if false;
+
+      /*
+       * GDPR Art. 9 consent log. Append-only by design: a consent record that
+       * can be erased is not a record. Withdrawal is an update that sets
+       * withdrawnAt, never a delete.
+       */
+      /*
+       * PRD 6.1 — one check-in per local calendar day, keyed by the date.
+       *
+       * The document id must equal the date field, which is what makes
+       * one-per-day idempotent: an offline write that syncs twice lands on
+       * the same document instead of creating a second entry for the day.
+       *
+       * The midnight lock is enforced in the client, not here. Security
+       * rules have no timezone support, so they cannot tell what "today in
+       * Brussels" is, and approximating it in UTC would lock the check-in an
+       * hour early or late depending on the season. The boundary that
+       * matters — nobody else can read or write this — is enforced.
+       */
+      match /checkins/{dateKey} {
+        allow read: if isSelf(patientId);
+        allow create, update: if isSelf(patientId)
+                              && request.resource.data.date == dateKey;
+        // Erasing a day would leave a silent hole in the clinical record.
+        // Deletion happens through the GDPR Art. 17 function, which cascades.
+        allow delete: if false;
+      }
+
+      match /weekly/{weekKey} {
+        allow read: if isSelf(patientId);
+        allow create, update: if isSelf(patientId);
+        allow delete: if false;
+      }
+
+      match /consents/{consentId} {
+        allow read: if isSelf(patientId);
+        allow create: if isSelf(patientId)
+                      && request.resource.data.version is string
+                      && request.resource.data.grants.essential == true
+                      && request.resource.data.grants.healthData == true;
+        allow update: if isSelf(patientId);
+        allow delete: if false;
+      }
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
