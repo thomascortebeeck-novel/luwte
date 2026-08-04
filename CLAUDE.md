@@ -160,10 +160,11 @@ rest when `functions` and `apps/console` make per-package tasks real.
 
 ## Current state
 
-**Phases 0 to 4 complete — Milestone A reached.** Circle and invite access
-control done and tested; their screens are not built yet.
+**Phases 0 to 4 complete — Milestone A reached. Phase 6.2 done:** the circle
+screens exist, so a family can actually be invited and the permissions can
+actually be changed.
 
-**238 unit tests plus 59 security-rules tests.** `pnpm verify` green, CI green.
+**273 unit tests plus 64 security-rules tests.** `pnpm verify` green, CI green.
 
 The product produces the thing that changes an appointment: a chart with
 medication changes as vertical rules, adherence as a count, and the person's
@@ -177,11 +178,13 @@ What exists and works: the account flow (sign-in, four onboarding screens,
 GDPR Art. 9 consent), the daily check-in with the weekly akathisia screen and
 the hopelessness path to the crisis screen, Today with the windline and
 medication, the Insights chart and diary archive, the printable report,
-settings with notification preferences and Google Calendar export, the crisis
-screen, and `/styleguide`.
+settings with notification preferences and Google Calendar export, the circle
+screens (invite, per-person permissions in plain sentences, revoke and
+restore, and the join flow that survives sign-in), the crisis screen, and
+`/styleguide`.
 
-**Next, in order:** the circle screens (invite, permissions per person,
-revoke), then the clinician console.
+**Next:** the clinician console, which is where medication ownership has to
+move (see below).
 
 Nothing needs a Firebase project. `pnpm emulators` plus `pnpm dev` is the
 whole setup.
@@ -266,9 +269,24 @@ function would additionally guarantee single use under a race, where this
 relies on the client transaction. Revisit if invites become more than a family
 sharing a link.
 
-26 of the 59 rules tests are about the circle and invites. They are written as
+31 of the 64 rules tests are about the circle and invites. They are written as
 the attacks someone would actually try. **Add to them rather than trimming
 them.**
+
+**On invites, `get` and `list` are split, and the split is the security.**
+Naming a code is the capability — that is what a shared link is, so any
+signed-in person may read an invite they can name. But a single `allow read`
+also permits listing the collection, and a signed-in stranger could then
+enumerate every open invite and redeem one belonging to someone else. The
+invite would be genuine and every other check would pass. So `list` is the
+issuer's alone, which also forces the query to filter on `patientId`. Found
+while building the circle screens, when the screen needed to list the
+patient's own invites (D17).
+
+**A revoked member cannot rejoin by redeeming again**, because redemption is a
+`create` and the document already exists. That is the right fence, but it
+means the patient must be able to restore, or revoking by accident locks
+someone out for good. Hence "weer toelaten" on the member screen (D18).
 
 ### Still owed: medication ownership moves to the clinician
 
@@ -318,6 +336,7 @@ Explained in plain language in [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) §3.
 
 | Date | Change |
 |---|---|
+| 2026-08-04 | Phase 6.2 — the circle screens. Invite with the permissions chosen up front, per-person permissions as the sentences themselves, revoke and restore, and a join flow that holds the code across sign-in and onboarding so a link works for someone without an account. **Found and fixed a real hole while building it:** `allow read` on invites permitted listing the collection, so any signed-in stranger could enumerate every open invite and redeem one belonging to someone else. Split into `get` (anyone who can name the code) and `list` (the issuer only). Five more rules tests. Walked end to end against the emulators as two people, and confirmed over the wire that a redeemer cannot widen their own card, read what they were not granted, enumerate invites, or un-revoke themselves — all four refused with 403. `.firebaserc` gained the `demo-luwte` hosting target, without which `pnpm emulators` did not start at all. |
 | 2026-08-04 | Invite redemption fenced against privilege escalation: a redeemed circle entry must carry exactly the role and permissions the invite held. 13 more rules tests (59 total) covering escalation, self-promotion to clinician, expired and already-claimed invites, forged invites, and arriving pre-revoked to stay hidden. Added [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md), the plain-language description of the whole system, which also records that medication ownership must move to the clinician when the console lands. |
 | 2026-08-04 | Circle access control (PRD 5.3). Reads of check-ins, weekly items, medication and doses now resolve through the circle document; writes stay self-only. 13 new rules tests cover the attacks that matter — a member widening their own access, un-revoking themselves, adding themselves to a circle, reading another member's entry, or authoring someone else's check-in. Phases reordered to 6 → 7 → 5 so the clinician overview arrives sooner. |
 | 2026-08-04 | Local development moved to `demo-luwte`, a project id Firebase treats as emulator-only. The repo now needs no Firebase project to run. |

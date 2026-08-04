@@ -1,0 +1,105 @@
+.intro,
+.empty {
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sectionTitle {
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: flex-start;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.name {
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
+  color: var(--text);
+}
+
+.quiet {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+}
+
+/*
+ * What one person can see, in the app's own voice — so sans, and never
+ * --amber. Amber means another human has been here; this is the person's own
+ * decision about their own data, which is theirs and reads as theirs.
+ */
+.sentences {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+}
+
+/* A link to be copied and sent, so it must survive being read character by
+   character. Tabular figures, and it wraps rather than being cut off. */
+.code {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+
+.roles {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.role {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-2);
+  font: inherit;
+  font-family: var(--font-ui);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  cursor: pointer;
+}
+
+/* Chosen, not correct. The mark is the person's own colour, because which
+   kind of person this is remains their answer about their own circle. */
+.role[aria-checked='true'] {
+  border-color: var(--self);
+}

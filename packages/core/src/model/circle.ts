@@ -81,6 +81,11 @@ export const PERMISSION_COPY: readonly PermissionCopy[] = [
   { key: 'calendar', sentenceKey: 'permCalendar' },
 ];
 
+/** The same mapping, for screens that already know which keys they want. */
+export const PERMISSION_SENTENCE = Object.fromEntries(
+  PERMISSION_COPY.map((entry) => [entry.key, entry.sentenceKey]),
+) as Record<PermissionKey, CopyKey>;
+
 /** Access is live only while the member has not been revoked. */
 export function isActive(member: Pick<CircleMember, 'revokedAt'>): boolean {
   return member.revokedAt === null || member.revokedAt === undefined;
@@ -110,4 +115,53 @@ export type Invite = z.infer<typeof inviteSchema>;
 export function isInviteUsable(invite: Pick<Invite, 'expiresAt' | 'usedBy'>, now: Date): boolean {
   if (invite.usedBy) return false;
   return invite.expiresAt.getTime() > now.getTime();
+}
+
+export function inviteExpiry(from: Date): Date {
+  return new Date(from.getTime() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000);
+}
+
+/**
+ * The code *is* the capability: whoever holds it can join. So it has to be
+ * unguessable — 12 characters of this alphabet is a little under 60 bits,
+ * which is far past anything a family invite needs to survive.
+ *
+ * The alphabet leaves out 0/O/1/l/i, because a code gets read aloud across a
+ * kitchen table as often as it gets tapped.
+ */
+export const INVITE_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
+export const INVITE_CODE_LENGTH = 12;
+
+/** 31 × 8. Bytes at or above this are discarded rather than folded. */
+const UNBIASED_LIMIT = INVITE_ALPHABET.length * 8;
+
+/**
+ * Turns random bytes into a code, discarding the ones that would make some
+ * characters likelier than others. Pure, so the randomness comes from the
+ * caller and this can be tested for what it actually promises.
+ */
+export function inviteCode(bytes: Uint8Array): string {
+  const chars: string[] = [];
+  for (const byte of bytes) {
+    if (byte >= UNBIASED_LIMIT) continue;
+    chars.push(INVITE_ALPHABET[byte % INVITE_ALPHABET.length]!);
+    if (chars.length === INVITE_CODE_LENGTH) return chars.join('');
+  }
+  throw new Error('inviteCode: not enough random bytes');
+}
+
+/** Where a code is redeemed. Defined once so the link and the route agree. */
+export const INVITE_PATH = '/join';
+
+export function inviteLink(origin: string, code: string): string {
+  return `${origin.replace(/\/+$/, '')}${INVITE_PATH}/${code}`;
+}
+
+/**
+ * The permissions that are on, in the order the sentences are shown. What a
+ * member's card lists is exactly this — never the ones that are off, which
+ * would read as a list of things being withheld from them.
+ */
+export function grantedKeys(permissions: Permissions): PermissionKey[] {
+  return PERMISSION_COPY.filter((entry) => permissions[entry.key]).map((entry) => entry.key);
 }

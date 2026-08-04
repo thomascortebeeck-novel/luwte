@@ -8,6 +8,7 @@ import {
 } from '@luwte/core';
 import { Button, Choice, Hairline, Screen } from '@luwte/ui';
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { saveNotificationSettings, saveReminderHour } from '../firebase/accounts';
 import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
@@ -25,6 +26,7 @@ export function Settings() {
   const { t, locale, setLocale } = useLocale();
   const { user } = useAuth();
   const { patient, reload } = useAccount();
+  const navigate = useNavigate();
 
   const timezone = patient?.timezone ?? DEFAULT_TIMEZONE;
   const [settings, setSettings] = useState<NotificationSettings>(
@@ -65,6 +67,21 @@ export function Settings() {
 
   return (
     <Screen title={t('settingsTitle')}>
+      {/* Above notifications on purpose: who can see what a person wrote
+          matters more than which alerts they get, and PRD 6.4 puts the
+          decision within easy reach rather than buried. */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>{t('circleTitle')}</h2>
+        <p className={styles.note}>{t('circleIntro')}</p>
+        <div className={styles.row}>
+          <Button variant="quiet" onClick={() => navigate('/circle')}>
+            {t('circleChange')}
+          </Button>
+        </div>
+      </section>
+
+      <Hairline />
+
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>{t('settingsReminderHour')}</h2>
         <div className={styles.row}>

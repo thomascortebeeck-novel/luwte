@@ -92,14 +92,17 @@ that already happened.
   my dose changed.* → Overview
 - *Before my appointment I print a sheet to take with me.* → Report
 - *I decide that my brother can see my check-ins but not my medication, and I
-  change my mind next week.* → Circle *(Not built yet)*
+  change my mind next week.* → Circle
 - *If I skip a day, nothing happens. No guilt message, no gap, no catch-up.*
 
 ### The supporter
 
+- *I open the link he sent me, and before I accept, I see exactly what I will
+  be able to look at.* → Join
 - *I get one notification when my brother finishes something he planned.*
   *(Preference exists; the trigger is not built yet)*
-- *I can see what he chose to share and nothing else.* *(Not built yet)*
+- *I can see what he chose to share and nothing else.* *(The permission is
+  enforced; the screens that show it arrive with the feed)*
 - *I can suggest an activity. It goes into a quiet tray — it does not appear
   on his calendar unless he accepts it. If he declines, I am not told.*
   *(Not built yet)*
@@ -127,11 +130,25 @@ that already happened.
 | Medication | Your list, and the form to add to it |
 | Overview | The chart over 2, 6 or 12 weeks, plus everything you wrote |
 | Report | A printable A4 sheet for an appointment |
-| Settings | Reminder time, which notifications you want, language, add reminder to Google Calendar |
+| Settings | Who sees anything, reminder time, which notifications you want, language, add reminder to Google Calendar |
+| **Circle** | Who has access, what each of them sees, and the way to change or stop it |
+| Invite | Choose what a link will carry, then get the link to send |
+| Join | The other side of that link: what you will see, before you accept |
 | Crisis | Three Belgian phone numbers, tappable, works with no internet |
 
-**Not built yet:** circle and invites, permissions per person, the feed,
-calendar and suggestions, the clinician console.
+**Not built yet:** the feed, calendar and suggestions, the clinician console.
+
+### How someone joins
+
+The patient makes a link. The link carries a code, and the code is the whole
+key — anyone holding it can accept, which is exactly how sharing a link works.
+It lasts seven days and works once.
+
+Opening it while signed out is fine: the code is held while you sign in and
+make an account, then you land back on the invitation. Before accepting, the
+screen lists what you will be able to see, in the same plain sentences the
+patient chose from. Accepting writes one card, carrying **exactly** what the
+patient put in the link and nothing more.
 
 ### The windline
 
@@ -206,6 +223,8 @@ Nobody meaningfully agrees to "checkins: true".
 
 **A new supporter starts with feed and calendar only** — not everything. An
 invite sent on a bad day should not hand over a clinical record by accident.
+Widening it afterwards takes two taps; unsending a link that already handed
+over a clinical record is not possible at all.
 
 ### The single most important rule in the system
 
@@ -216,10 +235,18 @@ removed.
 This is not a preference. During an episode the temptation for a worried
 family member to give themselves more access is real, and the whole product
 depends on that being impossible. It is enforced by the database itself, not
-by the app being polite, and there are thirteen automated tests that
-specifically try to break it — including a supporter attempting to grant
-themselves check-in access, and someone trying to un-revoke themselves after
-being cut off.
+by the app being polite, and there are automated tests that specifically try
+to break it — including a supporter attempting to grant themselves check-in
+access, and someone trying to un-revoke themselves after being cut off.
+
+Both were also tried by hand, from a real browser against a real database,
+and both were refused.
+
+**Stopping access ends everything at once.** The card keeps a record of what
+that person could once see, but while it is stopped none of it applies — so
+there is no gap between changing your mind and it taking effect. If you stop
+someone by accident you can let them back in; they cannot let themselves back
+in.
 
 **Reading and writing are separate.** A supporter granted "check-ins" can
 *read* how the person felt. They can never *write* it. Nobody records someone
@@ -299,8 +326,8 @@ These are not guidelines. Something fails to build if one is broken.
 | Overview chart and printable report | Working |
 | Notification preferences, calendar export | Working |
 | Who-sees-what rules | Enforced in the database |
-| Circle screens — invite, permissions, revoke | **Next** |
-| Clinician console | **After that** |
+| Circle screens — invite, permissions, revoke | Working |
+| Clinician console | **Next** |
 | Calendar and activity suggestions | Later |
 | Feed and reactions | Later |
 | Watch and phone data | After the Android app |

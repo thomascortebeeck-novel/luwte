@@ -199,4 +199,41 @@ export const nl = {
   permHealth: 'Kan zien wat je horloge doorgaf.',
   permFeed: 'Kan zien wat je deelt, en kan reageren.',
   permCalendar: 'Kan je agenda zien en iets voorstellen.',
+
+  // De kring — wie iets ziet, en wat precies
+  circleTitle: 'Wie iets ziet',
+  circleIntro: 'Jij bepaalt wie wat ziet. Je kan het elk moment veranderen.',
+  circleEmpty: 'Nog niemand ziet iets. Dat mag.',
+  circleAdd: 'Iemand uitnodigen',
+  circleWhatTheySee: 'Wat deze persoon ziet',
+  circleSeesNothing: 'Ziet nog niets van wat je invult.',
+  circleRevoked: 'Ziet niets meer.',
+  circleChange: 'Aanpassen',
+  circleRevoke: 'Toegang stoppen',
+  circleRestore: 'Weer toelaten',
+  circleRoleSupporter: 'Naaste',
+  circleRoleClinician: 'Zorgverlener',
+  circleRelation: 'Wie is dit voor jou?',
+  circleRelationHint: 'Bijvoorbeeld broer, mama, psychiater.',
+  circleOpenInvites: 'Uitnodigingen die openstaan',
+  circleInviteWaiting: 'Nog niet aangenomen.',
+  circleInviteWithdraw: 'Intrekken',
+
+  // Uitnodigen
+  inviteTitle: 'Iemand uitnodigen',
+  inviteWho: 'Wie nodig je uit?',
+  inviteWhatTheySee: 'Wat deze persoon mag zien',
+  inviteCreate: 'Maak een link',
+  inviteReady: 'Stuur deze link naar wie je uitnodigt. Ze blijft zeven dagen geldig en werkt één keer.',
+  inviteCopy: 'Kopieer de link',
+  inviteCopied: 'Gekopieerd.',
+
+  // Aannemen, aan de kant van wie uitgenodigd wordt
+  joinTitle: 'Je bent uitgenodigd',
+  joinExplain: 'Als je dit aanneemt, zie je het volgende:',
+  joinNothingYet: 'Voorlopig zie je nog niets. Dat kan later veranderen.',
+  joinAccept: 'Aannemen',
+  joinSignIn: 'Meld je eerst aan. Daarna kan je dit aannemen.',
+  joinDone: 'Klaar. Je hebt nu toegang.',
+  joinUnusable: 'Deze link werkt niet meer. Vraag er een nieuwe.',
 } as const satisfies Record<string, string>;

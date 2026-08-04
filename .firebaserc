@@ -4,6 +4,13 @@
     "prod": "luwte-prod"
   },
   "targets": {
+    "demo-luwte": {
+      "hosting": {
+        "app": [
+          "demo-luwte"
+        ]
+      }
+    },
     "luwte-dev": {
       "hosting": {
         "app": [

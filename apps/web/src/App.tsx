@@ -2,10 +2,14 @@ import { NavLink, Route, Routes, useLocation } from 'react-router';
 import styles from './App.module.css';
 import { useLocale } from './providers/LocaleProvider';
 import { CheckIn } from './routes/CheckIn';
+import { Circle } from './routes/Circle';
+import { CircleMember } from './routes/CircleMember';
 import { Consent } from './routes/Consent';
 import { Crisis } from './routes/Crisis';
 import { Gate } from './routes/Gate';
 import { Insights } from './routes/Insights';
+import { Invite } from './routes/Invite';
+import { Join } from './routes/Join';
 import { Medication } from './routes/Medication';
 import { Report } from './routes/Report';
 import { Onboarding } from './routes/Onboarding';
@@ -39,6 +43,11 @@ export function App() {
         {/* Reachable without an account and without passing the gate. */}
         <Route path="/crisis" element={<Crisis />} />
         <Route path="/styleguide" element={<Styleguide />} />
+
+        {/* Outside the gate on purpose: the gate would redirect someone who
+            is signed out and the code in the link would be lost. Join holds
+            it across sign-in itself. */}
+        <Route path="/join/:code" element={<Join />} />
 
         <Route
           path="/signin"
@@ -101,6 +110,30 @@ export function App() {
           element={
             <Gate>
               <Settings />
+            </Gate>
+          }
+        />
+        <Route
+          path="/circle"
+          element={
+            <Gate>
+              <Circle />
+            </Gate>
+          }
+        />
+        <Route
+          path="/circle/invite"
+          element={
+            <Gate>
+              <Invite />
+            </Gate>
+          }
+        />
+        <Route
+          path="/circle/:memberUid"
+          element={
+            <Gate>
+              <CircleMember />
             </Gate>
           }
         />

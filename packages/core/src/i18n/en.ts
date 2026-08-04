@@ -195,4 +195,41 @@ export const en: Dictionary = {
   permHealth: 'Can see what your watch reported.',
   permFeed: 'Can see what you share, and can respond.',
   permCalendar: 'Can see your calendar and suggest something.',
+
+  // The circle — who sees anything, and exactly what
+  circleTitle: 'Who sees anything',
+  circleIntro: 'You decide who sees what. You can change it whenever you like.',
+  circleEmpty: "Nobody sees anything yet. That's fine.",
+  circleAdd: 'Invite someone',
+  circleWhatTheySee: 'What this person sees',
+  circleSeesNothing: 'Sees nothing of what you write down yet.',
+  circleRevoked: 'Sees nothing any more.',
+  circleChange: 'Change',
+  circleRevoke: 'Stop their access',
+  circleRestore: 'Let them back in',
+  circleRoleSupporter: 'Someone close',
+  circleRoleClinician: 'Care team',
+  circleRelation: 'Who is this to you?',
+  circleRelationHint: 'Brother, mum, psychiatrist — your words.',
+  circleOpenInvites: 'Invites still open',
+  circleInviteWaiting: 'Not taken up yet.',
+  circleInviteWithdraw: 'Withdraw',
+
+  // Inviting
+  inviteTitle: 'Invite someone',
+  inviteWho: 'Who are you inviting?',
+  inviteWhatTheySee: 'What this person may see',
+  inviteCreate: 'Make a link',
+  inviteReady: 'Send this link to the person you are inviting. It lasts seven days and works once.',
+  inviteCopy: 'Copy the link',
+  inviteCopied: 'Copied.',
+
+  // Accepting, on the invited person's side
+  joinTitle: 'You have been invited',
+  joinExplain: 'If you accept, here is what you will see:',
+  joinNothingYet: 'For now you will see nothing. That can change later.',
+  joinAccept: 'Accept',
+  joinSignIn: 'Sign in first. Then you can accept this.',
+  joinDone: 'Done. You have access now.',
+  joinUnusable: 'This link no longer works. Ask for a new one.',
 };

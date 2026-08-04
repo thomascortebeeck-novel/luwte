@@ -1,5 +1,7 @@
+import { INVITE_PATH } from '@luwte/core';
 import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router';
+import { peekPendingInvite } from '../pendingInvite';
 import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
 
@@ -46,6 +48,20 @@ export function Gate({ children }: { children: ReactNode }) {
   // a second consent record for the same version.
   if (location.pathname === '/onboarding' || location.pathname === '/consent') {
     return <Navigate to="/" replace />;
+  }
+
+  /*
+   * Someone who followed an invite link before having an account lands here
+   * once sign-in and onboarding are done. Sending them back to the invite is
+   * the only reason the code was remembered.
+   *
+   * Only from Today, and only now that everything above has passed — so this
+   * cannot bounce with the join screen, which sends the not-yet-ready case
+   * back to exactly this point.
+   */
+  const pending = peekPendingInvite();
+  if (pending && location.pathname === '/') {
+    return <Navigate to={`${INVITE_PATH}/${pending}`} replace />;
   }
 
   return <>{children}</>;

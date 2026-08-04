@@ -207,7 +207,22 @@ service cloud.firestore {
      * belongs to.
      */
     match /invites/{code} {
-      allow read: if signedIn();
+      /*
+       * `get` and `list` are split deliberately, and the split is the whole
+       * security of the scheme.
+       *
+       * Naming a code is the capability — you can only name it if someone
+       * sent it to you. Listing is not: a single `allow read` would let any
+       * signed-in person enumerate every open invite in the system, pick one
+       * belonging to a stranger, and redeem it. The invite would be genuine
+       * and every other check would pass.
+       *
+       * So listing is restricted to the issuer, which also forces the query
+       * to filter on patientId: a list that could return someone else's
+       * invite is refused outright rather than filtered.
+       */
+      allow get: if signedIn();
+      allow list: if isSelf(resource.data.patientId);
       allow create: if signedIn()
                     && request.resource.data.patientId == request.auth.uid
                     && request.resource.data.usedBy == null;

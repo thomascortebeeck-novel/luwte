@@ -4,7 +4,17 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
@@ -621,6 +631,42 @@ describe('invites and redemption', () => {
   it('does not let anyone else delete it', async () => {
     await seedInvite();
     await assertFails(deleteDoc(doc(asOther(), 'invites', 'CODE1')));
+  });
+
+  /*
+   * Knowing a code is the capability, so naming one is allowed. Enumerating
+   * them is not — otherwise every check above is decoration, because an
+   * attacker would simply read the list and redeem a genuine invite.
+   */
+  it('lets anyone signed in read an invite they can name', async () => {
+    await seedInvite();
+    await assertSucceeds(getDoc(doc(asOther(), 'invites', 'CODE1')));
+  });
+
+  it('REFUSES to let a stranger list every open invite in the system', async () => {
+    await seedInvite();
+    await assertFails(getDocs(collection(asOther(), 'invites')));
+  });
+
+  it('REFUSES a listing filtered to another patient', async () => {
+    await seedInvite();
+    await assertFails(
+      getDocs(query(collection(asOther(), 'invites'), where('patientId', '==', JONAS))),
+    );
+  });
+
+  it('lets the patient list their own invites', async () => {
+    await seedInvite();
+    await assertSucceeds(
+      getDocs(query(collection(asJonas(), 'invites'), where('patientId', '==', JONAS))),
+    );
+  });
+
+  it('REFUSES even the patient an unfiltered listing', async () => {
+    // The filter is what makes the rule enforceable per document. Without it
+    // the query could return an invite belonging to someone else.
+    await seedInvite();
+    await assertFails(getDocs(collection(asJonas(), 'invites')));
   });
 });
 

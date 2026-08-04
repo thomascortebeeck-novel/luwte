@@ -1,9 +1,0 @@
- WARN  Unsupported engine: wanted: {"node":"20"} (current: {"node":"v24.13.0","pnpm":"9.15.9"})
-
-> @luwte/functions@0.0.0 build C:\Users\ThomasCortebeeck\luwte\functions
-> esbuild src/index.ts --bundle --platform=node --target=node20 --format=esm --outfile=lib/index.js --external:firebase-admin --external:firebase-functions
-
-
-  lib\index.js  535.4kb
-
-Done in 3715ms

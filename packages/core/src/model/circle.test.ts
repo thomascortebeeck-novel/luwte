@@ -1,0 +1,129 @@
+import { describe, expect, it } from 'vitest';
+import {
+  DEFAULT_CLINICIAN_PERMISSIONS,
+  DEFAULT_PERMISSIONS,
+  INVITE_ALPHABET,
+  INVITE_CODE_LENGTH,
+  INVITE_TTL_DAYS,
+  canSee,
+  grantedKeys,
+  inviteCode,
+  inviteExpiry,
+  inviteLink,
+  isActive,
+  isInviteUsable,
+  permissionKeys,
+} from './circle';
+
+describe('permissions', () => {
+  it('starts a supporter on feed and calendar only', () => {
+    // PRD 6.4 — an invite sent on a bad day must not hand over a clinical
+    // record. Widening it is two taps; narrowing it after the fact is not.
+    expect(grantedKeys(DEFAULT_PERMISSIONS)).toEqual(['feed', 'calendar']);
+  });
+
+  it('starts a clinician on the clinical picture and nothing social', () => {
+    expect(grantedKeys(DEFAULT_CLINICIAN_PERMISSIONS)).toEqual(['checkins', 'medication']);
+  });
+
+  it('lists what is granted, never what is withheld', () => {
+    expect(grantedKeys({ ...DEFAULT_PERMISSIONS, feed: false, calendar: false })).toEqual([]);
+  });
+
+  it('keeps the sentence order stable regardless of the object', () => {
+    const all = Object.fromEntries(permissionKeys.map((key) => [key, true]));
+    expect(grantedKeys(all as never)).toEqual([
+      'checkins',
+      'medication',
+      'health',
+      'feed',
+      'calendar',
+    ]);
+  });
+});
+
+describe('revocation', () => {
+  const member = { permissions: { ...DEFAULT_PERMISSIONS }, revokedAt: null };
+
+  it('treats a member without a revocation date as live', () => {
+    expect(isActive(member)).toBe(true);
+    expect(isActive({ revokedAt: undefined })).toBe(true);
+  });
+
+  it('ends every permission at once, not one at a time', () => {
+    const revoked = { ...member, revokedAt: new Date('2026-08-04T10:00:00Z') };
+    expect(isActive(revoked)).toBe(false);
+    for (const key of permissionKeys) {
+      expect(canSee(revoked, key)).toBe(false);
+    }
+  });
+
+  it('does not grant what was never granted', () => {
+    expect(canSee(member, 'feed')).toBe(true);
+    expect(canSee(member, 'checkins')).toBe(false);
+  });
+});
+
+describe('invites', () => {
+  const now = new Date('2026-08-04T12:00:00Z');
+
+  it('expires seven days out', () => {
+    const expires = inviteExpiry(now);
+    expect(expires.toISOString()).toBe('2026-08-11T12:00:00.000Z');
+    expect(isInviteUsable({ expiresAt: expires, usedBy: null }, now)).toBe(true);
+  });
+
+  it('is unusable the moment it expires', () => {
+    const expires = inviteExpiry(now);
+    const later = new Date(expires.getTime() + 1);
+    expect(isInviteUsable({ expiresAt: expires, usedBy: null }, later)).toBe(false);
+    expect(INVITE_TTL_DAYS).toBe(7);
+  });
+
+  it('is unusable once claimed, however long it has left', () => {
+    expect(isInviteUsable({ expiresAt: inviteExpiry(now), usedBy: 'uid-someone' }, now)).toBe(false);
+  });
+});
+
+describe('inviteCode', () => {
+  const bytes = (...values: number[]) => Uint8Array.from(values);
+
+  it('is the agreed length', () => {
+    expect(inviteCode(bytes(...Array.from({ length: 20 }, (_, i) => i)))).toHaveLength(
+      INVITE_CODE_LENGTH,
+    );
+  });
+
+  it('maps bytes onto the alphabet in order', () => {
+    expect(inviteCode(bytes(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11))).toBe('abcdefghjkmn');
+  });
+
+  it('uses only characters that survive being read aloud', () => {
+    const code = inviteCode(bytes(...Array.from({ length: 64 }, (_, i) => (i * 7) % 256)));
+    expect(code).toMatch(new RegExp(`^[${INVITE_ALPHABET}]{${INVITE_CODE_LENGTH}}$`));
+    expect(INVITE_ALPHABET).not.toMatch(/[01lio]/);
+  });
+
+  it('discards the bytes that would make some characters likelier', () => {
+    // 248 and 255 fold onto 'a' and 'h' if taken; they must be skipped
+    // instead, or the first eight characters become 12% more common.
+    const code = inviteCode(bytes(248, 255, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11));
+    expect(code).toBe('abcdefghjkmn');
+  });
+
+  it('refuses to produce a short code when the bytes run out', () => {
+    expect(() => inviteCode(bytes(0, 1, 2))).toThrow(/random bytes/);
+  });
+});
+
+describe('inviteLink', () => {
+  it('points at the redemption route', () => {
+    expect(inviteLink('https://luwte.app', 'abcdefghjkmn')).toBe(
+      'https://luwte.app/join/abcdefghjkmn',
+    );
+  });
+
+  it('does not double the slash when the origin carries one', () => {
+    expect(inviteLink('http://localhost:5173/', 'abc')).toBe('http://localhost:5173/join/abc');
+  });
+});
