@@ -48,6 +48,26 @@ service cloud.firestore {
       return isSelf(pid) || granted(pid, key);
     }
 
+    function inviteData(code) {
+      return get(/databases/$(database)/documents/invites/$(code)).data;
+    }
+
+    /**
+     * A proposed circle entry is redeemable only if it matches an invite this
+     * patient issued, exactly. Any deviation in role or permissions is a
+     * privilege escalation attempt and is refused.
+     */
+    function redeemable(pid, proposed) {
+      return proposed.inviteCode is string
+             && exists(/databases/$(database)/documents/invites/$(proposed.inviteCode))
+             && inviteData(proposed.inviteCode).patientId == pid
+             && inviteData(proposed.inviteCode).expiresAt > request.time
+             && (inviteData(proposed.inviteCode).usedBy == null
+                 || inviteData(proposed.inviteCode).usedBy == request.auth.uid)
+             && proposed.role == inviteData(proposed.inviteCode).role
+             && proposed.permissions == inviteData(proposed.inviteCode).permissions;
+    }
+
     // Identity and settings. Nothing clinical lives here.
     match /users/{uid} {
       allow read, create, update: if isSelf(uid);
@@ -137,7 +157,31 @@ service cloud.firestore {
        */
       match /circle/{memberUid} {
         allow read: if isSelf(patientId) || isSelf(memberUid);
-        allow create, update: if isSelf(patientId);
+
+        /*
+         * Redeeming an invite is the one way a circle entry appears without
+         * the patient writing it, and it is fenced in hard: the entry must be
+         * for yourself, must name an invite that is unused and unexpired and
+         * belongs to *this* patient, and must carry **exactly** the role and
+         * permissions the patient put in that invite.
+         *
+         * That last clause is the important one. Without it, a redeemer could
+         * present a feed-only invite and write themselves a card granting
+         * everything — the invite would be valid and the escalation total.
+         *
+         * PRD 5.4 puts this in a Cloud Function instead. Doing it in rules
+         * keeps the project free of billing, and the invariant is enforced by
+         * the database either way. A function would additionally guarantee
+         * an invite is consumed exactly once even under a race; here that
+         * relies on the client's transaction. Worth revisiting if invites are
+         * ever more than a family handing each other a link.
+         */
+        allow create: if isSelf(patientId)
+                      || (isSelf(memberUid)
+                          && request.resource.data.revokedAt == null
+                          && redeemable(patientId, request.resource.data));
+
+        allow update: if isSelf(patientId);
         allow delete: if false;
       }
 
@@ -150,6 +194,37 @@ service cloud.firestore {
         allow update: if isSelf(patientId);
         allow delete: if false;
       }
+    }
+
+    /*
+     * PRD 6.4 — invite codes. The code itself is the capability: knowing it
+     * is what lets someone join, which is exactly how a shared link works.
+     * So a signed-in person may read an invite they can name, and nothing
+     * else about it is secret.
+     *
+     * Only the patient issues one. The redeemer may mark it used, once, and
+     * may change nothing else — not the permissions it carries, not who it
+     * belongs to.
+     */
+    match /invites/{code} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+                    && request.resource.data.patientId == request.auth.uid
+                    && request.resource.data.usedBy == null;
+
+      allow update: if
+        // The patient may withdraw an invite by expiring it.
+        (isSelf(resource.data.patientId)
+          && request.resource.data.patientId == resource.data.patientId)
+        // Or the redeemer claims it, exactly once, changing nothing else.
+        || (resource.data.usedBy == null
+            && request.resource.data.usedBy == request.auth.uid
+            && request.resource.data.patientId == resource.data.patientId
+            && request.resource.data.role == resource.data.role
+            && request.resource.data.permissions == resource.data.permissions
+            && request.resource.data.expiresAt == resource.data.expiresAt);
+
+      allow delete: if isSelf(resource.data.patientId);
     }
 
     match /{document=**} {

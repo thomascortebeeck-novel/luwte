@@ -467,6 +467,163 @@ describe('the circle as an access control list', () => {
   });
 });
 
+/**
+ * PRD 6.4 — redeeming an invite is the one way a circle entry appears
+ * without the patient writing it. These tests are what stop it becoming a
+ * back door into someone's health record.
+ */
+describe('invites and redemption', () => {
+  const soon = () => new Date(Date.now() + 7 * 24 * 3600 * 1000);
+  const feedOnly = {
+    checkins: false,
+    medication: false,
+    health: false,
+    feed: true,
+    calendar: true,
+  };
+
+  const seedInvite = (overrides: Record<string, unknown> = {}) =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'invites', 'CODE1'), {
+        patientId: JONAS,
+        role: 'supporter',
+        permissions: feedOnly,
+        createdAt: new Date(),
+        expiresAt: soon(),
+        usedBy: null,
+        ...overrides,
+      });
+    });
+
+  const entry = (overrides: Record<string, unknown> = {}) => ({
+    inviteCode: 'CODE1',
+    role: 'supporter',
+    permissions: feedOnly,
+    grantedAt: new Date(),
+    revokedAt: null,
+    ...overrides,
+  });
+
+  it('lets someone join with a valid invite', async () => {
+    await seedInvite();
+    await assertSucceeds(setDoc(doc(asOther(), 'patients', JONAS, 'circle', OTHER), entry()));
+  });
+
+  it('REFUSES a redeemer who grants themselves more than the invite carried', async () => {
+    // The escalation that matters: a valid feed-only invite, used to write a
+    // card that sees everything.
+    await seedInvite();
+    await assertFails(
+      setDoc(
+        doc(asOther(), 'patients', JONAS, 'circle', OTHER),
+        entry({
+          permissions: {
+            checkins: true,
+            medication: true,
+            health: true,
+            feed: true,
+            calendar: true,
+          },
+        }),
+      ),
+    );
+  });
+
+  it('refuses a redeemer who promotes themselves to clinician', async () => {
+    await seedInvite();
+    await assertFails(
+      setDoc(doc(asOther(), 'patients', JONAS, 'circle', OTHER), entry({ role: 'clinician' })),
+    );
+  });
+
+  it('refuses an expired invite', async () => {
+    await seedInvite({ expiresAt: new Date(Date.now() - 1000) });
+    await assertFails(setDoc(doc(asOther(), 'patients', JONAS, 'circle', OTHER), entry()));
+  });
+
+  it('refuses an invite already used by somebody else', async () => {
+    await seedInvite({ usedBy: 'uid-someone-first' });
+    await assertFails(setDoc(doc(asOther(), 'patients', JONAS, 'circle', OTHER), entry()));
+  });
+
+  it('refuses an invite that names a different patient', async () => {
+    await seedInvite({ patientId: 'uid-another-patient' });
+    await assertFails(setDoc(doc(asOther(), 'patients', JONAS, 'circle', OTHER), entry()));
+  });
+
+  it('refuses a made-up invite code', async () => {
+    await assertFails(
+      setDoc(doc(asOther(), 'patients', JONAS, 'circle', OTHER), entry({ inviteCode: 'NOPE' })),
+    );
+  });
+
+  it('refuses a redeemer writing a card for somebody other than themselves', async () => {
+    await seedInvite();
+    await assertFails(
+      setDoc(doc(asOther(), 'patients', JONAS, 'circle', 'uid-third-party'), entry()),
+    );
+  });
+
+  it('refuses a redeemer who arrives pre-revoked, which would hide them', async () => {
+    await seedInvite();
+    await assertFails(
+      setDoc(doc(asOther(), 'patients', JONAS, 'circle', OTHER), entry({ revokedAt: new Date() })),
+    );
+  });
+
+  it('lets the patient issue an invite, and nobody issue one for someone else', async () => {
+    await assertSucceeds(
+      setDoc(doc(asJonas(), 'invites', 'MINE'), {
+        patientId: JONAS,
+        role: 'supporter',
+        permissions: feedOnly,
+        createdAt: new Date(),
+        expiresAt: soon(),
+        usedBy: null,
+      }),
+    );
+    await assertFails(
+      setDoc(doc(asOther(), 'invites', 'FORGED'), {
+        patientId: JONAS,
+        role: 'clinician',
+        permissions: feedOnly,
+        createdAt: new Date(),
+        expiresAt: soon(),
+        usedBy: null,
+      }),
+    );
+  });
+
+  it('lets a redeemer claim an invite but not rewrite what it grants', async () => {
+    await seedInvite();
+    await assertSucceeds(updateDoc(doc(asOther(), 'invites', 'CODE1'), { usedBy: OTHER }));
+
+    await seedInvite();
+    await assertFails(
+      updateDoc(doc(asOther(), 'invites', 'CODE1'), {
+        usedBy: OTHER,
+        permissions: {
+          checkins: true,
+          medication: true,
+          health: true,
+          feed: true,
+          calendar: true,
+        },
+      }),
+    );
+  });
+
+  it('lets the patient withdraw an invite', async () => {
+    await seedInvite();
+    await assertSucceeds(deleteDoc(doc(asJonas(), 'invites', 'CODE1')));
+  });
+
+  it('does not let anyone else delete it', async () => {
+    await seedInvite();
+    await assertFails(deleteDoc(doc(asOther(), 'invites', 'CODE1')));
+  });
+});
+
 describe('everything else', () => {
   it('is denied by default', async () => {
     await assertFails(getDoc(doc(asJonas(), 'checkins', 'anything')));
