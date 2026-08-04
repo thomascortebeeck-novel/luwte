@@ -2,6 +2,7 @@ node_modules/
 dist/
 dev-dist/
 functions/lib/
+.turbo/
 .firebase/
 .emulator-tmp/
 *.local
