@@ -319,6 +319,154 @@ describe('patients/{patientId}/doses', () => {
   });
 });
 
+/**
+ * PRD 5.3 — the circle document is the access control list, and these are the
+ * tests that decide whether that sentence is true.
+ */
+describe('the circle as an access control list', () => {
+  const seedCircle = (permissions: Record<string, boolean>, revokedAt: Date | null = null) =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'circle', OTHER), {
+        role: 'supporter',
+        relation: 'broer',
+        permissions: {
+          checkins: false,
+          medication: false,
+          health: false,
+          feed: false,
+          calendar: false,
+          ...permissions,
+        },
+        grantedAt: new Date(),
+        revokedAt,
+      });
+      await setDoc(ctx.firestore().doc(`patients/${JONAS}/checkins/2026-08-04`), {
+        date: '2026-08-04',
+        mood: 4,
+      });
+      await setDoc(ctx.firestore().doc(`patients/${JONAS}/medications/med1`), {
+        name: 'Quetiapine',
+      });
+    });
+
+  it('lets a granted supporter read the check-ins they were granted', async () => {
+    await seedCircle({ checkins: true });
+    await assertSucceeds(getDoc(doc(asOther(), 'patients', JONAS, 'checkins', '2026-08-04')));
+  });
+
+  it('refuses the same supporter the medication they were not granted', async () => {
+    // Per-key, not all-or-nothing. This is the whole point of five toggles.
+    await seedCircle({ checkins: true });
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'medications', 'med1')));
+  });
+
+  it('refuses a circle member with no permissions at all', async () => {
+    await seedCircle({});
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'checkins', '2026-08-04')));
+  });
+
+  it('cuts off access the moment the member is revoked', async () => {
+    await seedCircle({ checkins: true }, new Date());
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'checkins', '2026-08-04')));
+  });
+
+  it('refuses someone who is not in the circle at all', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(ctx.firestore().doc(`patients/${JONAS}/checkins/2026-08-04`), {
+        date: '2026-08-04',
+        mood: 4,
+      });
+    });
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'checkins', '2026-08-04')));
+  });
+
+  it('lets a member see their own entry, so they know what they were granted', async () => {
+    await seedCircle({ feed: true });
+    await assertSucceeds(getDoc(doc(asOther(), 'patients', JONAS, 'circle', OTHER)));
+  });
+
+  it('NEVER lets a member widen their own access', async () => {
+    // The rule that matters most. During an episode the temptation is real.
+    await seedCircle({ feed: true });
+    await assertFails(
+      updateDoc(doc(asOther(), 'patients', JONAS, 'circle', OTHER), {
+        'permissions.checkins': true,
+      }),
+    );
+  });
+
+  it('never lets a member un-revoke themselves', async () => {
+    await seedCircle({ checkins: true }, new Date());
+    await assertFails(
+      updateDoc(doc(asOther(), 'patients', JONAS, 'circle', OTHER), { revokedAt: null }),
+    );
+  });
+
+  it('never lets a stranger add themselves to the circle', async () => {
+    await assertFails(
+      setDoc(doc(asOther(), 'patients', JONAS, 'circle', OTHER), {
+        role: 'supporter',
+        permissions: {
+          checkins: true,
+          medication: true,
+          health: true,
+          feed: true,
+          calendar: true,
+        },
+        grantedAt: new Date(),
+        revokedAt: null,
+      }),
+    );
+  });
+
+  it('never lets a member read someone else’s entry in the same circle', async () => {
+    await seedCircle({ feed: true });
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(ctx.firestore().doc(`patients/${JONAS}/circle/uid-third-party`), {
+        role: 'supporter',
+        permissions: { checkins: true, medication: false, health: false, feed: false, calendar: false },
+        grantedAt: new Date(),
+        revokedAt: null,
+      });
+    });
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'circle', 'uid-third-party')));
+  });
+
+  it('lets the patient grant, narrow and revoke', async () => {
+    const db = asJonas();
+    await assertSucceeds(
+      setDoc(doc(db, 'patients', JONAS, 'circle', OTHER), {
+        role: 'supporter',
+        permissions: { checkins: false, medication: false, health: false, feed: true, calendar: true },
+        grantedAt: new Date(),
+        revokedAt: null,
+      }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(db, 'patients', JONAS, 'circle', OTHER), { 'permissions.checkins': true }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(db, 'patients', JONAS, 'circle', OTHER), { revokedAt: new Date() }),
+    );
+  });
+
+  it('refuses deletion, so who once had access stays on the record', async () => {
+    await seedCircle({ feed: true });
+    await assertFails(deleteDoc(doc(asJonas(), 'patients', JONAS, 'circle', OTHER)));
+  });
+
+  it('does not let a granted supporter write the check-in itself', async () => {
+    // Reading how someone felt is one thing. Authoring it is another.
+    await seedCircle({ checkins: true });
+    await assertFails(
+      setDoc(doc(asOther(), 'patients', JONAS, 'checkins', '2026-08-05'), {
+        date: '2026-08-05',
+        mood: 7,
+      }),
+    );
+  });
+});
+
 describe('everything else', () => {
   it('is denied by default', async () => {
     await assertFails(getDoc(doc(asJonas(), 'checkins', 'anything')));

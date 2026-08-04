@@ -188,4 +188,11 @@ export const en: Dictionary = {
   reportExplanation:
     'This makes a sheet you can take with you or send on. It is made on your own device and goes nowhere else.',
   reportPeriod: 'Period',
+
+  // PRD 6.4 — per person, in plain sentences. Never as toggle labels.
+  permCheckins: 'Can see how you felt.',
+  permMedication: 'Can see what you take and whether you took it.',
+  permHealth: 'Can see what your watch reported.',
+  permFeed: 'Can see what you share, and can respond.',
+  permCalendar: 'Can see your calendar and suggest something.',
 };

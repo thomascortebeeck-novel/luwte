@@ -192,4 +192,11 @@ export const nl = {
   reportExplanation:
     'Dit maakt een blad dat je kan meenemen of doorsturen. Het wordt op je eigen toestel gemaakt en gaat nergens anders heen.',
   reportPeriod: 'Periode',
+
+  // PRD 6.4 — per persoon, in gewone zinnen. Nooit als labels van schakelaars.
+  permCheckins: 'Kan zien hoe je je voelde.',
+  permMedication: 'Kan zien wat je neemt en of je het nam.',
+  permHealth: 'Kan zien wat je horloge doorgaf.',
+  permFeed: 'Kan zien wat je deelt, en kan reageren.',
+  permCalendar: 'Kan je agenda zien en iets voorstellen.',
 } as const satisfies Record<string, string>;

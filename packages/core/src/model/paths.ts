@@ -26,6 +26,13 @@ export const paths = {
   medication: (patientId: string, medId: string) =>
     `patients/${patientId}/medications/${medId}`,
 
+  circle: (patientId: string) => `patients/${patientId}/circle`,
+  circleMember: (patientId: string, memberUid: string) =>
+    `patients/${patientId}/circle/${memberUid}`,
+
+  invites: () => 'invites',
+  invite: (code: string) => `invites/${code}`,
+
   doses: (patientId: string) => `patients/${patientId}/doses`,
   /** doseId is `yyyy-MM-dd_medId_HHmm`. */
   dose: (patientId: string, id: string) => `patients/${patientId}/doses/${id}`,

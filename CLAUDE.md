@@ -259,6 +259,8 @@ midnight.
 
 | Date | Change |
 |---|---|
+| 2026-08-04 | Circle access control (PRD 5.3). Reads of check-ins, weekly items, medication and doses now resolve through the circle document; writes stay self-only. 13 new rules tests cover the attacks that matter — a member widening their own access, un-revoking themselves, adding themselves to a circle, reading another member's entry, or authoring someone else's check-in. Phases reordered to 6 → 7 → 5 so the clinician overview arrives sooner. |
+| 2026-08-04 | Local development moved to `demo-luwte`, a project id Firebase treats as emulator-only. The repo now needs no Firebase project to run. |
 | 2026-08-04 | Phase 4 complete — **Milestone A**. Insights chart (2/6/12 weeks, medication changes as vertical rules, `--zeeglas` only, series told apart by opacity), diary archive in the serif, adherence as a count rather than a percentage, and a printable A4 report. The report renders in the browser rather than in a Cloud Function (D16), so health data never leaves the device and dev needs no billing. |
 | 2026-08-04 | Phase 3 complete. Medication with a `changeLog` written from the first entry, keyed `doses` so an offline tick is idempotent, the medication screen, and optional practices as plain text with no completion state. Today now follows PRD 6.2 order: windline, check-in, medication, practices. |
 | 2026-08-04 | The windline (BRAND 3.7) — unrest per day in `packages/core/src/windline.ts`, geometry in `packages/ui/src/windline/`. A missed day is bridged from its neighbours so the line never shows a gap. Both amplitude and frequency follow unrest, because amplitude alone reads as a chart with a y-axis. Now sits at the top of Today. GitHub Actions runs the full gate plus the rules matrix on every PR. |

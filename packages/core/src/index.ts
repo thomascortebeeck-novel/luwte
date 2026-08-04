@@ -37,6 +37,25 @@ export {
   type WindlineDay,
 } from './windline';
 export {
+  DEFAULT_CLINICIAN_PERMISSIONS,
+  DEFAULT_PERMISSIONS,
+  INVITE_TTL_DAYS,
+  PERMISSION_COPY,
+  canSee,
+  circleMemberSchema,
+  circleRoleSchema,
+  inviteSchema,
+  isActive,
+  isInviteUsable,
+  permissionKeys,
+  permissionsSchema,
+  type CircleMember,
+  type CircleRole,
+  type Invite,
+  type PermissionKey,
+  type Permissions,
+} from './model/circle';
+export {
   INSIGHTS_METRICS,
   INSIGHTS_WINDOWS,
   normaliseForChart,

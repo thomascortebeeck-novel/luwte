@@ -155,6 +155,12 @@ The core loop, exactly per PRD §6.1.
 **Exit: the PDF that changes an appointment exists.** Real daily use by the
 first user can start here — PRD §13 names steps 1–5 a legitimate pause point.
 
+> **Reordered 2026-08-04.** Thomas asked for the psychiatrist to see each
+> patient's overview *inside the app* rather than only on paper. That is the
+> clinician console, and it cannot exist without the circle that decides who
+> may see what. So the order is now **6 → 7 → 5**: circle, then console, then
+> calendar. The calendar is not cut, only later.
+
 ### Phase 5 — Calendar + suggestions *(2–3 days)*
 
 - Week view, current day centred; activity CRUD; recurrence limited to

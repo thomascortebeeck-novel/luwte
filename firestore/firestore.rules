@@ -1,19 +1,15 @@
 rules_version = '2';
 
 /*
- * Phase 1 — self-only access.
+ * PRD 5.3 — the circle document IS the access control list. Every read of
+ * patient data resolves through it.
  *
- * PRD 5.3 makes the circle document the access control list, and every read
- * of patient data will resolve through it. The circle does not exist yet, so
- * this ruleset grants a person access to their own data and to nothing else.
- * Phase 6 adds the circle rows on top; the self rows below do not change.
+ * The rule that matters most: **circle/** is writable by the patient only.**
+ * A family member must never be able to widen their own access, and during an
+ * episode the temptation to do so is real. Read the `circle` match block with
+ * that sentence in mind; everything else here is detail.
  *
- * The rule that matters most, when the circle arrives: circle/** stays
- * writable by the patient only. A family member must never be able to widen
- * their own access, and during an episode the temptation to do so is real.
- *
- * Default deny is the last match in the file. Anything not named here is
- * refused.
+ * Default deny is the last match in the file. Anything not named is refused.
  */
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -24,6 +20,32 @@ service cloud.firestore {
 
     function isSelf(uid) {
       return signedIn() && request.auth.uid == uid;
+    }
+
+    /** The reader's own entry in this patient's circle, or null. */
+    function circleDoc(pid) {
+      return get(/databases/$(database)/documents/patients/$(pid)/circle/$(request.auth.uid)).data;
+    }
+
+    function inCircle(pid) {
+      return signedIn()
+             && exists(/databases/$(database)/documents/patients/$(pid)/circle/$(request.auth.uid));
+    }
+
+    /*
+     * Granted only while the membership is live and that specific permission
+     * is on. Revocation sets revokedAt, so access ends the moment it is set
+     * without deleting the record of it having existed.
+     */
+    function granted(pid, key) {
+      return inCircle(pid)
+             && circleDoc(pid).revokedAt == null
+             && circleDoc(pid).permissions[key] == true;
+    }
+
+    /** Self, or a circle member the patient granted this specific key to. */
+    function canRead(pid, key) {
+      return isSelf(pid) || granted(pid, key);
     }
 
     // Identity and settings. Nothing clinical lives here.
@@ -57,7 +79,9 @@ service cloud.firestore {
        * matters — nobody else can read or write this — is enforced.
        */
       match /checkins/{dateKey} {
-        allow read: if isSelf(patientId);
+        // Read resolves through the circle. Writing stays self-only: a
+        // supporter must never be able to author how someone else felt.
+        allow read: if canRead(patientId, 'checkins');
         allow create, update: if isSelf(patientId)
                               && request.resource.data.date == dateKey;
         // Erasing a day would leave a silent hole in the clinical record.
@@ -72,7 +96,7 @@ service cloud.firestore {
        * chart has something to mark.
        */
       match /medications/{medId} {
-        allow read: if isSelf(patientId);
+        allow read: if canRead(patientId, 'medication');
         allow create, update: if isSelf(patientId);
         // Deleting a medication would erase the history of taking it.
         // Stopping one sets activeTo instead.
@@ -84,13 +108,35 @@ service cloud.firestore {
        * syncing twice records one dose rather than two.
        */
       match /doses/{doseKey} {
-        allow read: if isSelf(patientId);
+        allow read: if canRead(patientId, 'medication');
         allow create, update: if isSelf(patientId);
         allow delete: if false;
       }
 
       match /weekly/{weekKey} {
-        allow read: if isSelf(patientId);
+        // The weekly items are check-in data, so they follow that permission.
+        allow read: if canRead(patientId, 'checkins');
+        allow create, update: if isSelf(patientId);
+        allow delete: if false;
+      }
+
+      /*
+       * PRD 5.3, the row that matters.
+       *
+       * The patient may read and write every entry. A member may read their
+       * own entry — so a supporter can see what they were granted — and may
+       * write **nothing at all**.
+       *
+       * This is what stops a family member widening their own access. Note
+       * that `allow update: if isSelf(patientId)` is not merely "the member
+       * cannot grant themselves more": the member cannot touch the document
+       * in any way, so there is no field left to be clever with.
+       *
+       * Revocation is an update setting revokedAt, never a delete, so the
+       * record of who once had access survives.
+       */
+      match /circle/{memberUid} {
+        allow read: if isSelf(patientId) || isSelf(memberUid);
         allow create, update: if isSelf(patientId);
         allow delete: if false;
       }
