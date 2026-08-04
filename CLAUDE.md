@@ -92,6 +92,21 @@ Note the `TEMP` seen inside Claude Code's shell is the 8.3 short form
 (`C:\Users\THOMAS~1\...`) while the real user variable is the long path. Both
 fail here, so the wrapper is needed either way.
 
+**If a run is killed, its Java grandchildren can survive and hold the ports.**
+The wrapper kills the whole tree on exit, and does it with `spawnSync` — an
+async spawn inside a `process.on('exit')` handler is scheduled and then never
+runs, which is exactly how the emulators kept surviving. On startup it also
+names the port and pid holding it rather than letting Firebase say only "port
+taken". It never kills anything at startup: a held port may be an emulator
+someone is running on purpose.
+
+Two things that waste time if you forget them: **Java is not on PATH** in this
+shell, so prefix with
+`export PATH="/c/Program Files/Microsoft/jdk-21.0.12.8-hotspot/bin:$PATH"`.
+And **piping `pnpm emulators` into `head`** closes the pipe early, kills the
+wrapper before its cleanup runs, and orphans Java — redirect to a file and
+grep that instead.
+
 ### Firestore, decided 2026-08-04 — do not relitigate
 
 The other Novel repos are Postgres + Express on Cloud Run, with Firebase for
