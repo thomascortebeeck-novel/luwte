@@ -121,9 +121,26 @@ export {
   type Weekly,
 } from './model/checkin';
 export {
+  RECURRENCES,
+  WEEK_RADIUS,
+  activitySchema,
+  activityStatusSchema,
+  centredWeek,
+  completionId,
+  completionSchema,
+  occursOn,
+  onDay,
+  recurrenceSchema,
+  type Activity,
+  type ActivityStatus,
+  type Completion,
+  type RecurrenceId,
+} from './model/activity';
+export {
   dateKey,
   isBackfillable,
   isEditable,
+  nextDateKey,
   previousDateKey,
   weekKey,
   weekdayOf,

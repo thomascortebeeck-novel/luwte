@@ -253,4 +253,37 @@ export const nl = {
   consoleSaveChange: 'Wijziging bewaren',
   consoleChangeLog: 'Wat er veranderde',
   consoleBackToOwn: 'Naar je eigen luwte',
+
+  // De agenda
+  calendarTitle: 'Je week',
+  calendarEmptyDay: 'Niets gepland.',
+  calendarAdd: 'Iets plannen',
+  calendarWhat: 'Wat ga je doen?',
+  calendarWhen: 'Hoe laat',
+  calendarWhenHint: 'Mag je ook leeg laten.',
+  calendarWithPerson: 'Met wie',
+  calendarRepeat: 'Herhalen',
+  calendarRepeatNever: 'Eén keer',
+  calendarRepeatDaily: 'Elke dag',
+  calendarRepeatWeekly: 'Elke week',
+  calendarRepeatWeekdays: 'Op weekdagen',
+  calendarSave: 'Bewaren',
+  calendarToday: 'Vandaag',
+
+  // Voorstellen van iemand anders — apart, en nooit meteen in de agenda
+  suggestionsTitle: 'Voorgesteld',
+  suggestionsIntro: 'Iemand uit je kring stelde dit voor. Jij beslist of het doorgaat.',
+  suggestionsEmpty: 'Er staat niets open.',
+  suggestionsAccept: 'Zet het erin',
+  suggestionsDecline: 'Liever niet',
+  suggestionsPending: 'Voorgesteld',
+  suggestBadge: 'Voorstel',
+
+  // Wat je ervan vond, na afloop. Twee tikken, en overslaan mag altijd.
+  ratingTitle: 'Hoe was het?',
+  ratingPleasure: 'Hoe voelde het?',
+  ratingMastery: 'Hoe zwaar was het?',
+  ratingSkip: 'Laat maar',
+  ratingSave: 'Bewaren',
+  activityDone: 'Gedaan',
 } as const satisfies Record<string, string>;

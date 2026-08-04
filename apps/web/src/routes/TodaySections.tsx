@@ -1,4 +1,5 @@
 import { OPTIONAL_PRACTICES, doseId, type DoseStatus } from '@luwte/core';
+import type { ActivityRecord } from '../firebase/activities';
 import type { MedicationRecord } from '../firebase/medication';
 import { useLocale } from '../providers/LocaleProvider';
 import styles from './TodaySections.module.css';
@@ -60,6 +61,58 @@ export function MedicationSection({
           }),
         )
       )}
+    </section>
+  );
+}
+
+/**
+ * PRD 6.2 — what was planned for today, by start time.
+ *
+ * A completed item greys and **stays where it is**. It does not disappear and
+ * it does not move, because motion on completion reads as reward mechanics,
+ * and this is not a to-do app.
+ *
+ * Nothing here counts anything. There is no "2 of 3", no bar, and a day with
+ * nothing ticked says only that nothing is ticked.
+ */
+export function ActivitiesSection({
+  activities,
+  completed,
+  onToggle,
+}: {
+  activities: ActivityRecord[];
+  completed: Record<string, boolean>;
+  onToggle: (activity: ActivityRecord, done: boolean) => void;
+}) {
+  const { t } = useLocale();
+
+  if (activities.length === 0) return null;
+
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>{t('calendarTitle')}</h2>
+      {activities.map((activity) => {
+        const done = completed[activity.id] === true;
+        return (
+          <button
+            key={activity.id}
+            type="button"
+            className={styles.dose}
+            data-taken={done || undefined}
+            aria-pressed={done}
+            onClick={() => onToggle(activity, !done)}
+          >
+            <span className={styles.time}>{activity.startTime || '—'}</span>
+            <span className={styles.doseText}>
+              <span>{activity.title}</span>
+              {activity.withPerson ? (
+                <span className={styles.purpose}>{activity.withPerson}</span>
+              ) : null}
+            </span>
+            <span className={styles.mark} aria-hidden="true" />
+          </button>
+        );
+      })}
     </section>
   );
 }

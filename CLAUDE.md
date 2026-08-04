@@ -95,10 +95,14 @@ fail here, so the wrapper is needed either way.
 **If a run is killed, its Java grandchildren can survive and hold the ports.**
 The wrapper kills the whole tree on exit, and does it with `spawnSync` — an
 async spawn inside a `process.on('exit')` handler is scheduled and then never
-runs, which is exactly how the emulators kept surviving. On startup it also
-names the port and pid holding it rather than letting Firebase say only "port
-taken". It never kills anything at startup: a held port may be an emulator
-someone is running on purpose.
+runs, which is how the emulators kept surviving a normal stop.
+
+**A force-kill of the wrapper still orphans them**, and no handler code can
+fix that: `taskkill /F` on the parent runs no handlers at all. `Ctrl-C` and
+`emulators:exec` clean up properly; killing the process from outside does
+not. That is why the wrapper now names the pid holding each port on startup
+rather than letting Firebase say only "port taken". It kills nothing itself —
+a held port may be an emulator someone is running on purpose.
 
 Two things that waste time if you forget them: **Java is not on PATH** in this
 shell, so prefix with
@@ -175,12 +179,12 @@ rest when `functions` and `apps/console` make per-package tasks real.
 
 ## Current state
 
-**Phases 0 to 4, 6.2 and 7 complete.** The circle screens exist, so a family
-can be invited and the permissions changed; the clinician console exists, so
-the psychiatrist can open a patient, read the chart and the diary, and change
-what is prescribed.
+**Phases 0 to 7 complete, except the feed (6.3).** The circle screens exist,
+so a family can be invited and the permissions changed; the clinician console
+exists, so the psychiatrist can open a patient and change what is prescribed;
+the calendar exists, with suggestions that never place themselves.
 
-**280 unit tests plus 88 security-rules tests.** `pnpm verify` green.
+**298 unit tests plus 105 security-rules tests.** `pnpm verify` green.
 
 The product produces the thing that changes an appointment: a chart with
 medication changes as vertical rules, adherence as a count, and the person's
@@ -200,8 +204,8 @@ restore, and the join flow that survives sign-in), the clinician console
 (patient list, per-patient overview, medication editor), the crisis screen,
 and `/styleguide`.
 
-**Next:** Phase 5 — the calendar and activity suggestions — then the feed
-(6.3), then Phase 8 hardening.
+**Next:** the feed and kudos (PRD 6.4, the rest of Phase 6), then Phase 8
+hardening and the pilot.
 
 Nothing needs a Firebase project. `pnpm emulators` plus `pnpm dev` is the
 whole setup.
@@ -381,6 +385,7 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-04 | Phase 5 — the calendar. A week with today in the middle, activities with daily/weekly/weekday recurrence expanded on the device, a separate suggestions tray, and the optional two-tap pleasure/mastery question after ticking something off. **A supporter may suggest and nothing else** — not place, not accept their own suggestion, not edit. And **declining is silent by rule, not by tact**: a member cannot read a declined activity at all, so their listing must filter on status or be refused. 17 more rules tests (105). Verified over the wire: suggest 200, place directly 403, accept own suggestion 403, read after decline 403, unfiltered listing 403 — while the patient keeps the full record of what was offered. |
 | 2026-08-04 | Phase 7 — the clinician console, as routes in `apps/web` rather than a separate app (D19). Patient list from a collection group query, per-patient overview reusing the same `PatientOverview` component the patient sees, and the medication editor. Medication ownership settled: `prescribedBy`, a verified-clinician document nobody can write from a client (D20, [docs/CLINICIAN-VERIFICATION.md](docs/CLINICIAN-VERIFICATION.md)), and a `changeLog` that may only grow. 24 more rules tests (88). Walked end to end: a verified psychiatrist prescribed, changed a dose, and the change appeared as a vertical rule on the patient's own chart. Confirmed over the wire that the patient cannot edit or disown a prescription, that a clinician cannot erase the log or tick a dose, and that self-verification is refused. |
 | 2026-08-04 | Phase 6.2 — the circle screens. Invite with the permissions chosen up front, per-person permissions as the sentences themselves, revoke and restore, and a join flow that holds the code across sign-in and onboarding so a link works for someone without an account. **Found and fixed a real hole while building it:** `allow read` on invites permitted listing the collection, so any signed-in stranger could enumerate every open invite and redeem one belonging to someone else. Split into `get` (anyone who can name the code) and `list` (the issuer only). Five more rules tests. Walked end to end against the emulators as two people, and confirmed over the wire that a redeemer cannot widen their own card, read what they were not granted, enumerate invites, or un-revoke themselves — all four refused with 403. `.firebaserc` gained the `demo-luwte` hosting target, without which `pnpm emulators` did not start at all. |
 | 2026-08-04 | Invite redemption fenced against privilege escalation: a redeemed circle entry must carry exactly the role and permissions the invite held. 13 more rules tests (59 total) covering escalation, self-promotion to clinician, expired and already-claimed invites, forged invites, and arriving pre-revoked to stay hidden. Added [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md), the plain-language description of the whole system, which also records that medication ownership must move to the clinician when the console lands. |

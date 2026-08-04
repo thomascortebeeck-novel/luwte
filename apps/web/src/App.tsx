@@ -1,6 +1,7 @@
 import { NavLink, Route, Routes, useLocation } from 'react-router';
 import styles from './App.module.css';
 import { useLocale } from './providers/LocaleProvider';
+import { Calendar } from './routes/Calendar';
 import { CheckIn } from './routes/CheckIn';
 import { Circle } from './routes/Circle';
 import { CircleMember } from './routes/CircleMember';
@@ -18,6 +19,7 @@ import { Onboarding } from './routes/Onboarding';
 import { Settings } from './routes/Settings';
 import { SignIn } from './routes/SignIn';
 import { Styleguide } from './routes/Styleguide';
+import { Suggestions } from './routes/Suggestions';
 import { Today } from './routes/Today';
 
 export function App() {
@@ -88,6 +90,24 @@ export function App() {
           element={
             <Gate>
               <Medication />
+            </Gate>
+          }
+        />
+        <Route
+          path="/calendar"
+          element={
+            <Gate>
+              <Calendar />
+            </Gate>
+          }
+        />
+        {/* PRD 6.3 — its own screen, never mixed into the calendar. What
+            somebody else thinks you should do is an offer, not an entry. */}
+        <Route
+          path="/suggestions"
+          element={
+            <Gate>
+              <Suggestions />
             </Gate>
           }
         />

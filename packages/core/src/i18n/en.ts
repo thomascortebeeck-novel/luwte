@@ -249,4 +249,37 @@ export const en: Dictionary = {
   consoleSaveChange: 'Save the change',
   consoleChangeLog: 'What changed',
   consoleBackToOwn: 'Back to your own luwte',
+
+  // The calendar
+  calendarTitle: 'Your week',
+  calendarEmptyDay: 'Nothing planned.',
+  calendarAdd: 'Plan something',
+  calendarWhat: 'What are you doing?',
+  calendarWhen: 'What time',
+  calendarWhenHint: 'You can leave this empty.',
+  calendarWithPerson: 'With whom',
+  calendarRepeat: 'Repeat',
+  calendarRepeatNever: 'Once',
+  calendarRepeatDaily: 'Every day',
+  calendarRepeatWeekly: 'Every week',
+  calendarRepeatWeekdays: 'On weekdays',
+  calendarSave: 'Save',
+  calendarToday: 'Today',
+
+  // Suggestions from someone else — separate, and never straight onto the day
+  suggestionsTitle: 'Suggested',
+  suggestionsIntro: 'Someone in your circle suggested this. You decide whether it happens.',
+  suggestionsEmpty: 'Nothing waiting.',
+  suggestionsAccept: 'Put it in',
+  suggestionsDecline: 'Rather not',
+  suggestionsPending: 'Suggested',
+  suggestBadge: 'Suggestion',
+
+  // How it went, afterwards. Two taps, and skipping is always fine.
+  ratingTitle: 'How was it?',
+  ratingPleasure: 'How did it feel?',
+  ratingMastery: 'How hard was it?',
+  ratingSkip: 'Never mind',
+  ratingSave: 'Save',
+  activityDone: 'Done',
 };

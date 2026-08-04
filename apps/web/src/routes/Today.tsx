@@ -10,7 +10,17 @@ import {
   setDose,
   type MedicationRecord,
 } from '../firebase/medication';
-import { MedicationSection, PracticesSection } from './TodaySections';
+import { ActivitiesSection, MedicationSection, PracticesSection } from './TodaySections';
+import { ActivityRating } from './ActivityRating';
+import {
+  completeActivity,
+  rateCompletion,
+  readActivities,
+  readCompletions,
+  uncompleteActivity,
+  type ActivityRecord,
+} from '../firebase/activities';
+import { onDay } from '@luwte/core';
 import type { DoseStatus } from '@luwte/core';
 import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
@@ -35,6 +45,10 @@ export function Today() {
   const [history, setHistory] = useState<(WindlineDay | null)[]>([]);
   const [medications, setMedications] = useState<MedicationRecord[]>([]);
   const [statuses, setStatuses] = useState<Record<string, DoseStatus>>({});
+  const [activities, setActivities] = useState<ActivityRecord[]>([]);
+  const [completed, setCompleted] = useState<Record<string, boolean>>({});
+  /** The activity just ticked, waiting to be asked about. Never blocks. */
+  const [rating, setRating] = useState<{ activity: ActivityRecord; key: string } | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -55,6 +69,18 @@ export function Today() {
     void readDoseStatuses(user.uid, today)
       .then(setStatuses)
       .catch(() => setStatuses({}));
+    void readActivities(user.uid)
+      .then(setActivities)
+      .catch(() => setActivities([]));
+    void readCompletions(user.uid, today)
+      .then((byActivity) =>
+        setCompleted(
+          Object.fromEntries(
+            Object.entries(byActivity).map(([id, entry]) => [id, entry.completedAt !== null]),
+          ),
+        ),
+      )
+      .catch(() => setCompleted({}));
   }, [user, today]);
 
   const toggleDose = (medId: string, time: string, next: DoseStatus) => {
@@ -63,6 +89,26 @@ export function Today() {
     // Optimistic, because the write is queued locally and may not reach the
     // server for hours. Waiting would make a tap feel broken.
     setStatuses((prev) => ({ ...prev, [id]: next }));
+  };
+
+  const plannedToday = useMemo(() => onDay(activities, today), [activities, today]);
+
+  /*
+   * The tick is recorded first and the question comes after, so dismissing it
+   * loses nothing. PRD 6.2 calls the two-tap rating optional; that is only
+   * true if the completion does not depend on answering it.
+   */
+  const toggleActivity = (activity: ActivityRecord, done: boolean) => {
+    if (!user) return;
+    setCompleted((prev) => ({ ...prev, [activity.id]: done }));
+
+    if (done) {
+      const key = completeActivity(user.uid, activity.id, today);
+      setRating({ activity, key });
+    } else {
+      uncompleteActivity(user.uid, activity.id, today);
+      setRating((prev) => (prev?.activity.id === activity.id ? null : prev));
+    }
   };
 
   const series = useMemo(() => windlineSeries(history), [history]);
@@ -77,6 +123,9 @@ export function Today() {
         <>
           <Button full onClick={() => navigate('/checkin')}>
             {done ? t('checkinEdit') : t('checkinStart')}
+          </Button>
+          <Button variant="quiet" onClick={() => navigate('/calendar')}>
+            {t('calendarTitle')}
           </Button>
           <Button variant="quiet" onClick={() => navigate('/insights')}>
             {t('insightsTitle')}
@@ -108,6 +157,23 @@ export function Today() {
         dateKey={today}
         onToggle={toggleDose}
       />
+
+      <ActivitiesSection
+        activities={plannedToday}
+        completed={completed}
+        onToggle={toggleActivity}
+      />
+
+      {rating ? (
+        <ActivityRating
+          title={rating.activity.title}
+          onSave={(ratings) => {
+            if (user) rateCompletion(user.uid, rating.key, ratings);
+            setRating(null);
+          }}
+          onSkip={() => setRating(null)}
+        />
+      ) : null}
 
       <PracticesSection />
     </Screen>

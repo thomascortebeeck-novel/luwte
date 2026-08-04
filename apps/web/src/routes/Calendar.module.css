@@ -1,0 +1,123 @@
+.intro {
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
+.sectionTitle {
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.week,
+.items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.items {
+  gap: var(--space-1);
+}
+
+.day,
+.dayToday {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: flex-start;
+}
+
+/*
+ * Today is marked by the person's own colour, in the label only. Not a filled
+ * block: the week is a horizon, and one day shouted at is a day that reads as
+ * more important than the one you are actually having.
+ */
+.dayToday .dayLabel {
+  color: var(--self);
+}
+
+.dayLabel {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  font-variant-numeric: tabular-nums;
+}
+
+.item,
+.suggestion {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+}
+
+.suggestion {
+  gap: var(--space-1);
+}
+
+.time {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  font-variant-numeric: tabular-nums;
+}
+
+.title {
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  color: var(--text);
+}
+
+.quiet {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+}
+
+.decide {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.repeats {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.repeat {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-2);
+  font: inherit;
+  font-family: var(--font-ui);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  cursor: pointer;
+}
+
+.repeat[aria-checked='true'] {
+  border-color: var(--self);
+}
+
+/*
+ * Appears after something is ticked off, and is always dismissible. Framed
+ * with a hairline rather than a card or an overlay: it is an offer to say
+ * something, not a step in a flow that has to be completed.
+ */
+.rating {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--line);
+}

@@ -211,6 +211,55 @@ service cloud.firestore {
         allow delete: if false;
       }
 
+      /*
+       * PRD 6.3, and the rule the calendar exists to express.
+       *
+       * A supporter with `calendar` may *offer* something — create it as
+       * `suggested`, in their own name — and may change nothing afterwards.
+       * Accepting is the patient's, declining is the patient's, and editing
+       * is the patient's. Family wanting to help and a person needing to
+       * control their own day is the central tension of this product, and a
+       * supporter who could write straight onto the calendar would resolve it
+       * the wrong way.
+       *
+       * **Declining is silent, and that is enforced here rather than by the
+       * app being tactful:** a member cannot read a declined activity at all.
+       * Their listing has to filter on status, so a query that would reveal
+       * one is refused outright.
+       */
+      match /activities/{activityId} {
+        allow get: if isSelf(patientId)
+                   || (granted(patientId, 'calendar') && resource.data.status != 'declined');
+        allow list: if isSelf(patientId)
+                    || (granted(patientId, 'calendar') && resource.data.status != 'declined');
+
+        allow create: if isSelf(patientId)
+                      || (granted(patientId, 'calendar')
+                          && request.resource.data.status == 'suggested'
+                          && request.resource.data.createdBy == request.auth.uid);
+
+        allow update: if isSelf(patientId);
+        // Removing something from the day is declining it, which keeps the
+        // record of what was offered without putting it on the calendar.
+        allow delete: if false;
+      }
+
+      /*
+       * What a person made of doing it. Self only, in both directions.
+       *
+       * PRD 5.3 does not give completions a row, so this takes the narrow
+       * reading: pleasure and mastery are someone rating their own day, which
+       * is the kind of thing the check-in permission covers, and they sit in
+       * the same document as the fact of completion. Sharing a completion is
+       * what the feed is for, deliberately and per item. Widening this later
+       * is easy; narrowing it after a family has read someone's ratings is
+       * not.
+       */
+      match /completions/{completionKey} {
+        allow read, create, update: if isSelf(patientId);
+        allow delete: if false;
+      }
+
       match /weekly/{weekKey} {
         // The weekly items are check-in data, so they follow that permission.
         allow read: if canRead(patientId, 'checkins');

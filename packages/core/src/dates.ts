@@ -52,6 +52,12 @@ export function previousDateKey(key: DateKey): DateKey {
   return fromUtcDate(date);
 }
 
+export function nextDateKey(key: DateKey): DateKey {
+  const date = toUtcDate(key);
+  date.setUTCDate(date.getUTCDate() + 1);
+  return fromUtcDate(date);
+}
+
 /** ISO weekday: Monday is 1, Sunday is 7. */
 export function weekdayOf(key: DateKey): number {
   const day = toUtcDate(key).getUTCDay();

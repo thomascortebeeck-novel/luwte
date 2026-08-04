@@ -117,8 +117,8 @@ that already happened.
 - *I can see what he chose to share and nothing else.* *(The permission is
   enforced; the screens that show it arrive with the feed)*
 - *I can suggest an activity. It goes into a quiet tray — it does not appear
-  on his calendar unless he accepts it. If he declines, I am not told.*
-  *(Not built yet)*
+  on his calendar unless he accepts it. If he declines, I am not told.* →
+  Calendar
 
 ### The clinician
 
@@ -149,10 +149,44 @@ that already happened.
 | **Circle** | Who has access, what each of them sees, and the way to change or stop it |
 | Invite | Choose what a link will carry, then get the link to send |
 | Join | The other side of that link: what you will see, before you accept |
+| **Calendar** | Your week, today in the middle. Plan something, or repeat it daily, weekly or on weekdays |
+| Suggestions | What someone else offered, waiting for you to decide |
 | **Console** | For a clinician: the people who gave them access, then one person's chart, diary, adherence and medication |
 | Crisis | Three Belgian phone numbers, tappable, works with no internet |
 
-**Not built yet:** the feed, calendar and suggestions.
+**Not built yet:** the feed.
+
+### Suggesting, not placing
+
+Someone in the circle with calendar access can **offer** something. It never
+lands on the day. It waits in a separate, quiet tray until the person says
+yes, and the app calls it what it is: *someone in your circle suggested this,
+you decide whether it happens.*
+
+Family wanting to help and a person needing to control their own day is the
+central tension of this whole product, and this is where it is settled. A
+supporter can suggest and nothing else — not place, not accept their own
+suggestion, not edit what was planned.
+
+**Declining is silent, and that is enforced rather than promised.** Nobody is
+notified, and the person who suggested it cannot read a declined item at all —
+so there is nothing to check and nothing to infer from silence. The person
+keeps their own record of what was offered.
+
+### After doing something
+
+Ticking something off may be followed by two short questions: how did it feel,
+and how hard was it. Both are optional, both are dismissible, and the tick is
+already saved before they appear — so closing them loses nothing.
+
+This is the point of the calendar rather than a decoration on it. Noticing
+that something you expected to be hard turned out to be fine is the
+observation that changes what you do next; a to-do list cannot show you that.
+
+Nothing counts anything. There is no "two of three", no bar, and a day with
+nothing ticked says only that nothing is ticked. A completed item goes quiet
+and **stays exactly where it is** — things that vanish or slide on completion
+are reward mechanics.
 
 The console shows the person exactly the same chart the person sees
 themselves — one component, used twice — because at an appointment the two of
@@ -205,6 +239,12 @@ The person
                         plus a log of every change ever made
 
   Doses                 one tick per medicine per time per day
+
+  Activities            what is planned, who suggested it, whether it
+                        was accepted, and whether it repeats
+
+  Completions           one per activity per day, with the optional
+                        two answers about how it went
 
   Consent               what they agreed to, in which language, when
                         never deleted — withdrawing adds to it
@@ -350,8 +390,8 @@ These are not guidelines. Something fails to build if one is broken.
 | Who-sees-what rules | Enforced in the database |
 | Circle screens — invite, permissions, revoke | Working |
 | Clinician console, with the medication editor | Working |
-| Calendar and activity suggestions | **Next** |
-| Feed and reactions | Later |
+| Calendar, suggestions, and the after-the-fact questions | Working |
+| Feed and reactions | **Next** |
 | Watch and phone data | After the Android app |
 
 The daily reminder is written and tested but not switched on, because turning

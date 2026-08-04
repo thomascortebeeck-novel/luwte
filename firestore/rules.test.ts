@@ -516,6 +516,231 @@ describe('medication ownership', () => {
   });
 });
 
+/*
+ * PRD 6.3 — a supporter may offer something, never place it. This block is
+ * where "family wanting to help and a person needing to control their own
+ * day" is settled by the database rather than by the app being polite.
+ */
+describe('patients/{patientId}/activities', () => {
+  const activity = (overrides: Record<string, unknown> = {}) => ({
+    title: 'Koffie',
+    date: '2026-08-04',
+    startTime: '10:00',
+    withPerson: '',
+    createdBy: JONAS,
+    status: 'accepted',
+    recurrence: null,
+    ...overrides,
+  });
+
+  const grantCalendar = (extra: Record<string, boolean> = {}) =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'circle', OTHER), {
+        memberUid: OTHER,
+        role: 'supporter',
+        permissions: {
+          checkins: false,
+          medication: false,
+          health: false,
+          feed: true,
+          calendar: true,
+          ...extra,
+        },
+        grantedAt: new Date(),
+        revokedAt: null,
+      });
+    });
+
+  const seedActivity = (overrides: Record<string, unknown> = {}) =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'activities', 'act1'), activity(overrides));
+    });
+
+  it('lets the patient plan their own day', async () => {
+    await assertSucceeds(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'activities', 'act1'), activity()),
+    );
+  });
+
+  it('lets a supporter with calendar suggest something', async () => {
+    await grantCalendar();
+    await assertSucceeds(
+      setDoc(
+        doc(asOther(), 'patients', JONAS, 'activities', 'act2'),
+        activity({ status: 'suggested', createdBy: OTHER }),
+      ),
+    );
+  });
+
+  it('REFUSES a supporter putting something straight on the calendar', async () => {
+    // The whole design. An offer is not an entry.
+    await grantCalendar();
+    await assertFails(
+      setDoc(
+        doc(asOther(), 'patients', JONAS, 'activities', 'act2'),
+        activity({ status: 'accepted', createdBy: OTHER }),
+      ),
+    );
+  });
+
+  it('REFUSES a supporter suggesting in somebody else’s name', async () => {
+    await grantCalendar();
+    await assertFails(
+      setDoc(
+        doc(asOther(), 'patients', JONAS, 'activities', 'act2'),
+        activity({ status: 'suggested', createdBy: JONAS }),
+      ),
+    );
+  });
+
+  it('REFUSES a supporter accepting their own suggestion', async () => {
+    await grantCalendar();
+    await seedActivity({ status: 'suggested', createdBy: OTHER });
+    await assertFails(
+      updateDoc(doc(asOther(), 'patients', JONAS, 'activities', 'act1'), { status: 'accepted' }),
+    );
+  });
+
+  it('REFUSES a supporter editing what the patient planned', async () => {
+    await grantCalendar();
+    await seedActivity();
+    await assertFails(
+      updateDoc(doc(asOther(), 'patients', JONAS, 'activities', 'act1'), { title: 'Iets anders' }),
+    );
+  });
+
+  it('REFUSES a supporter without the calendar permission suggesting anything', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'circle', OTHER), {
+        memberUid: OTHER,
+        role: 'supporter',
+        permissions: {
+          checkins: true,
+          medication: false,
+          health: false,
+          feed: true,
+          calendar: false,
+        },
+        grantedAt: new Date(),
+        revokedAt: null,
+      });
+    });
+    await assertFails(
+      setDoc(
+        doc(asOther(), 'patients', JONAS, 'activities', 'act2'),
+        activity({ status: 'suggested', createdBy: OTHER }),
+      ),
+    );
+  });
+
+  it('lets a supporter read what was accepted', async () => {
+    await grantCalendar();
+    await seedActivity();
+    await assertSucceeds(getDoc(doc(asOther(), 'patients', JONAS, 'activities', 'act1')));
+  });
+
+  /*
+   * "Declining is silent; the suggester is not notified of a decline."
+   * Enforced rather than merely intended: they cannot read it at all, so
+   * there is nothing to poll for and nothing to infer.
+   */
+  it('REFUSES a supporter reading an activity that was declined', async () => {
+    await grantCalendar();
+    await seedActivity({ status: 'declined', createdBy: OTHER });
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'activities', 'act1')));
+  });
+
+  it('REFUSES a listing that would reveal a decline', async () => {
+    await grantCalendar();
+    await seedActivity({ status: 'declined', createdBy: OTHER });
+    await assertFails(getDocs(collection(asOther(), 'patients', JONAS, 'activities')));
+  });
+
+  it('lets a supporter list what is not declined', async () => {
+    await grantCalendar();
+    await seedActivity();
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(asOther(), 'patients', JONAS, 'activities'),
+          where('status', 'in', ['suggested', 'accepted']),
+        ),
+      ),
+    );
+  });
+
+  it('lets the patient see everything, declines included', async () => {
+    await seedActivity({ status: 'declined' });
+    await assertSucceeds(getDocs(collection(asJonas(), 'patients', JONAS, 'activities')));
+  });
+
+  it('refuses deletion, so what was offered stays on the record', async () => {
+    await seedActivity();
+    await assertFails(deleteDoc(doc(asJonas(), 'patients', JONAS, 'activities', 'act1')));
+  });
+
+  it('keeps a stranger out entirely', async () => {
+    await seedActivity();
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'activities', 'act1')));
+    await assertFails(
+      setDoc(doc(asOther(), 'patients', JONAS, 'activities', 'act3'), activity()),
+    );
+  });
+});
+
+describe('patients/{patientId}/completions', () => {
+  const completion = {
+    activityId: 'act1',
+    date: '2026-08-04',
+    completedAt: new Date(),
+    pleasure: 5,
+    mastery: 3,
+    postedToFeed: false,
+  };
+
+  it('lets a person record how it went', async () => {
+    await assertSucceeds(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'completions', 'act1_2026-08-04'), completion),
+    );
+  });
+
+  /*
+   * Pleasure and mastery are someone rating their own day. A supporter with
+   * the calendar permission can see what was planned; what the person made of
+   * it is not part of that.
+   */
+  it('REFUSES even a supporter with calendar reading the ratings', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'circle', OTHER), {
+        memberUid: OTHER,
+        role: 'supporter',
+        permissions: {
+          checkins: true,
+          medication: true,
+          health: true,
+          feed: true,
+          calendar: true,
+        },
+        grantedAt: new Date(),
+        revokedAt: null,
+      });
+      await setDoc(
+        doc(ctx.firestore(), 'patients', JONAS, 'completions', 'act1_2026-08-04'),
+        completion,
+      );
+    });
+    await assertFails(
+      getDoc(doc(asOther(), 'patients', JONAS, 'completions', 'act1_2026-08-04')),
+    );
+  });
+
+  it('REFUSES anyone recording a completion on somebody else’s behalf', async () => {
+    await assertFails(
+      setDoc(doc(asOther(), 'patients', JONAS, 'completions', 'act1_2026-08-04'), completion),
+    );
+  });
+});
+
 describe('clinicians/{uid}', () => {
   it('lets a clinician see that they were verified', async () => {
     await verifyClinician(DOCTOR);
