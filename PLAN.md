@@ -231,7 +231,8 @@ first (§10), usage sensing (§9).
 | D8 | No third-party error reporting in v1. Crashlytics becomes relevant in the Android phase. |
 | D9 | One Firebase project; two Hosting sites; pnpm workspaces + Turborepo, matching the other Novel repos. |
 | D10 | All date keys computed in Europe/Brussels; midnight-lock and week-anchor logic covered by unit tests. |
-| D11 | Firestore rather than the house Postgres + Express stack, because PRD 5.3 makes security rules the access-control design and PRD 5.6 needs offline-first writes. Cheap to reverse until Phase 1 lands; expensive after. Flagged in CLAUDE.md. |
+| D11 | **Firestore confirmed 2026-08-04**, rather than the house Postgres + Express stack: PRD 5.3 makes security rules the access-control design and PRD 5.6 needs offline-first writes. Settled — not to be relitigated. |
+| D13 | Two Firebase projects, `luwte-dev` and `luwte-prod`. Developing against the database holding a real person's health records is not acceptable. |
 | D12 | A JRE is required for the Firebase emulators only. Nothing in the build or runtime touches the JVM. |
 
 ---
