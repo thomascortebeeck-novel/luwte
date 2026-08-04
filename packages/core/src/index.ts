@@ -30,6 +30,12 @@ export {
   selectDue,
   type ReminderCandidate,
 } from './reminders';
+export {
+  WINDLINE_DAYS,
+  dayUnrest,
+  windlineSeries,
+  type WindlineDay,
+} from './windline';
 
 export {
   CONSENT_ITEMS,

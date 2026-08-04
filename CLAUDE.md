@@ -216,11 +216,18 @@ midnight.
 - `sleepHours` is the one check-in field shown as a number. It is a quantity,
   not a rating; BRAND's "never a visible number" governs the subjective
   scales, where a number invites scoring yourself.
+- **The windline is not a score.** Unrest is not badness — a person can be
+  unsettled and having a good week. Both amplitude *and* frequency follow
+  unrest, because amplitude alone reads as a chart with a y-axis where bigger
+  means worse. A missed day is bridged from its neighbours, never drawn as a
+  gap. It animates with `requestAnimationFrame`, so a hidden tab stops it for
+  free.
 
 ## Changelog
 
 | Date | Change |
 |---|---|
+| 2026-08-04 | The windline (BRAND 3.7) — unrest per day in `packages/core/src/windline.ts`, geometry in `packages/ui/src/windline/`. A missed day is bridged from its neighbours so the line never shows a gap. Both amplitude and frequency follow unrest, because amplitude alone reads as a chart with a y-axis. Now sits at the top of Today. GitHub Actions runs the full gate plus the rules matrix on every PR. |
 | 2026-08-04 | Notification preferences (four categories, all individually disableable), a settings screen, and Google Calendar export via a prefilled template link — deliberately no OAuth, no calendar scopes, no stored token. `sendCheckinReminder` written and verified loading in the emulator; not deployed, since Blaze stays off `luwte-dev` by decision. |
 | 2026-08-04 | Phase 2 complete, minus the reminder function (needs Blaze on dev). Europe/Brussels date logic tested across both DST transitions; check-in and weekly models, rules and rules tests; six-question check-in with diary line and weekly akathisia screen; top-of-scale hopelessness goes to the crisis screen with no notification to anyone. Walked end to end against the emulators and checked at the database. Added `docs/EMAIL-SETUP.md` for the admin-only email configuration. |
 | 2026-08-04 | Phase 1 complete. Firebase client with offline persistence, security rules with 17 table-driven tests, sign-in (email link + password), four onboarding screens, GDPR Art. 9 consent, empty Today, route gate. Walked end to end against the emulators in Dutch and English. Copy-lint and the brand guard each caught a false positive in their own rules — both narrowed and given regression tests. |

@@ -1,4 +1,4 @@
-import { LOCALES, type Locale } from '@luwte/core';
+import { LOCALES, windlineSeries, type Locale, type WindlineDay } from '@luwte/core';
 import {
   Button,
   Card,
@@ -6,6 +6,7 @@ import {
   HumanText,
   ScaleInput,
   Screen,
+  Windline,
   type ScaleValue,
 } from '@luwte/ui';
 import { useState } from 'react';
@@ -59,6 +60,37 @@ export function Styleguide() {
             </Button>
           ))}
         </div>
+      </section>
+
+      <Hairline />
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Windline</h2>
+        <p className={styles.note}>
+          Geen getal, geen schaal, geen oordeel. Een horizonlijn, geen score. Onrustige stukken
+          bewegen fijn en dicht op elkaar, rustige stukken lopen lang en bijna vlak.
+        </p>
+        <Windline
+          series={windlineSeries(
+            [
+              { mood: 6, sleepRested: 6, anxiety: 1 },
+              { mood: 6, sleepRested: 5, anxiety: 2 },
+              { mood: 5, sleepRested: 5, anxiety: 2 },
+              null,
+              { mood: 4, sleepRested: 3, anxiety: 5 },
+              { mood: 3, sleepRested: 2, anxiety: 6 },
+              { mood: 2, sleepRested: 2, anxiety: 7 },
+              { mood: 2, sleepRested: 2, anxiety: 7 },
+              { mood: 3, sleepRested: 3, anxiety: 6 },
+              null,
+              { mood: 4, sleepRested: 4, anxiety: 4 },
+              { mood: 5, sleepRested: 5, anxiety: 3 },
+              { mood: 6, sleepRested: 6, anxiety: 2 },
+              { mood: 6, sleepRested: 6, anxiety: 1 },
+            ] satisfies (WindlineDay | null)[],
+          )}
+          label="Overzicht van de laatste veertien dagen"
+        />
       </section>
 
       <Hairline />
