@@ -13,24 +13,59 @@ psychosis and depression, their family, and their care team.
 - [docs/BRAND-QA.md](docs/BRAND-QA.md) — the checklist every screen passes
 - [CLAUDE.md](CLAUDE.md) — working rules for this repo
 
+## Stack
+
+TypeScript end to end. pnpm workspaces + Turborepo, the same shape as the
+other Novel repos. **No JVM in the build or the runtime.**
+
+| Path | What | Runtime |
+|---|---|---|
+| `apps/web` (`@luwte/web`) | Vite + React 19 SPA, installable PWA, react-router | Vite |
+| `packages/core` (`@luwte/core`) | types, i18n dictionaries, copy-lint | library |
+| `packages/ui` (`@luwte/ui`) | design tokens, primitives, charts | library |
+
+Data and infra: **Cloud Firestore** (`eur3`) · Cloud Functions gen2
+(`europe-west1`) · Firebase Auth + FCM · Firebase Hosting.
+Tests: Vitest (unit) today, Playwright (e2e) from Phase 2.
+
+> **Note this diverges from the house stack.** The other Novel repos use
+> PostgreSQL with an Express API on Cloud Run, and Firebase only for auth and
+> push. luwte follows the PRD's Firestore design, where the security rules
+> *are* the access-control mechanism (PRD 5.3) rather than an API layer.
+> See [CLAUDE.md](CLAUDE.md) for the trade-off and when to revisit it.
+
 ## Prerequisites
 
-| Tool | Version | Notes |
+| Tool | Version | Needed for |
 |---|---|---|
-| Node | 20+ (24 in use) | |
+| Node | 20+ (24 in use here) | everything |
 | pnpm | 9+ | `corepack enable` |
-| Java | JDK 21 | **Only needed from Phase 1**, for the Firebase emulators |
+| JRE | 21 | **the Firebase emulators only, from Phase 1** |
 
-The Firestore and Auth emulators are Java processes. Nothing in Phase 0
-requires them. When you get there:
+### Why Java, in a repo with no Java in it
+
+The **Firebase Emulator Suite** ships as Java binaries — the Firestore, Auth,
+Pub/Sub and Storage emulators are all JVM processes. `firebase
+emulators:start` needs a JRE no matter what language your code is written in.
+
+The other Novel repos never hit this because they keep data in Postgres and
+use Firebase only for auth and FCM, so they never start the Firestore
+emulator. luwte's security rules can only be tested locally against it, and
+those rules are the whole access-control design.
+
+Nothing in Phase 0 needs it. Before Phase 1:
 
 ```bash
 winget install --id Microsoft.OpenJDK.21 -e
 ```
 
+The alternative is running rules tests against a throwaway cloud Firebase
+project — no Java, but slower, billable, and awkward to wire into CI.
+
 ## Getting started
 
 ```bash
+corepack enable
 pnpm install
 pnpm dev
 ```
@@ -42,6 +77,7 @@ holding screen: `/crisis` and `/styleguide`.
 
 ```bash
 pnpm dev         # the app, with hot reload
+pnpm verify      # the full gate: lint, typecheck, test, build
 pnpm test        # vitest across the workspace
 pnpm typecheck   # tsc, strict, whole repo
 pnpm lint        # eslint
@@ -49,10 +85,15 @@ pnpm build       # production build with the service worker
 pnpm preview     # serve the production build, for testing offline behaviour
 ```
 
+`lint`, `typecheck` and `test` run once at the root rather than per package —
+one ESLint config, one tsconfig, one Vitest config covering
+`{apps,packages}/*/src`. Turborepo orchestrates `build` and `dev`, and takes
+over the rest when `functions` and `apps/console` arrive.
+
 ## Repository
 
 ```
-apps/app/         patient + supporter PWA
+apps/web/         patient + supporter PWA
 packages/core/    types, i18n dictionaries, copy-lint — no React, no Firebase
 packages/ui/      design tokens and primitives — no Firebase
 firestore/        security rules and indexes

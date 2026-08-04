@@ -4,7 +4,7 @@
     {
       "name": "luwte app",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@luwte/app", "dev", "--port", "5173", "--strictPort"],
+      "runtimeArgs": ["--filter", "@luwte/web", "dev", "--port", "5173", "--strictPort"],
       "port": 5173
     }
   ]

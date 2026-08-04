@@ -43,7 +43,7 @@ Replaces the Android rows of PRD §5.1. Backend rows are unchanged.
 
 ```
 luwte/
-  apps/app/         patient + supporter PWA
+  apps/web/         patient + supporter PWA
   apps/console/     clinician console
   packages/ui/      tokens, primitives, windline, scale input, chart
   packages/core/    types, zod schemas, Firestore paths/converters, i18n dictionaries, copy-lint
@@ -229,8 +229,10 @@ first (§10), usage sensing (§9).
 | D6 | i18n: `nl-BE` source of truth; English mirrors BRAND voice rules; copy-lint enforces both. |
 | D7 | App Check deferred until any launch beyond the family (web App Check = reCAPTCHA, a privacy trade-off to assess in the DPIA). Access control is carried entirely by security rules regardless. |
 | D8 | No third-party error reporting in v1. Crashlytics becomes relevant in the Android phase. |
-| D9 | One Firebase project; two Hosting sites; pnpm monorepo. |
+| D9 | One Firebase project; two Hosting sites; pnpm workspaces + Turborepo, matching the other Novel repos. |
 | D10 | All date keys computed in Europe/Brussels; midnight-lock and week-anchor logic covered by unit tests. |
+| D11 | Firestore rather than the house Postgres + Express stack, because PRD 5.3 makes security rules the access-control design and PRD 5.6 needs offline-first writes. Cheap to reverse until Phase 1 lands; expensive after. Flagged in CLAUDE.md. |
+| D12 | A JRE is required for the Firebase emulators only. Nothing in the build or runtime touches the JVM. |
 
 ---
 

@@ -1387,7 +1387,12 @@ wordmark is always lowercase; BRAND 4.2's health-import string writes
 "Luwte" mid-sentence. The explicit rule wins and the dictionaries use
 `luwte` throughout. Worth confirming with Thomas.
 
-**4. Not done, deliberately.** `.firebaserc` is absent — it is written by
+**4. Renamed after the fact.** `apps/app` (`@luwte/app`) became `apps/web`
+(`@luwte/web`) to match the other Novel repos, and Turborepo was added for
+the same reason. Paths written above still say `apps/app`; they are the
+record of what was built, not of where it now lives.
+
+**5. Not done, deliberately.** `.firebaserc` is absent — it is written by
 `firebase use --add` once a real project exists, and a placeholder project id
 would only produce confusing 404s. The `console` hosting target is also
 absent from `firebase.json` until Phase 7 creates `apps/console`, so that a

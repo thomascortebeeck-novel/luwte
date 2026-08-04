@@ -49,30 +49,65 @@ Source documents, both binding:
 8. **Tests before implementation** for security rules, Cloud Functions,
    date/timezone logic, and copy. UI gets a smoke test plus the brand QA pass.
 
-## Repository
+## Stack and repository
+
+TypeScript end to end, pnpm workspaces + Turborepo, Node 20+. **No JVM in the
+build or the runtime.**
 
 ```
-apps/app/         patient + supporter PWA (React, Vite)
+apps/web/         patient + supporter PWA (React 19, Vite, react-router)
 apps/console/     clinician console (from Phase 7)
 packages/core/    types, i18n dictionaries, copy-lint — no React, no Firebase
 packages/ui/      design tokens, primitives, windline, chart — no Firebase
-functions/        Cloud Functions (from Phase 1)
+functions/        Cloud Functions gen2 (from Phase 1)
 firestore/        rules, indexes, rules tests
 docs/             PRD, BRAND, QA checklist, per-phase plans
 ```
 
 Remote: `https://github.com/thomascortebeeck-novel/luwte.git`
 
+### Java is needed for the emulators, not for the code
+
+The Firebase Emulator Suite ships as Java binaries — Firestore, Auth, Pub/Sub
+and Storage emulators are all JVM processes, so `firebase emulators:start`
+needs a JRE regardless of the codebase language. Install before Phase 1:
+`winget install --id Microsoft.OpenJDK.21 -e`. Nothing in Phase 0 needs it.
+
+The other Novel repos never need this because they keep data in Postgres and
+use Firebase only for auth and FCM.
+
+### Divergence from the house stack — revisit before Phase 1 ends
+
+The other Novel repos are Postgres + Express on Cloud Run, with Firebase for
+auth and push only. luwte instead follows the PRD's Firestore design.
+
+The reason to keep Firestore: PRD 5.3 makes the circle document the access
+control list, and security rules resolve every read through it. That model —
+plus offline-first writes for the check-in (PRD 5.6) — is what Firestore is
+genuinely good at, and it removes an API tier from a solo part-time build.
+
+The reason to reconsider: it is not the stack Thomas has muscle memory for,
+and security rules are their own skill.
+
+Switching is cheap while there is no data layer, and expensive once Phase 1
+lands. Raise it before Phase 1 is finished, not after.
+
 ## Commands
 
 ```bash
-pnpm install       # once
-pnpm dev           # apps/app on localhost
+pnpm install       # once, after corepack enable
+pnpm dev           # apps/web on localhost:5173
+pnpm verify        # the full gate: lint, typecheck, test, build
 pnpm test          # vitest, whole workspace
-pnpm typecheck     # tsc across all packages
+pnpm typecheck     # tsc, strict, whole repo
 pnpm lint          # eslint
-pnpm build         # production build of apps/app
+pnpm build         # turbo run build
 ```
+
+`lint`, `typecheck` and `test` run once at the root, not per package: one
+ESLint config, one tsconfig, one Vitest config over `{apps,packages}/*/src`.
+Turborepo currently orchestrates `build` and `dev` only, and takes over the
+rest when `functions` and `apps/console` make per-package tasks real.
 
 ## Non-negotiables that are easy to break by accident
 
