@@ -105,4 +105,23 @@ export const en: Dictionary = {
   consentAccept: 'Yes, that is fine',
   consentMissing: 'The first two are needed to continue.',
   consentWhereToChange: 'You can change this later under Data and privacy.',
+
+  // Check-in
+  checkinSleepHours: 'How many hours did you sleep?',
+  checkinHoursSuffix: 'hours',
+  checkinStart: 'Fill it in',
+  checkinSave: 'Save',
+  checkinBack: 'Back',
+  checkinSkip: 'Skip',
+  checkinDiaryPlaceholder: 'Whatever you like',
+  checkinEdit: 'Change it',
+  checkinDoneToday: 'You filled today in.',
+  checkinLocked: 'This day is closed.',
+
+  // The weekly extra, once a week, inline after the daily items
+  weeklyIntro: 'Four more questions. They come once a week.',
+  weeklyRestlessness: 'How restless did your body feel?',
+  weeklyStiffness: 'How stiff did your body feel?',
+  weeklySedation: 'How drowsy were you during the day?',
+  weeklyHopelessness: 'How hopeless did it feel?',
 };

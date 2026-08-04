@@ -43,6 +43,34 @@ service cloud.firestore {
        * can be erased is not a record. Withdrawal is an update that sets
        * withdrawnAt, never a delete.
        */
+      /*
+       * PRD 6.1 — one check-in per local calendar day, keyed by the date.
+       *
+       * The document id must equal the date field, which is what makes
+       * one-per-day idempotent: an offline write that syncs twice lands on
+       * the same document instead of creating a second entry for the day.
+       *
+       * The midnight lock is enforced in the client, not here. Security
+       * rules have no timezone support, so they cannot tell what "today in
+       * Brussels" is, and approximating it in UTC would lock the check-in an
+       * hour early or late depending on the season. The boundary that
+       * matters — nobody else can read or write this — is enforced.
+       */
+      match /checkins/{dateKey} {
+        allow read: if isSelf(patientId);
+        allow create, update: if isSelf(patientId)
+                              && request.resource.data.date == dateKey;
+        // Erasing a day would leave a silent hole in the clinical record.
+        // Deletion happens through the GDPR Art. 17 function, which cascades.
+        allow delete: if false;
+      }
+
+      match /weekly/{weekKey} {
+        allow read: if isSelf(patientId);
+        allow create, update: if isSelf(patientId);
+        allow delete: if false;
+      }
+
       match /consents/{consentId} {
         allow read: if isSelf(patientId);
         allow create: if isSelf(patientId)

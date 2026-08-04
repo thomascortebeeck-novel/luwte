@@ -28,3 +28,25 @@ export {
   type Patient,
 } from './model/patient';
 export { paths } from './model/paths';
+export {
+  CHECKIN_STEPS,
+  HOPELESSNESS_CRISIS_THRESHOLD,
+  WEEKLY_STEPS,
+  checkinSchema,
+  scaleSchema,
+  shouldOfferCrisis,
+  weeklySchema,
+  type Checkin,
+  type Scale,
+  type Weekly,
+} from './model/checkin';
+export {
+  dateKey,
+  isBackfillable,
+  isEditable,
+  previousDateKey,
+  weekKey,
+  weekdayOf,
+  type DateKey,
+  type WeekKey,
+} from './dates';

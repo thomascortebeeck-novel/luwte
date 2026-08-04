@@ -108,4 +108,23 @@ export const nl = {
   consentAccept: 'Ja, dat mag',
   consentMissing: 'De eerste twee zijn nodig om verder te kunnen.',
   consentWhereToChange: 'Je kan dit later veranderen bij Gegevens en privacy.',
+
+  // Check-in
+  checkinSleepHours: 'Hoeveel uur heb je geslapen?',
+  checkinHoursSuffix: 'uur',
+  checkinStart: 'Invullen',
+  checkinSave: 'Bewaren',
+  checkinBack: 'Terug',
+  checkinSkip: 'Overslaan',
+  checkinDiaryPlaceholder: 'Wat je maar wil',
+  checkinEdit: 'Aanpassen',
+  checkinDoneToday: 'Je hebt vandaag ingevuld.',
+  checkinLocked: 'Deze dag is afgesloten.',
+
+  // The weekly extra, once a week, inline after the daily items
+  weeklyIntro: 'Nog vier vragen. Die komen één keer per week.',
+  weeklyRestlessness: 'Hoe rusteloos voelde je lichaam?',
+  weeklyStiffness: 'Hoe stijf voelde je lichaam?',
+  weeklySedation: 'Hoe suf was je overdag?',
+  weeklyHopelessness: 'Hoe uitzichtloos voelde het?',
 } as const satisfies Record<string, string>;

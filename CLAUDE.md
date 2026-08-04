@@ -149,16 +149,23 @@ rest when `functions` and `apps/console` make per-package tasks real.
 
 ## Current state
 
-**Phases 0 and 1 complete.** 106 unit tests plus 17 security-rules tests.
-`pnpm verify` green. Next is Phase 2, the daily check-in.
+**Phases 0, 1 and 2 complete.** 136 unit tests plus 26 security-rules tests.
+`pnpm verify` green. Next is Phase 3 — Today with medication and the windline.
 
 What exists: the monorepo, both dictionaries, the copy-lint and brand guards,
 design tokens in both themes, seven primitives plus `ScaleInput`, the PWA
-shell, the crisis screen, `/styleguide`, and the whole account flow —
-sign-in (email link or password), four onboarding screens, GDPR Art. 9
-consent, and an empty Today.
+shell, the crisis screen, `/styleguide`, the whole account flow (sign-in,
+onboarding, GDPR Art. 9 consent), and **the daily check-in** — six questions,
+a diary line, the weekly akathisia screen, and the hopelessness path to the
+crisis screen.
 
 Phase 0 needs no Firebase project. Phase 1 onwards needs `pnpm emulators`.
+
+### Still owed from Phase 2
+
+The check-in reminder (`sendCheckinReminder`, PRD 5.4) is **not built**. It
+needs Cloud Functions, which need Blaze on `luwte-dev`. Until then the
+check-in is entered by opening the app. Nothing else in Phase 2 is missing.
 
 ### Verified against the emulators, 2026-08-04
 
@@ -180,12 +187,26 @@ Phase 0 needs no Firebase project. Phase 1 onwards needs `pnpm emulators`.
 - `--on-self` exists because light-mode `--diep-l` on `--zeeglas-l` is 4.20:1
   and fails AA. The primary button label is white in light mode.
 - `resolveLocale` treats anything not clearly English as Dutch.
-- Check-in dates will be keyed in `Europe/Brussels`, not UTC (Phase 2).
+- **Check-in dates are keyed in the patient's timezone, not UTC.**
+  `packages/core/src/dates.ts`, tested across both DST transitions and the
+  ISO week-year boundary. Never use `toISOString().slice(0,10)` for a date
+  key — it is UTC and puts a 23:30 Brussels entry on the wrong day.
+- The **midnight lock is enforced in the client, not in the rules.** Security
+  rules have no timezone support, so they cannot know what "today in
+  Brussels" is. The rules enforce the boundary that matters — nobody else can
+  read or write — plus `document id == date field`, which is what makes an
+  offline write idempotent when it syncs twice.
+- The **weekly extra is anchored to the weekday the account was created.**
+  If it is missed, it returns next week. The app never chases.
+- `sleepHours` is the one check-in field shown as a number. It is a quantity,
+  not a rating; BRAND's "never a visible number" governs the subjective
+  scales, where a number invites scoring yourself.
 
 ## Changelog
 
 | Date | Change |
 |---|---|
+| 2026-08-04 | Phase 2 complete, minus the reminder function (needs Blaze on dev). Europe/Brussels date logic tested across both DST transitions; check-in and weekly models, rules and rules tests; six-question check-in with diary line and weekly akathisia screen; top-of-scale hopelessness goes to the crisis screen with no notification to anyone. Walked end to end against the emulators and checked at the database. Added `docs/EMAIL-SETUP.md` for the admin-only email configuration. |
 | 2026-08-04 | Phase 1 complete. Firebase client with offline persistence, security rules with 17 table-driven tests, sign-in (email link + password), four onboarding screens, GDPR Art. 9 consent, empty Today, route gate. Walked end to end against the emulators in Dutch and English. Copy-lint and the brand guard each caught a false positive in their own rules — both narrowed and given regression tests. |
 | 2026-08-04 | Firestore confirmed over the house Postgres stack — settled. Created `luwte-dev` and `luwte-prod`, aliased in `.firebaserc`, `dev` active. JDK 21 installed. Diagnosed and worked around a Windows AF_UNIX failure that killed the Firestore emulator; `pnpm emulators` now wraps it. Emulators verified starting and stopping cleanly. |
 | 2026-08-04 | Aligned with the house stack: `apps/app` → `apps/web` (`@luwte/web`), Turborepo added, `pnpm verify` gate. Clarified that the JRE is for the Firebase emulators only — no JVM in build or runtime. Recorded the Firestore-vs-Postgres divergence (D11 in PLAN.md) as reversible until Phase 1 lands. Pushed `phase-0-foundations` to GitHub. |

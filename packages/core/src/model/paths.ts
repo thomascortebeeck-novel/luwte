@@ -12,4 +12,13 @@ export const paths = {
   consents: (patientId: string) => `patients/${patientId}/consents`,
   consent: (patientId: string, consentId: string) =>
     `patients/${patientId}/consents/${consentId}`,
+
+  checkins: (patientId: string) => `patients/${patientId}/checkins`,
+  /** dateKey is the local calendar day, yyyy-MM-dd. */
+  checkin: (patientId: string, dateKey: string) =>
+    `patients/${patientId}/checkins/${dateKey}`,
+
+  weeklies: (patientId: string) => `patients/${patientId}/weekly`,
+  /** weekKey is the ISO week, yyyy-'W'ww. */
+  weekly: (patientId: string, weekKey: string) => `patients/${patientId}/weekly/${weekKey}`,
 } as const;

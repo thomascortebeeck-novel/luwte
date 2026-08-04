@@ -171,6 +171,83 @@ describe('patients/{patientId}/consents', () => {
   });
 });
 
+describe('patients/{patientId}/checkins', () => {
+  const checkin = {
+    date: '2026-08-04',
+    mood: 4,
+    energy: 3,
+    sleepHours: 7,
+    sleepRested: 4,
+    anxiety: 5,
+    flatness: 2,
+    source: 'manual',
+  };
+
+  it('lets a person write their own day', async () => {
+    await assertSucceeds(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'checkins', '2026-08-04'), checkin),
+    );
+  });
+
+  it('refuses a document whose id does not match its date', async () => {
+    // This is what keeps one-per-day idempotent when an offline write syncs.
+    await assertFails(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'checkins', '2026-08-05'), checkin),
+    );
+  });
+
+  it('stops another signed-in person reading a check-in', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'checkins', '2026-08-04'), checkin);
+    });
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'checkins', '2026-08-04')));
+  });
+
+  it('stops another signed-in person writing one', async () => {
+    await assertFails(
+      setDoc(doc(asOther(), 'patients', JONAS, 'checkins', '2026-08-04'), checkin),
+    );
+  });
+
+  it('refuses deletion, so a day cannot silently disappear', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'checkins', '2026-08-04'), checkin);
+    });
+    await assertFails(deleteDoc(doc(asJonas(), 'patients', JONAS, 'checkins', '2026-08-04')));
+  });
+
+  it('allows an edit on the same day', async () => {
+    await setDoc(doc(asJonas(), 'patients', JONAS, 'checkins', '2026-08-04'), checkin);
+    await assertSucceeds(
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'checkins', '2026-08-04'), { mood: 5 }),
+    );
+  });
+});
+
+describe('patients/{patientId}/weekly', () => {
+  const weekly = { restlessness: 3, stiffness: 2, sedation: 5, hopelessness: 4 };
+
+  it('lets a person write their own weekly items', async () => {
+    await assertSucceeds(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'weekly', '2026-W32'), weekly),
+    );
+  });
+
+  it("stops another person reading someone's weekly items", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'weekly', '2026-W32'), weekly);
+    });
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'weekly', '2026-W32')));
+  });
+
+  it('refuses deletion', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'weekly', '2026-W32'), weekly);
+    });
+    await assertFails(deleteDoc(doc(asJonas(), 'patients', JONAS, 'weekly', '2026-W32')));
+  });
+});
+
 describe('everything else', () => {
   it('is denied by default', async () => {
     await assertFails(getDoc(doc(asJonas(), 'checkins', 'anything')));

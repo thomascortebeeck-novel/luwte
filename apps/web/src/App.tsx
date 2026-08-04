@@ -1,6 +1,7 @@
 import { NavLink, Route, Routes, useLocation } from 'react-router';
 import styles from './App.module.css';
 import { useLocale } from './providers/LocaleProvider';
+import { CheckIn } from './routes/CheckIn';
 import { Consent } from './routes/Consent';
 import { Crisis } from './routes/Crisis';
 import { Gate } from './routes/Gate';
@@ -56,6 +57,14 @@ export function App() {
           element={
             <Gate>
               <Consent />
+            </Gate>
+          }
+        />
+        <Route
+          path="/checkin"
+          element={
+            <Gate>
+              <CheckIn />
             </Gate>
           }
         />
