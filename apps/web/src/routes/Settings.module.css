@@ -1,0 +1,63 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sectionTitle {
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.note {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+}
+
+.hourSelect {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-2);
+  font: inherit;
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+}
+
+/*
+ * Leaving luwte for Google's calendar is something another service does, not
+ * something the app did, so it is a plain link rather than the primary
+ * action. It carries no accent colour: --self is the person's own data and
+ * --amber means a human was here. Neither is true of a calendar hand-off.
+ */
+.calendarLink {
+  min-height: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  color: var(--text);
+  text-decoration: none;
+  align-self: flex-start;
+}

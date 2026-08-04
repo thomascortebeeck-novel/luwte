@@ -124,4 +124,31 @@ export const en: Dictionary = {
   weeklyStiffness: 'How stiff did your body feel?',
   weeklySedation: 'How drowsy were you during the day?',
   weeklyHopelessness: 'How hopeless did it feel?',
+
+  // Settings and notifications
+  settingsTitle: 'Settings',
+  settingsNotifications: 'Notifications',
+  settingsNotificationsIntro:
+    'You can turn each notification off separately. With all of them off, the app still works.',
+  settingsAllowNotifications: 'Allow notifications',
+  settingsNotificationsBlocked: 'Your browser is not allowing notifications. You can change that there.',
+  settingsReminderHour: 'Your reminder',
+  settingsSaved: 'Saved.',
+
+  notifyCheckinLabel: 'Your daily reminder',
+  notifyCheckinExplanation: 'One notification, at the hour you chose. If you miss it, nothing happens.',
+  notifyMedicationLabel: 'Your medication',
+  notifyMedicationExplanation: 'A notification at the times listed on your medication.',
+  notifyKudosLabel: 'When someone responds',
+  notifyKudosExplanation: 'When someone in your circle responds to what you shared.',
+  notifySupportedActivityLabel: 'When someone you follow did something',
+  notifySupportedActivityExplanation:
+    'When someone you support finished something they had planned. This only works if that person shared their overview with you.',
+
+  // Calendar
+  calendarAddReminder: 'Put it in Google Calendar',
+  calendarExplanation:
+    'This opens Google Calendar with everything filled in. luwte gets no access to your calendar and stores nothing.',
+  calendarEventTitle: 'luwte',
+  calendarEventDetails: 'A moment to look back on your day.',
 };

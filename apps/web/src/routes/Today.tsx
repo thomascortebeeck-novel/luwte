@@ -41,9 +41,14 @@ export function Today() {
     <Screen
       title={patient?.displayName || undefined}
       action={
-        <Button full onClick={() => navigate('/checkin')}>
-          {done ? t('checkinEdit') : t('checkinStart')}
-        </Button>
+        <>
+          <Button full onClick={() => navigate('/checkin')}>
+            {done ? t('checkinEdit') : t('checkinStart')}
+          </Button>
+          <Button variant="quiet" onClick={() => navigate('/settings')}>
+            {t('settingsTitle')}
+          </Button>
+        </>
       }
     >
       {done ? (

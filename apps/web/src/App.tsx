@@ -6,6 +6,7 @@ import { Consent } from './routes/Consent';
 import { Crisis } from './routes/Crisis';
 import { Gate } from './routes/Gate';
 import { Onboarding } from './routes/Onboarding';
+import { Settings } from './routes/Settings';
 import { SignIn } from './routes/SignIn';
 import { Styleguide } from './routes/Styleguide';
 import { Today } from './routes/Today';
@@ -65,6 +66,14 @@ export function App() {
           element={
             <Gate>
               <CheckIn />
+            </Gate>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <Gate>
+              <Settings />
             </Gate>
           }
         />

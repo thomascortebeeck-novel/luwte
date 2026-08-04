@@ -3,6 +3,14 @@
     "rules": "firestore/firestore.rules",
     "indexes": "firestore/firestore.indexes.json"
   },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "runtime": "nodejs20",
+      "ignore": ["node_modules", ".git", "src", "tsconfig.json"]
+    }
+  ],
   "hosting": [
     {
       "target": "app",
@@ -34,6 +42,8 @@
   "emulators": {
     "auth": { "port": 9099 },
     "firestore": { "port": 8080 },
+    "functions": { "port": 5001 },
+    "pubsub": { "port": 8085 },
     "hosting": { "port": 5000 },
     "ui": { "enabled": true, "port": 4000 },
     "singleProjectMode": true

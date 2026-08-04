@@ -161,11 +161,26 @@ crisis screen.
 
 Phase 0 needs no Firebase project. Phase 1 onwards needs `pnpm emulators`.
 
-### Still owed from Phase 2
+### Cloud Functions, and why Blaze is not needed to build them
 
-The check-in reminder (`sendCheckinReminder`, PRD 5.4) is **not built**. It
-needs Cloud Functions, which need Blaze on `luwte-dev`. Until then the
-check-in is entered by opening the app. Nothing else in Phase 2 is missing.
+`functions/` holds `sendCheckinReminder` (PRD 5.4). It is **written, bundled
+and verified loading in the emulator, but never deployed** — Thomas decided
+on 2026-08-04 not to put Blaze on `luwte-dev`.
+
+**The Functions emulator does not need billing.** Blaze is only required to
+deploy. So functions are developed and exercised locally as normal; the only
+thing missing is a live schedule, which no amount of local work would prove
+anyway.
+
+`@luwte/core` is bundled into the function with esbuild rather than resolved
+as a workspace dependency, because pnpm symlinks do not survive the deploy
+upload. `functions/lib/` is generated — never edit it, never commit it.
+
+**The decision of whom to disturb lives in `packages/core/src/reminders.ts`,
+not in the function.** It is a pure function with 17 tests. The Cloud Function
+is plumbing around it. `remindedOn` is what makes "never chase" true rather
+than aspirational: without it an hourly job would fire every hour until
+midnight.
 
 ### Verified against the emulators, 2026-08-04
 
@@ -206,6 +221,7 @@ check-in is entered by opening the app. Nothing else in Phase 2 is missing.
 
 | Date | Change |
 |---|---|
+| 2026-08-04 | Notification preferences (four categories, all individually disableable), a settings screen, and Google Calendar export via a prefilled template link — deliberately no OAuth, no calendar scopes, no stored token. `sendCheckinReminder` written and verified loading in the emulator; not deployed, since Blaze stays off `luwte-dev` by decision. |
 | 2026-08-04 | Phase 2 complete, minus the reminder function (needs Blaze on dev). Europe/Brussels date logic tested across both DST transitions; check-in and weekly models, rules and rules tests; six-question check-in with diary line and weekly akathisia screen; top-of-scale hopelessness goes to the crisis screen with no notification to anyone. Walked end to end against the emulators and checked at the database. Added `docs/EMAIL-SETUP.md` for the admin-only email configuration. |
 | 2026-08-04 | Phase 1 complete. Firebase client with offline persistence, security rules with 17 table-driven tests, sign-in (email link + password), four onboarding screens, GDPR Art. 9 consent, empty Today, route gate. Walked end to end against the emulators in Dutch and English. Copy-lint and the brand guard each caught a false positive in their own rules — both narrowed and given regression tests. |
 | 2026-08-04 | Firestore confirmed over the house Postgres stack — settled. Created `luwte-dev` and `luwte-prod`, aliased in `.firebaserc`, `dev` active. JDK 21 installed. Diagnosed and worked around a Windows AF_UNIX failure that killed the Firestore emulator; `pnpm emulators` now wraps it. Emulators verified starting and stopping cleanly. |

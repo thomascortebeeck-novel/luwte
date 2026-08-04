@@ -127,4 +127,32 @@ export const nl = {
   weeklyStiffness: 'Hoe stijf voelde je lichaam?',
   weeklySedation: 'Hoe suf was je overdag?',
   weeklyHopelessness: 'Hoe uitzichtloos voelde het?',
+
+  // Settings and notifications
+  settingsTitle: 'Instellingen',
+  settingsNotifications: 'Meldingen',
+  settingsNotificationsIntro:
+    'Je kan elke melding apart uitzetten. Staan ze allemaal uit, dan werkt de app gewoon verder.',
+  settingsAllowNotifications: 'Meldingen toelaten',
+  settingsNotificationsBlocked:
+    'Je browser laat geen meldingen toe. Dat kan je daar aanpassen.',
+  settingsReminderHour: 'Je herinnering',
+  settingsSaved: 'Bewaard.',
+
+  notifyCheckinLabel: 'Je dagelijkse herinnering',
+  notifyCheckinExplanation: 'Eén melding, op het uur dat jij koos. Mis je ze, dan gebeurt er niets.',
+  notifyMedicationLabel: 'Je medicatie',
+  notifyMedicationExplanation: 'Een melding op de uren die op je medicatie staan.',
+  notifyKudosLabel: 'Als iemand iets laat weten',
+  notifyKudosExplanation: 'Wanneer iemand uit je kring reageert op wat je deelde.',
+  notifySupportedActivityLabel: 'Als iemand die je volgt iets deed',
+  notifySupportedActivityExplanation:
+    'Wanneer iemand die jij steunt iets afrondde dat gepland stond. Dit werkt alleen als die persoon je zijn overzicht liet zien.',
+
+  // Calendar
+  calendarAddReminder: 'Zet in Google Agenda',
+  calendarExplanation:
+    'Dit opent Google Agenda met alles al ingevuld. luwte krijgt geen toegang tot je agenda en bewaart niets.',
+  calendarEventTitle: 'luwte',
+  calendarEventDetails: 'Even stilstaan bij je dag.',
 } as const satisfies Record<string, string>;

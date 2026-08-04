@@ -1,10 +1,12 @@
 import {
   CONSENT_VERSION,
   DEFAULT_CHECKIN_HOUR,
+  DEFAULT_NOTIFICATION_SETTINGS,
   DEFAULT_TIMEZONE,
   paths,
   type ConsentGrants,
   type Locale,
+  type NotificationSettings,
   type Patient,
 } from '@luwte/core';
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
@@ -37,7 +39,10 @@ export async function ensureAccount(uid: string, locale: Locale): Promise<void> 
   });
 }
 
-export type PatientRecord = Omit<Patient, 'createdAt'> & { createdAt: Date | null };
+export type PatientRecord = Omit<Patient, 'createdAt'> & {
+  createdAt: Date | null;
+  notifications: NotificationSettings;
+};
 
 export async function readPatient(uid: string): Promise<PatientRecord | null> {
   const snapshot = await getDoc(doc(db, paths.patient(uid)));
@@ -49,6 +54,7 @@ export async function readPatient(uid: string): Promise<PatientRecord | null> {
     timezone: data.timezone ?? DEFAULT_TIMEZONE,
     onboarded: data.onboarded === true,
     createdAt: data.createdAt?.toDate?.() ?? null,
+    notifications: { ...DEFAULT_NOTIFICATION_SETTINGS, ...(data.notifications ?? {}) },
   };
 }
 
@@ -58,6 +64,17 @@ export async function saveOnboarding(
 ): Promise<void> {
   await updateDoc(doc(db, paths.patient(uid)), values);
   await updateDoc(doc(db, paths.user(uid)), { displayName: values.displayName });
+}
+
+export async function saveNotificationSettings(
+  uid: string,
+  notifications: NotificationSettings,
+): Promise<void> {
+  await updateDoc(doc(db, paths.patient(uid)), { notifications });
+}
+
+export async function saveReminderHour(uid: string, checkinHour: number): Promise<void> {
+  await updateDoc(doc(db, paths.patient(uid)), { checkinHour });
 }
 
 /**

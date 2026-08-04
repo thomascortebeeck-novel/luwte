@@ -9,6 +9,27 @@ export {
   type Locale,
 } from './i18n/index';
 export { CRISIS_SERVICES, type CrisisService } from './crisis';
+export {
+  checkinReminderCalendarLink,
+  googleCalendarLink,
+  type CalendarEvent,
+} from './calendar';
+export {
+  DEFAULT_NOTIFICATION_SETTINGS,
+  MAX_PATIENT_CATEGORIES,
+  NOTIFICATION_CATEGORIES,
+  categoriesFor,
+  notificationSettingsSchema,
+  type NotificationAudience,
+  type NotificationCategory,
+  type NotificationSettings,
+} from './model/notifications';
+export {
+  isDueForReminder,
+  localHour,
+  selectDue,
+  type ReminderCandidate,
+} from './reminders';
 
 export {
   CONSENT_ITEMS,
