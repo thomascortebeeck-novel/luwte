@@ -19,6 +19,9 @@ Source documents, both binding:
 - [PLAN.md](PLAN.md) — phase roadmap and decision log
 - [docs/superpowers/plans/](docs/superpowers/plans/) — per-phase implementation plans
 - [docs/BRAND-QA.md](docs/BRAND-QA.md) — the checklist every screen passes before it is done
+- [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) — the whole system in plain language: roles,
+  user stories, pages, data, permissions, architecture. Keep it current when
+  behaviour changes; it is the document a non-engineer reads.
 
 ## Working rules
 
