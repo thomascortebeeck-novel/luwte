@@ -65,4 +65,44 @@ export const en: Dictionary = {
   scaleStep7: 'very much',
 
   styleguideTitle: 'Style guide',
+
+  // Auth
+  signInTitle: 'Welcome',
+  signInEmailLabel: 'Your email address',
+  signInSendLink: 'Send me a link',
+  signInLinkSent: 'Check your inbox. The link stays valid for an hour.',
+  signInUsePassword: 'Use a password instead',
+  signInUseLink: 'Use a link in my email instead',
+  signInPasswordLabel: 'Password',
+  signInSubmit: 'Sign in',
+  signInInvalidEmail: "That doesn't look like an email address.",
+  signInFailed: "Signing in didn't work. Try again later.",
+  signOut: 'Sign out',
+
+  // Onboarding
+  onboardingNext: 'Continue',
+  onboardingNameTitle: 'What should we call you?',
+  onboardingNameLabel: 'Your name',
+  onboardingHourTitle: 'When does it suit you to look back on your day?',
+  onboardingHourExplanation: 'One reminder a day. If you miss it, nothing happens.',
+  onboardingFinish: 'Done',
+
+  // Consent
+  consentTitle: 'What you are agreeing to',
+  consentIntro:
+    'luwte stores health data. That needs your explicit permission, and you can withdraw it later.',
+  consentEssentialLabel: 'Keep an account and your settings',
+  consentEssentialExplanation:
+    'Your name, your language and the hour of your reminder. The app does not work without this.',
+  consentHealthLabel: 'Store what you write about how you feel',
+  consentHealthExplanation:
+    'Mood, energy, sleep, restlessness, medication. This is health data. It is stored in Belgium and nobody sees it unless you choose that.',
+  consentRemindersLabel: 'Send you a reminder',
+  consentRemindersExplanation:
+    'One notification a day, at the hour you chose. You can turn this off later.',
+  consentRequired: 'Needed',
+  consentOptional: 'You may decline',
+  consentAccept: 'Yes, that is fine',
+  consentMissing: 'The first two are needed to continue.',
+  consentWhereToChange: 'You can change this later under Data and privacy.',
 };

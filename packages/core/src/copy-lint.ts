@@ -53,7 +53,15 @@ const RULES: readonly Rule[] = [
   {
     rule: 'never-cheerful',
     detail: 'cheerful phrasing',
-    test: /\b(goed bezig|fantastisch|geweldig|proficiat|gefeliciteerd|knap gedaan|je kan dit|great job|well done|keep it up|awesome|amazing|congrats|congratulations|you got this|nice work)\b/i,
+    test: /\b(goed bezig|fantastisch|geweldig|proficiat|gefeliciteerd|knap gedaan|great job|well done|keep it up|awesome|amazing|congrats|congratulations|you got this|nice work)\b/i,
+  },
+  {
+    rule: 'never-cheerful',
+    detail: 'motivational phrasing',
+    // Only as a complete sentence. "Je kan dit." is a pep talk; "Je kan dit
+    // later uitzetten." is an ordinary sentence about a setting, and the app
+    // needs to be able to say the second one.
+    test: /\bje kan dit\b(?=\s*[.!?]|\s*$)/i,
   },
   {
     rule: 'never-compare',
