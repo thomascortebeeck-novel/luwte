@@ -14,6 +14,7 @@ import {
   isInviteUsable,
   permissionKeys,
 } from './circle';
+import { isPrescribed } from './medication';
 
 describe('permissions', () => {
   it('starts a supporter on feed and calendar only', () => {
@@ -113,6 +114,31 @@ describe('inviteCode', () => {
 
   it('refuses to produce a short code when the bytes run out', () => {
     expect(() => inviteCode(bytes(0, 1, 2))).toThrow(/random bytes/);
+  });
+});
+
+describe('who owns a medication line', () => {
+  const line = {
+    name: 'Quetiapine',
+    dose: '200 mg',
+    times: ['08:00'],
+    purpose: '',
+    activeFrom: new Date('2026-01-01T00:00:00Z'),
+    activeTo: null,
+  };
+
+  it('treats a line the person wrote themselves as their own', () => {
+    expect(isPrescribed({ ...line, prescribedBy: null })).toBe(false);
+  });
+
+  it('treats a line a clinician took over as prescribed', () => {
+    expect(isPrescribed({ ...line, prescribedBy: 'uid-doctor' })).toBe(true);
+  });
+
+  it('does not treat an empty string as a prescriber', () => {
+    // A blank uid would read as prescribed and lock the person out of their
+    // own entry, with nobody able to edit it.
+    expect(isPrescribed({ ...line, prescribedBy: '' })).toBe(false);
   });
 });
 

@@ -15,6 +15,10 @@ vi.mock('../providers/AuthProvider', () => ({
   useAuth: () => ({ user: { uid: 'uid-jonas' }, status: 'signed-in' }),
 }));
 
+vi.mock('../providers/AccountProvider', () => ({
+  useAccount: () => ({ patient: { displayName: 'Jonas', onboarded: true }, status: 'ready' }),
+}));
+
 const renderInvite = () =>
   render(
     <LocaleProvider initialLocale="nl">
@@ -62,6 +66,7 @@ describe('Invite', () => {
     expect(createInvite).toHaveBeenCalledWith('uid-jonas', {
       role: 'supporter',
       relation: '',
+      patientName: 'Jonas',
       permissions: {
         checkins: true,
         medication: false,

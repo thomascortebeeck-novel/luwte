@@ -11,6 +11,7 @@ import { Button, Choice, Field, Hairline, Screen } from '@luwte/ui';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { createInvite } from '../firebase/circle';
+import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
 import { useLocale } from '../providers/LocaleProvider';
 import styles from './Circle.module.css';
@@ -25,6 +26,7 @@ import styles from './Circle.module.css';
 export function Invite() {
   const { t } = useLocale();
   const { user } = useAuth();
+  const { patient } = useAccount();
   const navigate = useNavigate();
 
   const [role, setRole] = useState<CircleRole>('supporter');
@@ -48,7 +50,15 @@ export function Invite() {
     if (!user) return;
     setBusy(true);
     try {
-      const invite = await createInvite(user.uid, { role, permissions, relation: relation.trim() });
+      const invite = await createInvite(user.uid, {
+        role,
+        permissions,
+        relation: relation.trim(),
+        // Carried so the circle entry can name the patient. A member cannot
+        // read `patients/{pid}`, and widening that to show one name would
+        // also hand over reminder hours and notification settings.
+        patientName: patient?.displayName ?? '',
+      });
       setLink(inviteLink(window.location.origin, invite.code));
     } finally {
       setBusy(false);

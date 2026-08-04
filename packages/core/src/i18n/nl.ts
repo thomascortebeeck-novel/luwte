@@ -167,6 +167,7 @@ export const nl = {
   medicationSave: 'Bewaren',
   medicationTaken: 'Genomen',
   medicationHistory: 'Wat er veranderde',
+  medicationByClinician: 'Dit zette je zorgverlener klaar.',
 
   // Optional practices — offered, never tracked
   practicesTitle: 'Als je zin hebt',
@@ -236,4 +237,20 @@ export const nl = {
   joinSignIn: 'Meld je eerst aan. Daarna kan je dit aannemen.',
   joinDone: 'Klaar. Je hebt nu toegang.',
   joinUnusable: 'Deze link werkt niet meer. Vraag er een nieuwe.',
+
+  // De console van de zorgverlener
+  consoleTitle: 'Wie je opvolgt',
+  consoleEmpty: 'Nog niemand heeft je toegang gegeven.',
+  consoleOpen: 'Bekijken',
+  consoleNoName: 'Zonder naam',
+  consoleCaveat:
+    'Dit is wat deze persoon zelf opschreef. Het zijn geen metingen en geen conclusies.',
+  consoleNothingShared: 'Deze persoon deelt hier niets van.',
+  consoleMedicationTitle: 'Wat je voorschrijft',
+  consoleMedicationOwn: 'Deze regel schreef de persoon zelf op.',
+  consoleMedicationMine: 'Deze regel staat op jouw naam.',
+  consoleTakeOver: 'Overnemen',
+  consoleSaveChange: 'Wijziging bewaren',
+  consoleChangeLog: 'Wat er veranderde',
+  consoleBackToOwn: 'Naar je eigen luwte',
 } as const satisfies Record<string, string>;

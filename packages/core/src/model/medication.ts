@@ -36,7 +36,22 @@ export const medicationSchema = z.object({
   purpose: z.string().max(300).default(''),
   activeFrom: z.date(),
   activeTo: z.date().nullable().optional(),
+  /**
+   * PRD 5.3 and 6.7 — who owns this entry. Null while it is the patient's own
+   * note of what they take; a verified clinician's uid once they have taken
+   * it over, after which the patient may no longer edit it.
+   *
+   * The patient can never set this. Otherwise they could author provenance,
+   * and a line saying a doctor prescribed something would not be worth
+   * reading. The rules enforce that; this field only records it.
+   */
+  prescribedBy: z.string().nullable().default(null),
 });
+
+/** Whether this entry is a clinical decision rather than a personal note. */
+export function isPrescribed(medication: Pick<Medication, 'prescribedBy'>): boolean {
+  return typeof medication.prescribedBy === 'string' && medication.prescribedBy.length > 0;
+}
 
 export type Medication = z.infer<typeof medicationSchema>;
 

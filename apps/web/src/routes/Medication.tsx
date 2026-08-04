@@ -1,4 +1,4 @@
-import { doseTimeSchema, type Medication as MedicationModel } from '@luwte/core';
+import { doseTimeSchema, isPrescribed, type Medication as MedicationModel } from '@luwte/core';
 import { Button, Field, Hairline, Screen } from '@luwte/ui';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -129,6 +129,13 @@ export function Medication() {
               <span className={styles.times}>{medication.times.join(' · ')}</span>
               {medication.purpose ? (
                 <span className={styles.purpose}>{medication.purpose}</span>
+              ) : null}
+              {/* Since the console landed, this list can hold lines the person
+                  cannot change. Saying who set them is the difference between
+                  a rule that reads as care and one that reads as being
+                  locked out of your own record. */}
+              {isPrescribed(medication) ? (
+                <span className={styles.purpose}>{t('medicationByClinician')}</span>
               ) : null}
               <Hairline />
             </li>

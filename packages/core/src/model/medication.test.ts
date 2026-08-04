@@ -19,6 +19,7 @@ const valid: Medication = {
   purpose: 'Om je gedachten rustiger te maken.',
   activeFrom: new Date('2026-01-01T00:00:00Z'),
   activeTo: null,
+  prescribedBy: null,
 };
 
 describe('doseTimeSchema', () => {

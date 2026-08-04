@@ -10,6 +10,7 @@ import {
 } from '@luwte/core';
 import {
   collection,
+  collectionGroup,
   doc,
   getDoc,
   getDocs,
@@ -96,15 +97,21 @@ export async function readInviteByCode(code: string): Promise<InviteRecord | nul
 
 export async function createInvite(
   uid: string,
-  values: { role: CircleRole; permissions: Permissions; relation: string },
+  values: { role: CircleRole; permissions: Permissions; relation: string; patientName: string },
 ): Promise<InviteRecord> {
   const code = inviteCode(crypto.getRandomValues(new Uint8Array(32)));
   const now = new Date();
-  const invite: Invite & { relation: string } = {
+  /*
+   * `patientName` rides along so the circle entry can carry it. A member is
+   * not allowed to read `patients/{pid}`, and widening that rule to show one
+   * name would also hand over reminder hours and notification settings.
+   */
+  const invite: Invite & { relation: string; patientName: string } = {
     patientId: uid,
     role: values.role,
     permissions: values.permissions,
     relation: values.relation,
+    patientName: values.patientName,
     createdAt: now,
     expiresAt: inviteExpiry(now),
     usedBy: null,
@@ -154,6 +161,41 @@ export async function restoreMember(uid: string, memberUid: string): Promise<voi
   await updateDoc(doc(db, paths.circleMember(uid, memberUid)), { revokedAt: null });
 }
 
+export type Membership = {
+  patientId: string;
+  patientName: string;
+  role: CircleRole;
+  permissions: Permissions;
+};
+
+/**
+ * The patients who granted this person access — the console's whole list.
+ *
+ * A collection group query over every circle in the database, filtered to
+ * this person's own cards. The filter is what makes it legal: the rule is
+ * evaluated per returned document, so a query that could reach somebody
+ * else's card is refused rather than trimmed.
+ */
+export async function readMemberships(uid: string): Promise<Membership[]> {
+  const snapshot = await getDocs(
+    query(collectionGroup(db, 'circle'), where('memberUid', '==', uid)),
+  );
+
+  return snapshot.docs
+    .map((document) => {
+      const data = document.data();
+      return {
+        patientId: (data.patientId ?? document.ref.parent.parent?.id ?? '') as string,
+        patientName: (data.patientName ?? '') as string,
+        role: (data.role ?? 'supporter') as CircleRole,
+        permissions: { ...DEFAULT_PERMISSIONS, ...((data.permissions ?? {}) as Permissions) },
+        revokedAt: toDate(data.revokedAt),
+      };
+    })
+    .filter((entry) => entry.revokedAt === null && entry.patientId !== '')
+    .map(({ revokedAt: _revokedAt, ...membership }) => membership);
+}
+
 export type RedeemOutcome = 'joined' | 'unusable';
 
 /**
@@ -185,6 +227,12 @@ export async function redeemInvite(code: string, uid: string): Promise<RedeemOut
       role: invite.role,
       permissions: invite.permissions,
       relation: (snapshot.data().relation ?? '') as string,
+      // Both exist only so the console can list patients without reading
+      // their documents. The rules refuse a memberUid that disagrees with
+      // the document id.
+      memberUid: uid,
+      patientId: invite.patientId,
+      patientName: (snapshot.data().patientName ?? '') as string,
       grantedAt: new Date(),
       revokedAt: null,
     });

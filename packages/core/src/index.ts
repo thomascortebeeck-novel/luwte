@@ -81,6 +81,7 @@ export {
   diffMedication,
   doseId,
   doseStatusSchema,
+  isPrescribed,
   doseTimeSchema,
   medicationChangeSchema,
   medicationSchema,

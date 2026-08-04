@@ -163,6 +163,7 @@ export const en: Dictionary = {
   medicationSave: 'Save',
   medicationTaken: 'Taken',
   medicationHistory: 'What changed',
+  medicationByClinician: 'Your care team set this one.',
 
   // Optional practices — offered, never tracked
   practicesTitle: 'If you feel like it',
@@ -232,4 +233,20 @@ export const en: Dictionary = {
   joinSignIn: 'Sign in first. Then you can accept this.',
   joinDone: 'Done. You have access now.',
   joinUnusable: 'This link no longer works. Ask for a new one.',
+
+  // The clinician's console
+  consoleTitle: 'The people you follow',
+  consoleEmpty: 'Nobody has given you access yet.',
+  consoleOpen: 'Open',
+  consoleNoName: 'No name given',
+  consoleCaveat:
+    'This is what this person wrote down themselves. It is not a measurement and not a conclusion.',
+  consoleNothingShared: 'This person does not share any of this.',
+  consoleMedicationTitle: 'What you prescribe',
+  consoleMedicationOwn: 'This line is the person’s own note.',
+  consoleMedicationMine: 'This line is in your name.',
+  consoleTakeOver: 'Take this on',
+  consoleSaveChange: 'Save the change',
+  consoleChangeLog: 'What changed',
+  consoleBackToOwn: 'Back to your own luwte',
 };

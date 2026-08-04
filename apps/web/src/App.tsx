@@ -5,6 +5,8 @@ import { CheckIn } from './routes/CheckIn';
 import { Circle } from './routes/Circle';
 import { CircleMember } from './routes/CircleMember';
 import { Consent } from './routes/Consent';
+import { Console } from './routes/Console';
+import { ConsolePatient } from './routes/ConsolePatient';
 import { Crisis } from './routes/Crisis';
 import { Gate } from './routes/Gate';
 import { Insights } from './routes/Insights';
@@ -134,6 +136,26 @@ export function App() {
           element={
             <Gate>
               <CircleMember />
+            </Gate>
+          }
+        />
+
+        {/* PRD 6.7. The gate here is only about what is offered: every read
+            still resolves through the circle, and the rules refuse a
+            medication write from anyone the admin has not verified. */}
+        <Route
+          path="/console"
+          element={
+            <Gate>
+              <Console />
+            </Gate>
+          }
+        />
+        <Route
+          path="/console/:patientId"
+          element={
+            <Gate>
+              <ConsolePatient />
             </Gate>
           }
         />

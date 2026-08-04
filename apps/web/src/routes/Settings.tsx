@@ -10,6 +10,7 @@ import { Button, Choice, Hairline, Screen } from '@luwte/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { saveNotificationSettings, saveReminderHour } from '../firebase/accounts';
+import { isVerifiedClinician } from '../firebase/clinician';
 import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
 import { useLocale } from '../providers/LocaleProvider';
@@ -36,6 +37,12 @@ export function Settings() {
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>(() =>
     typeof Notification === 'undefined' ? 'unsupported' : Notification.permission,
   );
+  const [isClinician, setIsClinician] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    void isVerifiedClinician(user.uid).then(setIsClinician);
+  }, [user]);
 
   useEffect(() => {
     if (patient?.notifications) setSettings(patient.notifications);
@@ -79,6 +86,23 @@ export function Settings() {
           </Button>
         </div>
       </section>
+
+      {/* PRD 6.7 — only offered to someone the admin verified. Not a security
+          boundary: the rules are. This is about not showing a psychiatrist's
+          menu to a person who is not one. */}
+      {isClinician ? (
+        <>
+          <Hairline />
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>{t('consoleTitle')}</h2>
+            <div className={styles.row}>
+              <Button variant="quiet" onClick={() => navigate('/console')}>
+                {t('consoleOpen')}
+              </Button>
+            </div>
+          </section>
+        </>
+      ) : null}
 
       <Hairline />
 

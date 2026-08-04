@@ -33,6 +33,10 @@ export const paths = {
   invites: () => 'invites',
   invite: (code: string) => `invites/${code}`,
 
+  /** PRD 6.7 — written by an admin only. Nothing client-side may create one. */
+  clinicians: () => 'clinicians',
+  clinician: (uid: string) => `clinicians/${uid}`,
+
   doses: (patientId: string) => `patients/${patientId}/doses`,
   /** doseId is `yyyy-MM-dd_medId_HHmm`. */
   dose: (patientId: string, id: string) => `patients/${patientId}/doses/${id}`,

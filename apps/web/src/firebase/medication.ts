@@ -37,6 +37,7 @@ export async function readActiveMedications(uid: string): Promise<MedicationReco
         purpose: data.purpose ?? '',
         activeFrom: data.activeFrom?.toDate?.() ?? new Date(),
         activeTo: null,
+        prescribedBy: (data.prescribedBy ?? null) as string | null,
       };
     })
     .sort((a, b) => (a.times[0] ?? '').localeCompare(b.times[0] ?? ''));
@@ -44,11 +45,18 @@ export async function readActiveMedications(uid: string): Promise<MedicationReco
 
 export async function createMedication(
   uid: string,
-  values: Omit<Medication, 'activeFrom' | 'activeTo'>,
+  values: Omit<Medication, 'activeFrom' | 'activeTo' | 'prescribedBy'>,
+  /**
+   * The clinician's uid when a verified clinician is writing, null when the
+   * patient is keeping their own list. The rules refuse any other pairing:
+   * a patient may not set it, and a clinician may not set it to someone else.
+   */
+  prescribedBy: string | null = null,
 ): Promise<void> {
   const id = doc(collection(db, paths.medications(uid))).id;
   await setDoc(doc(db, paths.medication(uid, id)), {
     ...values,
+    prescribedBy,
     activeFrom: serverTimestamp(),
     activeTo: null,
     // PRD 6.6 — the log exists from the first write, not from whenever a
@@ -68,12 +76,17 @@ export async function updateMedication(
   before: Partial<Medication>,
   after: Partial<Medication>,
   by: string,
+  /** Set when a clinician is editing, so the entry becomes theirs. */
+  prescribedBy?: string,
 ): Promise<void> {
   const changes = diffMedication(before, after, by, new Date());
-  if (changes.length === 0) return;
+  if (changes.length === 0 && prescribedBy === undefined) return;
 
   await updateDoc(doc(db, paths.medication(uid, medId)), {
     ...after,
+    ...(prescribedBy === undefined ? {} : { prescribedBy }),
+    // arrayUnion, never a replacement: the rules refuse a log that shrinks,
+    // because shortening it would erase a dose change that happened.
     changeLog: arrayUnion(...changes),
   });
 }

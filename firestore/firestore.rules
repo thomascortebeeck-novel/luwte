@@ -52,6 +52,62 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/invites/$(code)).data;
     }
 
+    /*
+     * PRD 6.7 — "checked manually at first". Verification is an out-of-band
+     * admin act: a document in `clinicians/` that nobody may write from a
+     * client. If it could be claimed in-band, "verified clinician" would mean
+     * nothing, and a patient could anoint anyone — including themselves — as
+     * the person who decides what they are prescribed.
+     *
+     * A document rather than a custom claim, because Auth is deliberately
+     * kept to an email and auth machinery only (PRD 5.5 option 1), and
+     * because a claim needs a token refresh before it takes effect.
+     */
+    function isVerifiedClinician() {
+      return signedIn()
+             && exists(/databases/$(database)/documents/clinicians/$(request.auth.uid));
+    }
+
+    /**
+     * Allowed to write what this patient is prescribed. Three conditions, and
+     * removing any one of them opens a hole:
+     *
+     *   verified   — the admin checked they are a clinician at all
+     *   granted    — this patient gave them the medication permission
+     *   role       — this patient meant them as a clinician, not a supporter
+     *
+     * Being a doctor somewhere is not the same as being *this* person's
+     * doctor, and the patient's word is what settles it.
+     */
+    function isPrescriber(pid) {
+      return isVerifiedClinician()
+             && granted(pid, 'medication')
+             && circleDoc(pid).role == 'clinician';
+    }
+
+    /*
+     * The change log is what draws the vertical rules on the chart, and PRD
+     * 6.6 calls those "the entire clinical value of the product". Shortening
+     * it would erase a dose change that actually happened, so nobody may —
+     * not the patient, not the clinician who wrote it.
+     */
+    /*
+     * `memberUid` exists only so a clinician can find their patients with a
+     * collection group query, which cannot filter on the document id. It is
+     * therefore allowed to be absent, but never allowed to disagree with the
+     * id — a card claiming to belong to someone else would put its patient in
+     * that person's list without them ever being invited.
+     */
+    function honestMemberUid(memberUid) {
+      return !('memberUid' in request.resource.data)
+             || request.resource.data.memberUid == memberUid;
+    }
+
+    function logOnlyGrows() {
+      return request.resource.data.get('changeLog', []).size()
+             >= resource.data.get('changeLog', []).size();
+    }
+
     /**
      * A proposed circle entry is redeemable only if it matches an invite this
      * patient issued, exactly. Any deviation in role or permissions is a
@@ -110,14 +166,36 @@ service cloud.firestore {
       }
 
       /*
-       * PRD 5.3 — medication is the one thing a verified clinician may write
-       * once the console exists (Phase 7). Until then it is the patient's own
-       * list, and the changeLog is appended from the very first edit so the
-       * chart has something to mark.
+       * PRD 5.3 and 6.7 — *what you are prescribed* is a clinical decision.
+       *
+       * A verified clinician the patient invited owns this list. The patient
+       * keeps writing entries themselves — which is the only way the list can
+       * exist before the psychiatrist has an account — but an entry a
+       * clinician has taken over is no longer theirs to edit.
+       *
+       * `prescribedBy` carries that ownership, so the patient may never set
+       * it: otherwise they could author provenance, and a line saying "your
+       * doctor prescribed this" would not be worth reading.
+       *
+       * The counterpart is in `doses/` below and the line between them is the
+       * one that must never blur: whether you took it is your own record, and
+       * nobody writes it for you — not even the person who prescribed it.
        */
       match /medications/{medId} {
         allow read: if canRead(patientId, 'medication');
-        allow create, update: if isSelf(patientId);
+
+        allow create: if (isSelf(patientId)
+                          && request.resource.data.get('prescribedBy', null) == null)
+                      || (isPrescriber(patientId)
+                          && request.resource.data.prescribedBy == request.auth.uid);
+
+        allow update: if logOnlyGrows()
+                      && ((isSelf(patientId)
+                           && resource.data.get('prescribedBy', null) == null
+                           && request.resource.data.get('prescribedBy', null) == null)
+                          || (isPrescriber(patientId)
+                              && request.resource.data.prescribedBy == request.auth.uid));
+
         // Deleting a medication would erase the history of taking it.
         // Stopping one sets activeTo instead.
         allow delete: if false;
@@ -176,12 +254,13 @@ service cloud.firestore {
          * relies on the client's transaction. Worth revisiting if invites are
          * ever more than a family handing each other a link.
          */
-        allow create: if isSelf(patientId)
-                      || (isSelf(memberUid)
-                          && request.resource.data.revokedAt == null
-                          && redeemable(patientId, request.resource.data));
+        allow create: if honestMemberUid(memberUid)
+                      && (isSelf(patientId)
+                          || (isSelf(memberUid)
+                              && request.resource.data.revokedAt == null
+                              && redeemable(patientId, request.resource.data)));
 
-        allow update: if isSelf(patientId);
+        allow update: if isSelf(patientId) && honestMemberUid(memberUid);
         allow delete: if false;
       }
 
@@ -240,6 +319,40 @@ service cloud.firestore {
             && request.resource.data.expiresAt == resource.data.expiresAt);
 
       allow delete: if isSelf(resource.data.patientId);
+    }
+
+    /*
+     * PRD 6.7 — verified clinicians, checked manually by an admin.
+     *
+     * Readable by yourself so the console can tell you which side of the gate
+     * you are on. Writable by nobody: verification is granted out of band,
+     * with the admin SDK, and that is the whole point of it.
+     */
+    match /clinicians/{uid} {
+      allow read: if isSelf(uid);
+      allow write: if false;
+    }
+
+    /*
+     * How a clinician finds the patients who granted them access, without a
+     * server: a collection group query over every circle, filtered to their
+     * own entry.
+     *
+     * The filter is not a convenience — the rule is evaluated per returned
+     * document, so a query that could return somebody else's card is refused
+     * outright rather than quietly trimmed.
+     *
+     * It has to be a field rather than `isSelf(memberUid)`, which is what you
+     * would write first: **inside a collection group match the document-id
+     * wildcard is null**, and touching it fails the whole rule with a null
+     * value error. `resource.data` is available; the path segments after
+     * `{path=**}` are not. So `memberUid` duplicates the document id, and the
+     * circle rules above refuse a write where the two disagree — otherwise
+     * anyone could put a clinician's uid on their own card and appear in that
+     * clinician's patient list uninvited.
+     */
+    match /{path=**}/circle/{memberUid} {
+      allow list: if signedIn() && resource.data.memberUid == request.auth.uid;
     }
 
     match /{document=**} {

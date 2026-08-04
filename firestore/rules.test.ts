@@ -6,6 +6,7 @@ import {
 } from '@firebase/rules-unit-testing';
 import {
   collection,
+  collectionGroup,
   deleteDoc,
   doc,
   getDoc,
@@ -31,6 +32,8 @@ import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 const PROJECT_ID = 'demo-luwte-rules';
 const JONAS = 'uid-jonas';
 const OTHER = 'uid-someone-else';
+/** A clinician the admin has verified. Only the admin can create this. */
+const DOCTOR = 'uid-doctor';
 
 let testEnv: RulesTestEnvironment;
 
@@ -62,7 +65,36 @@ beforeEach(async () => {
 
 const asJonas = () => testEnv.authenticatedContext(JONAS).firestore();
 const asOther = () => testEnv.authenticatedContext(OTHER).firestore();
+const asDoctor = () => testEnv.authenticatedContext(DOCTOR).firestore();
 const asStranger = () => testEnv.unauthenticatedContext().firestore();
+
+/** The admin marks a clinician verified out of band. Nobody else can. */
+const verifyClinician = (uid: string) =>
+  testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'clinicians', uid), { verifiedAt: new Date() });
+  });
+
+/** The patient puts them in the circle, with medication granted. */
+const seedClinicianCircle = (
+  uid: string,
+  overrides: Record<string, unknown> = {},
+) =>
+  testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'circle', uid), {
+      memberUid: uid,
+      role: 'clinician',
+      permissions: {
+        checkins: true,
+        medication: true,
+        health: false,
+        feed: false,
+        calendar: false,
+      },
+      grantedAt: new Date(),
+      revokedAt: null,
+      ...overrides,
+    });
+  });
 
 describe('users/{uid}', () => {
   it('lets a person create and read their own document', async () => {
@@ -295,6 +327,271 @@ describe('patients/{patientId}/medications', () => {
     await assertSucceeds(
       updateDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1'), {
         activeTo: new Date(),
+      }),
+    );
+  });
+});
+
+/**
+ * PRD 5.3 and 6.7 — medication ownership moves to the clinician.
+ *
+ * The line that must never blur runs through this block: *what you are
+ * prescribed* is a clinical decision and a verified clinician owns it, while
+ * *whether you took it* is the patient's own record and nobody may write it
+ * for them. The doses block below is the other half of the same sentence.
+ */
+describe('medication ownership', () => {
+  const medication = {
+    name: 'Quetiapine',
+    dose: '200 mg',
+    times: ['08:00', '20:00'],
+    purpose: 'Om je gedachten rustiger te maken.',
+    activeFrom: new Date(),
+    activeTo: null,
+    changeLog: [],
+    prescribedBy: null,
+  };
+
+  const seedMedication = (overrides: Record<string, unknown> = {}) =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'medications', 'med1'), {
+        ...medication,
+        ...overrides,
+      });
+    });
+
+  const asDoctorWriting = () => doc(asDoctor(), 'patients', JONAS, 'medications', 'med1');
+
+  it('lets a verified clinician the patient invited write the list', async () => {
+    await verifyClinician(DOCTOR);
+    await seedClinicianCircle(DOCTOR);
+    await assertSucceeds(setDoc(asDoctorWriting(), { ...medication, prescribedBy: DOCTOR }));
+  });
+
+  /*
+   * Three separate conditions, and removing any one of them opens a hole.
+   * Each of the next three tests removes exactly one.
+   */
+  it('REFUSES a clinician the admin never verified', async () => {
+    await seedClinicianCircle(DOCTOR);
+    await assertFails(setDoc(asDoctorWriting(), { ...medication, prescribedBy: DOCTOR }));
+  });
+
+  it('REFUSES a verified clinician the patient never invited', async () => {
+    await verifyClinician(DOCTOR);
+    await assertFails(setDoc(asDoctorWriting(), { ...medication, prescribedBy: DOCTOR }));
+  });
+
+  it('REFUSES a verified clinician the patient did not grant medication to', async () => {
+    await verifyClinician(DOCTOR);
+    await seedClinicianCircle(DOCTOR, {
+      permissions: {
+        checkins: true,
+        medication: false,
+        health: false,
+        feed: false,
+        calendar: false,
+      },
+    });
+    await assertFails(setDoc(asDoctorWriting(), { ...medication, prescribedBy: DOCTOR }));
+  });
+
+  it('REFUSES a verified clinician whose access was stopped', async () => {
+    await verifyClinician(DOCTOR);
+    await seedClinicianCircle(DOCTOR, { revokedAt: new Date() });
+    await assertFails(setDoc(asDoctorWriting(), { ...medication, prescribedBy: DOCTOR }));
+  });
+
+  it('REFUSES a verified clinician invited only as a supporter', async () => {
+    // The patient chose the word. Being a doctor somewhere is not the same as
+    // being *this* person's doctor.
+    await verifyClinician(DOCTOR);
+    await seedClinicianCircle(DOCTOR, { role: 'supporter' });
+    await assertFails(setDoc(asDoctorWriting(), { ...medication, prescribedBy: DOCTOR }));
+  });
+
+  it('REFUSES a clinician writing the list under another uid', async () => {
+    await verifyClinician(DOCTOR);
+    await seedClinicianCircle(DOCTOR);
+    await assertFails(setDoc(asDoctorWriting(), { ...medication, prescribedBy: OTHER }));
+  });
+
+  it('still lets the patient keep a list of their own', async () => {
+    await assertSucceeds(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med2'), medication),
+    );
+  });
+
+  it('REFUSES the patient claiming a medication was prescribed', async () => {
+    // Otherwise the patient could author provenance, and a list that says
+    // "your doctor prescribed this" would not be trustworthy.
+    await assertFails(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med3'), {
+        ...medication,
+        prescribedBy: DOCTOR,
+      }),
+    );
+  });
+
+  it('REFUSES the patient editing what a clinician prescribed', async () => {
+    await seedMedication({ prescribedBy: DOCTOR });
+    await assertFails(
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1'), { dose: '400 mg' }),
+    );
+  });
+
+  it('REFUSES the patient stopping what a clinician prescribed', async () => {
+    await seedMedication({ prescribedBy: DOCTOR });
+    await assertFails(
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1'), { activeTo: new Date() }),
+    );
+  });
+
+  it('REFUSES the patient taking ownership of their own entry away from a clinician', async () => {
+    await seedMedication({ prescribedBy: DOCTOR });
+    await assertFails(
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1'), { prescribedBy: null }),
+    );
+  });
+
+  it('lets a clinician take over an entry the patient wrote first', async () => {
+    // The common case: the list exists before the psychiatrist has an account.
+    await verifyClinician(DOCTOR);
+    await seedClinicianCircle(DOCTOR);
+    await seedMedication();
+    await assertSucceeds(
+      updateDoc(doc(asDoctor(), 'patients', JONAS, 'medications', 'med1'), {
+        dose: '300 mg',
+        prescribedBy: DOCTOR,
+        changeLog: [{ at: new Date(), field: 'dose', from: '200 mg', to: '300 mg', by: DOCTOR }],
+      }),
+    );
+  });
+
+  it('REFUSES anyone shortening the change log', async () => {
+    // The log is what draws the vertical rules on the chart. Erasing an entry
+    // would erase a dose change that happened.
+    await verifyClinician(DOCTOR);
+    await seedClinicianCircle(DOCTOR);
+    await seedMedication({
+      prescribedBy: DOCTOR,
+      changeLog: [
+        { at: new Date(), field: 'dose', from: '100 mg', to: '200 mg', by: DOCTOR },
+        { at: new Date(), field: 'times', from: '08:00', to: '08:00, 20:00', by: DOCTOR },
+      ],
+    });
+    await assertFails(
+      updateDoc(doc(asDoctor(), 'patients', JONAS, 'medications', 'med1'), { changeLog: [] }),
+    );
+  });
+
+  /*
+   * The other half of the sentence. Adherence is never recorded on someone
+   * else's behalf, not even by the person who prescribed the medication.
+   */
+  it('REFUSES even a verified prescribing clinician ticking a dose', async () => {
+    await verifyClinician(DOCTOR);
+    await seedClinicianCircle(DOCTOR);
+    await assertFails(
+      setDoc(doc(asDoctor(), 'patients', JONAS, 'doses', '2026-08-04_med1_0800'), {
+        medId: 'med1',
+        status: 'taken',
+        takenAt: new Date(),
+      }),
+    );
+  });
+
+  it('lets that same clinician read whether the dose was taken', async () => {
+    await verifyClinician(DOCTOR);
+    await seedClinicianCircle(DOCTOR);
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'doses', '2026-08-04_med1_0800'), {
+        medId: 'med1',
+        status: 'taken',
+      });
+    });
+    await assertSucceeds(
+      getDoc(doc(asDoctor(), 'patients', JONAS, 'doses', '2026-08-04_med1_0800')),
+    );
+  });
+});
+
+describe('clinicians/{uid}', () => {
+  it('lets a clinician see that they were verified', async () => {
+    await verifyClinician(DOCTOR);
+    await assertSucceeds(getDoc(doc(asDoctor(), 'clinicians', DOCTOR)));
+  });
+
+  it('REFUSES anyone marking themselves verified', async () => {
+    // Verification is an out-of-band admin act, deliberately. If it could be
+    // claimed in-band, "verified clinician" would mean nothing.
+    await assertFails(setDoc(doc(asDoctor(), 'clinicians', DOCTOR), { verifiedAt: new Date() }));
+    await assertFails(setDoc(doc(asJonas(), 'clinicians', JONAS), { verifiedAt: new Date() }));
+  });
+
+  it('REFUSES reading another person’s verification record', async () => {
+    await verifyClinician(DOCTOR);
+    await assertFails(getDoc(doc(asJonas(), 'clinicians', DOCTOR)));
+  });
+});
+
+describe('the patients a clinician may open', () => {
+  it('lets a member list the circles they belong to', async () => {
+    await verifyClinician(DOCTOR);
+    await seedClinicianCircle(DOCTOR);
+    await assertSucceeds(
+      getDocs(query(collectionGroup(asDoctor(), 'circle'), where('memberUid', '==', DOCTOR))),
+    );
+  });
+
+  it('REFUSES listing the circles somebody else belongs to', async () => {
+    await verifyClinician(DOCTOR);
+    await seedClinicianCircle(DOCTOR);
+    await assertFails(
+      getDocs(query(collectionGroup(asOther(), 'circle'), where('memberUid', '==', DOCTOR))),
+    );
+  });
+
+  it('REFUSES an unfiltered sweep of every circle in the database', async () => {
+    await seedClinicianCircle(DOCTOR);
+    await assertFails(getDocs(collectionGroup(asDoctor(), 'circle')));
+  });
+
+  it('REFUSES putting somebody else in your own circle under their uid', async () => {
+    // Otherwise anyone could write a card in their own circle carrying a
+    // clinician's uid, and appear in that clinician's patient list without
+    // ever having invited them.
+    await assertFails(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'circle', OTHER), {
+        memberUid: DOCTOR,
+        role: 'supporter',
+        permissions: {
+          checkins: true,
+          medication: true,
+          health: false,
+          feed: false,
+          calendar: false,
+        },
+        grantedAt: new Date(),
+        revokedAt: null,
+      }),
+    );
+  });
+
+  it('lets the patient write a card that names the right person', async () => {
+    await assertSucceeds(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'circle', OTHER), {
+        memberUid: OTHER,
+        role: 'supporter',
+        permissions: {
+          checkins: false,
+          medication: false,
+          health: false,
+          feed: true,
+          calendar: true,
+        },
+        grantedAt: new Date(),
+        revokedAt: null,
       }),
     );
   });

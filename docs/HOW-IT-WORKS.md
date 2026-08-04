@@ -46,28 +46,41 @@ at any moment.
 
 ## 3. Your question: who controls the medication list?
 
-**Today: the patient does.** They add their own medication — name, dose, what
-times of day, and a plain sentence about what it is for. Nobody else can write
-to it. This is deliberate for now, because the clinician console does not
-exist yet, and a medication list nobody can fill in is useless.
+**Both, and which one is written down.** A line the person added themselves is
+theirs to change. A line their clinician set is the clinician's, and the
+person can see it, tick it off, but not edit it — the app says which is which,
+because "your care team set this one" is care, and silently refusing an edit
+is being locked out of your own record.
 
-**Intended (PRD §5.3 and §6.7): the clinician owns it.** Once the console
-exists, a *verified* clinician who is in the patient's circle edits the
-medication list, and the patient may not overwrite the fields the clinician
-authored. The patient still ticks off whether they actually took each dose —
-that part is always theirs and no one else can record it for them.
+The patient keeps their own list until a clinician arrives, which is the only
+way a list can exist before the psychiatrist has an account. When a clinician
+takes a line on, it becomes theirs.
+
+**A clinician may only write it if all three are true:**
+
+| Condition | Who decides |
+|---|---|
+| They are a verified clinician at all | An admin, checked by hand, out of band |
+| They are in this person's circle, with medication shared | The patient |
+| They were invited *as* a clinician, not as a supporter | The patient |
+
+Being a doctor somewhere is not the same as being *this* person's doctor. The
+patient's word settles it, and they can withdraw it at any moment.
+
+**The patient can never mark a line as prescribed.** Otherwise they could
+write their own provenance, and "your doctor set this" would not be worth
+reading.
 
 **So there are two different things, and they never mix:**
 
 | Thing | Who writes it | Why |
 |---|---|---|
-| *What you are prescribed* | Clinician (patient, for now) | It is a clinical decision |
+| *What you are prescribed* | The clinician who set it | It is a clinical decision |
 | *Whether you took it* | The patient, always | Nobody may record adherence on someone else's behalf |
 
-**This is a gap you should know about.** The rules currently say only the
-patient can write medication. When the console is built, that rule has to
-change to admit verified clinicians, and to protect clinician-authored fields
-from patient edits. It is written down here so it is not discovered late.
+The second row holds without exception. A psychiatrist can see that a dose was
+missed; they cannot tick it. It was tried by hand against a real database and
+refused.
 
 **Every change is logged, from the first day.** Whenever a medication changes
 — dose, timing, stopped — the app records what changed, when, and who did it.
@@ -110,9 +123,11 @@ that already happened.
 ### The clinician
 
 - *I open a patient and see their chart, when medication changed, how much of
-  it was taken, and what they wrote in their own words.* *(Not built yet —
-  this is the next thing being built)*
-- *I update their medication and it appears in their app.* *(Not built yet)*
+  it was taken, and what they wrote in their own words.* → Console
+- *I change a dose, and it appears in their app and as a marked line on the
+  chart, so at the next appointment we can both see what happened after.* →
+  Console
+- *I can see they missed doses. I cannot tick them off for them.*
 
 ---
 
@@ -134,9 +149,16 @@ that already happened.
 | **Circle** | Who has access, what each of them sees, and the way to change or stop it |
 | Invite | Choose what a link will carry, then get the link to send |
 | Join | The other side of that link: what you will see, before you accept |
+| **Console** | For a clinician: the people who gave them access, then one person's chart, diary, adherence and medication |
 | Crisis | Three Belgian phone numbers, tappable, works with no internet |
 
-**Not built yet:** the feed, calendar and suggestions, the clinician console.
+**Not built yet:** the feed, calendar and suggestions.
+
+The console shows the person exactly the same chart the person sees
+themselves — one component, used twice — because at an appointment the two of
+them are looking at one picture, and two implementations would drift until
+they were not. The sentence above the chart is the same in both: *this is not
+a conclusion, this is what you wrote down.*
 
 ### How someone joins
 
@@ -327,8 +349,8 @@ These are not guidelines. Something fails to build if one is broken.
 | Notification preferences, calendar export | Working |
 | Who-sees-what rules | Enforced in the database |
 | Circle screens — invite, permissions, revoke | Working |
-| Clinician console | **Next** |
-| Calendar and activity suggestions | Later |
+| Clinician console, with the medication editor | Working |
+| Calendar and activity suggestions | **Next** |
 | Feed and reactions | Later |
 | Watch and phone data | After the Android app |
 
