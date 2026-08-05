@@ -1921,6 +1921,108 @@ describe('patients/{patientId}/doses', () => {
  * tests that decide whether that sentence is true.
  */
 /**
+ * The early-warning-signs plan.
+ *
+ * Its own permission, because sharing "what I do when it starts going wrong"
+ * is a different decision from sharing how a Tuesday felt.
+ */
+describe('the early-warning-signs plan', () => {
+  const entry = { sign: 'Ik slaap minder dan vijf uur.', action: 'Ik bel mijn zus.' };
+
+  const seedEntry = () =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'plan', 'p1'), entry);
+    });
+
+  const seedMemberWith = (plan: boolean) =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'circle', OTHER), {
+        memberUid: OTHER,
+        role: 'supporter',
+        permissions: {
+          checkins: true,
+          medication: false,
+          doses: false,
+          health: false,
+          feed: true,
+          calendar: true,
+          plan,
+        },
+        grantedAt: new Date(),
+        revokedAt: null,
+      });
+    });
+
+  it('lets the person write their own plan', async () => {
+    await assertSucceeds(setDoc(doc(asJonas(), 'patients', JONAS, 'plan', 'p1'), entry));
+  });
+
+  it('lets the person delete an entry, unlike almost everything else here', async () => {
+    /*
+     * The rest of this database is a record of what happened, and a record
+     * that can vanish is not worth keeping. A plan is a current intention —
+     * a sign that stopped being true is noise in the one document somebody
+     * needs to read quickly on a bad day.
+     */
+    await seedEntry();
+    await assertSucceeds(deleteDoc(doc(asJonas(), 'patients', JONAS, 'plan', 'p1')));
+  });
+
+  it('lets somebody granted it read the plan', async () => {
+    await seedMemberWith(true);
+    await seedEntry();
+    await assertSucceeds(getDoc(doc(asOther(), 'patients', JONAS, 'plan', 'p1')));
+  });
+
+  it('REFUSES somebody granted check-ins but not the plan', async () => {
+    // Its own permission, not a rider on another one.
+    await seedMemberWith(false);
+    await seedEntry();
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'plan', 'p1')));
+  });
+
+  it('REFUSES a member writing into somebody else’s plan', async () => {
+    // It is the person's own words about their own patterns. Somebody else
+    // adding a sign would be telling them what to watch for in themselves.
+    await seedMemberWith(true);
+    await assertFails(setDoc(doc(asOther(), 'patients', JONAS, 'plan', 'p2'), entry));
+  });
+
+  it('REFUSES a member deleting from it', async () => {
+    await seedMemberWith(true);
+    await seedEntry();
+    await assertFails(deleteDoc(doc(asOther(), 'patients', JONAS, 'plan', 'p1')));
+  });
+
+  it('REFUSES a revoked member who had been granted it', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'circle', OTHER), {
+        memberUid: OTHER,
+        role: 'supporter',
+        permissions: {
+          checkins: true,
+          medication: false,
+          doses: false,
+          health: false,
+          feed: true,
+          calendar: true,
+          plan: true,
+        },
+        grantedAt: new Date(),
+        revokedAt: new Date(),
+      });
+    });
+    await seedEntry();
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'plan', 'p1')));
+  });
+
+  it('REFUSES a stranger entirely', async () => {
+    await seedEntry();
+    await assertFails(getDocs(collection(asOther(), 'patients', JONAS, 'plan')));
+  });
+});
+
+/**
  * D29 — the person's own record of who they gave what to.
  *
  * **A record, not a control**, and the tests say so: rules cannot require

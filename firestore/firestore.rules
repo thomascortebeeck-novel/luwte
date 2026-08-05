@@ -440,6 +440,28 @@ service cloud.firestore {
         allow delete: if false;
       }
 
+      /*
+       * The early-warning-signs plan — standard relapse prevention, and
+       * entirely the person's own words about their own patterns.
+       *
+       * Its own permission rather than riding on `checkins`, because sharing
+       * "what I do when it starts going wrong" is a different decision from
+       * sharing how a Tuesday felt. It is deliberately **not** treated as a
+       * clinical key by the screens: the whole point of a plan is that the
+       * people around you know it, so a confirmation screen in front of
+       * sharing it would add friction to the thing that makes it work.
+       *
+       * **Delete is allowed here, unlike almost everywhere else.** The rest of
+       * this database is a record of what happened, and deleting history makes
+       * it untrustworthy. A plan is not history — it is a current intention,
+       * and a sign that has stopped being true is noise in a document somebody
+       * needs to be able to read quickly on a bad day.
+       */
+      match /plan/{entryId} {
+        allow read: if canRead(patientId, 'plan');
+        allow create, update, delete: if isSelf(patientId);
+      }
+
       match /weekly/{weekKey} {
         // The weekly items are check-in data, so they follow that permission.
         allow read: if canRead(patientId, 'checkins');

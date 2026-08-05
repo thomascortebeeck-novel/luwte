@@ -29,6 +29,14 @@ export const permissionKeys = [
   'health',
   'feed',
   'calendar',
+  /*
+   * The early-warning-signs plan. Deliberately **not** a clinical key: the
+   * whole point of a relapse-prevention plan is that the people around you
+   * know it, so putting a confirmation screen in front of sharing it would add
+   * friction to the thing that makes it work. It is still logged like every
+   * other change.
+   */
+  'plan',
 ] as const;
 export type PermissionKey = (typeof permissionKeys)[number];
 
@@ -45,6 +53,8 @@ export const permissionsSchema = z.object({
   health: z.boolean(),
   feed: z.boolean(),
   calendar: z.boolean(),
+  /* Defaulted for the same reason `doses` is: cards written before it exists. */
+  plan: z.boolean().default(false),
 });
 
 export type Permissions = z.infer<typeof permissionsSchema>;
@@ -86,6 +96,7 @@ export const DEFAULT_PERMISSIONS: Permissions = {
   health: false,
   feed: true,
   calendar: true,
+  plan: false,
 };
 
 /**
@@ -100,6 +111,7 @@ export const DEFAULT_CLINICIAN_PERMISSIONS: Permissions = {
   health: false,
   feed: false,
   calendar: false,
+  plan: false,
 };
 
 export const circleMemberSchema = z.object({
@@ -131,6 +143,7 @@ export const PERMISSION_COPY: readonly PermissionCopy[] = [
   { key: 'health', sentenceKey: 'permHealth' },
   { key: 'feed', sentenceKey: 'permFeed' },
   { key: 'calendar', sentenceKey: 'permCalendar' },
+  { key: 'plan', sentenceKey: 'permPlan' },
 ];
 
 /**
@@ -174,6 +187,7 @@ export const PERMISSION_GRANT: Record<PermissionKey, CopyKey> = {
   health: 'grantHealth',
   feed: 'grantFeed',
   calendar: 'grantCalendar',
+  plan: 'grantPlan',
 };
 
 /**

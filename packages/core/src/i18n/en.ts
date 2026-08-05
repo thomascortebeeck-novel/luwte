@@ -163,6 +163,26 @@ export const en: Dictionary = {
   grantHealth: 'What the watch reported',
   grantFeed: 'What gets shared',
   grantCalendar: 'The calendar',
+  grantPlan: 'What gets done when things get harder',
+
+  // The plan — own words, own list. luwte never checks anything against it.
+  planTitle: 'When things get harder',
+  planLink: 'When things get harder',
+  planIntro:
+    'What do you notice first when things start going downhill, and what do you do then? Your own words. luwte does not check anything against this.',
+  planEmpty: 'You have nothing here yet.',
+  planSign: 'What do you notice?',
+  planAction: 'What do you do then?',
+  planActionHint: 'You can fill this in later.',
+  planAdd: 'Add something',
+  planSave: 'Save',
+  planRemove: 'Remove',
+  planExamples: 'For example',
+  planExampleSleep: 'I sleep less than five hours, two nights running.',
+  planExampleWithdraw: 'I stop answering the phone.',
+  planExampleThoughts: 'My thoughts move faster than I can follow them.',
+  planExampleMedication: 'I start thinking I do not need my medication any more.',
+  planShared: 'What this person wrote down for when things get harder.',
 
   // Verification — the admin's side
   adminTitle: 'Requests',
@@ -353,6 +373,7 @@ export const en: Dictionary = {
   permHealth: 'Can see what your watch reported.',
   permFeed: 'Can see what you share, and can respond.',
   permCalendar: 'Can see your calendar and suggest something.',
+  permPlan: 'Can read what you do when things get harder.',
 
   // D29 — turning something about medication on is confirmed in words.
   // Turning it off is not: taking access away needs no explanation.

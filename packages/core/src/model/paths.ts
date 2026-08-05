@@ -80,6 +80,10 @@ export const paths = {
    */
   admin: (uid: string) => `admins/${uid}`,
 
+  /** The early-warning-signs plan. The person's own words, in their own list. */
+  plan: (patientId: string) => `patients/${patientId}/plan`,
+  planEntry: (patientId: string, id: string) => `patients/${patientId}/plan/${id}`,
+
   doses: (patientId: string) => `patients/${patientId}/doses`,
   /** doseId is `yyyy-MM-dd_medId_HHmm`. */
   dose: (patientId: string, id: string) => `patients/${patientId}/doses/${id}`,

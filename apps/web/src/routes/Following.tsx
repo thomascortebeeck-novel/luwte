@@ -57,6 +57,14 @@ export function Following() {
                     {t('followingCalendar')}
                   </Button>
                 ) : null}
+                {/* What they wrote for when it goes downhill — the reason a
+                    relapse-prevention plan is worth writing is that the people
+                    around you have read it. */}
+                {person.permissions.plan ? (
+                  <Button variant="quiet" onClick={() => navigate(`/plan/${person.patientId}`)}>
+                    {t('planLink')}
+                  </Button>
+                ) : null}
               </div>
               <Hairline />
             </li>

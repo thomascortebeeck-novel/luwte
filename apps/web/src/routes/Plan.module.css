@@ -1,0 +1,59 @@
+.intro,
+.quiet {
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
+.sectionTitle {
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.list,
+.examples {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: flex-start;
+}
+
+/*
+ * What the person notices, in their own words — so the serif, the same as the
+ * diary. BRAND 3.4: sans is the app talking, serif is what a person wrote.
+ */
+.sign {
+  font-family: var(--font-human);
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  color: var(--text);
+}
+
+/* What they do about it. Also theirs, and quieter, because on a bad day the
+   sign is what you scan for and the answer is what you then read. */
+.action {
+  font-family: var(--font-human);
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  color: var(--text-quiet);
+}
+
+.examples {
+  gap: var(--space-1);
+  font-family: var(--font-human);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+}

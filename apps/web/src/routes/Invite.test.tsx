@@ -89,6 +89,7 @@ describe('Invite', () => {
         health: false,
         feed: true,
         calendar: true,
+        plan: false,
       },
     });
   });

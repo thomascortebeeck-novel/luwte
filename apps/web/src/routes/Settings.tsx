@@ -109,6 +109,19 @@ export function Settings() {
         </div>
       </section>
 
+      {/* The early-warning-signs plan. Here rather than on Today, because it
+          is a thing written once and re-read, not a daily prompt — and a
+          reminder every evening of how relapse starts is not a nudge. */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>{t('planTitle')}</h2>
+        <p className={styles.note}>{t('planIntro')}</p>
+        <div className={styles.row}>
+          <Button variant="quiet" onClick={() => navigate('/plan')}>
+            {t('planLink')}
+          </Button>
+        </div>
+      </section>
+
       {/* Only for someone who actually supports another person, which most
           people using this app do not. */}
       {supports ? (

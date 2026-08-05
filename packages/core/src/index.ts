@@ -185,6 +185,12 @@ export {
 } from './model/patient';
 export { paths } from './model/paths';
 export {
+  PLAN_EXAMPLE_KEYS,
+  hasPlan,
+  planEntrySchema,
+  type PlanEntry,
+} from './model/plan';
+export {
   CHECKIN_STEPS,
   HOPELESSNESS_CRISIS_THRESHOLD,
   SCALE_STEP_KEYS,

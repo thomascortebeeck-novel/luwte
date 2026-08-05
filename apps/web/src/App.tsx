@@ -6,6 +6,7 @@ import { Calendar } from './routes/Calendar';
 import { CheckIn } from './routes/CheckIn';
 import { Grounding } from './routes/Grounding';
 import { PermissionLog } from './routes/PermissionLog';
+import { Plan } from './routes/Plan';
 import { Circle } from './routes/Circle';
 import { CircleMember } from './routes/CircleMember';
 import { Consent } from './routes/Consent';
@@ -208,6 +209,25 @@ export function App() {
           element={
             <Gate>
               <Invite />
+            </Gate>
+          }
+        />
+        {/* The early-warning-signs plan. Their own, or somebody else's if
+            they granted it — the rules refuse the read otherwise, so the
+            second route is navigation and not access. */}
+        <Route
+          path="/plan"
+          element={
+            <Gate>
+              <Plan />
+            </Gate>
+          }
+        />
+        <Route
+          path="/plan/:patientId"
+          element={
+            <Gate>
+              <Plan />
             </Gate>
           }
         />

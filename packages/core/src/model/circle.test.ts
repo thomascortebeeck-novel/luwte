@@ -53,6 +53,7 @@ describe('permissions', () => {
       'health',
       'feed',
       'calendar',
+      'plan',
     ]);
   });
 
@@ -209,6 +210,7 @@ describe('who may be offered what', () => {
         'health',
         'feed',
         'calendar',
+        'plan',
       ]);
     }
   });

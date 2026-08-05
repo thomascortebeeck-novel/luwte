@@ -166,6 +166,26 @@ export const nl = {
   grantHealth: 'Wat het horloge doorgaf',
   grantFeed: 'Wat er gedeeld wordt',
   grantCalendar: 'De agenda',
+  grantPlan: 'Wat er gedaan wordt als het minder gaat',
+
+  // Het plan — eigen woorden, eigen lijst. luwte legt hier nooit iets naast.
+  planTitle: 'Als het minder gaat',
+  planLink: 'Als het minder gaat',
+  planIntro:
+    'Waar merk je zelf het eerst aan dat het minder gaat, en wat doe je dan? Je eigen woorden. luwte kijkt hier niets mee na.',
+  planEmpty: 'Je hebt hier nog niets staan.',
+  planSign: 'Wat merk je?',
+  planAction: 'Wat doe je dan?',
+  planActionHint: 'Mag je later invullen.',
+  planAdd: 'Iets toevoegen',
+  planSave: 'Bewaren',
+  planRemove: 'Weghalen',
+  planExamples: 'Bijvoorbeeld',
+  planExampleSleep: 'Ik slaap minder dan vijf uur, twee nachten na elkaar.',
+  planExampleWithdraw: 'Ik neem de telefoon niet meer op.',
+  planExampleThoughts: 'Mijn gedachten gaan sneller dan ik ze kan volgen.',
+  planExampleMedication: 'Ik denk dat ik mijn medicatie niet meer nodig heb.',
+  planShared: 'Wat deze persoon geschreven heeft voor als het minder gaat.',
 
   // Verification — the admin's side
   adminTitle: 'Aanvragen',
@@ -357,6 +377,7 @@ export const nl = {
   permHealth: 'Kan zien wat je horloge doorgaf.',
   permFeed: 'Kan zien wat je deelt, en kan reageren.',
   permCalendar: 'Kan je agenda zien en iets voorstellen.',
+  permPlan: 'Kan lezen wat je doet als het minder gaat.',
 
   // D29 — iets over medicatie aanzetten wordt in woorden bevestigd. Iets
   // uitzetten niet: wie toegang intrekt hoeft niets uit te leggen.
