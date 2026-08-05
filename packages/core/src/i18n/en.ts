@@ -227,6 +227,14 @@ export const en: Dictionary = {
   consentRemindersLabel: 'Send you a reminder',
   consentRemindersExplanation:
     'One notification a day, at the hour you chose. You can turn this off later.',
+  consentWatchLabel: 'Data from your watch',
+  /*
+   * What is read, where it stays, and what luwte does not do with it. That
+   * last clause is not modesty but the MDR line: luwte may pass a measurement
+   * on and may never draw a conclusion from it.
+   */
+  consentWatchExplanation:
+    'How long you slept and what your resting heart rate was. It stays on your phone until you share it and luwte never says anything about it.',
   consentRequired: 'Needed',
   consentOptional: 'You may decline',
   consentAccept: 'Yes, that is fine',

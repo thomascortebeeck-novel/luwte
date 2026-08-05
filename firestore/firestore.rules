@@ -367,8 +367,38 @@ service cloud.firestore {
         allow read: if canRead(patientId, 'checkins');
         allow create, update: if isSelf(patientId)
                               && request.resource.data.date == dateKey;
-        // Erasing a day would leave a silent hole in the clinical record.
-        // Deletion happens through the GDPR Art. 17 function, which cascades.
+        // Erasing a day would leave a silent hole in the clinical record, so
+        // this opens only during an Art. 17 erasure. See `erasing()`.
+        allow delete: if erasing(patientId);
+      }
+
+      /*
+       * Watch data — sleep and resting heart rate, one document per day.
+       *
+       * **Written by the Android app from Health Connect**, which is an
+       * on-device API: no Garmin agreement, no client secret, no webhook and
+       * no server. The browser cannot reach it and simply never writes here.
+       *
+       * Its own permission, already in `permissionKeys`, because what your
+       * heart did at night is a different disclosure from how a Tuesday felt.
+       * **GDPR Art. 15 is why it is the patient's to grant**: "your doctor can
+       * see your heart rate and you cannot" would be non-compliance rather
+       * than a product decision.
+       *
+       * `date == dateKey` for the same reason as a check-in: it makes a write
+       * that syncs twice idempotent, which matters more here than anywhere
+       * else because an import re-runs over days it has already seen.
+       *
+       * `source` is required. Relaying a device's own measurement, attributed
+       * to that device, is a conduit under MDCG 2019-11; an unattributed
+       * number shown in luwte's own voice is luwte making a measurement claim,
+       * and that is the line this product does not cross.
+       */
+      match /health/{dateKey} {
+        allow read: if canRead(patientId, 'health');
+        allow create, update: if isSelf(patientId)
+                              && request.resource.data.date == dateKey
+                              && request.resource.data.source.app is string;
         allow delete: if erasing(patientId);
       }
 

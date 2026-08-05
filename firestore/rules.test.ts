@@ -2815,6 +2815,95 @@ describe('an invite addressed to one person', () => {
 });
 
 /**
+ * Watch data, arriving from Health Connect through the Android app.
+ *
+ * The patient writes it, because the app runs as them; the circle reads it only
+ * where the patient granted `health`. GDPR Art. 15 is what makes that direction
+ * non-negotiable rather than a preference.
+ */
+describe('patients/{patientId}/health', () => {
+  const reading = {
+    date: '2026-08-04',
+    sleepMinutes: 420,
+    restingHeartRate: 58,
+    source: { app: 'com.garmin.android.apps.connectmobile', device: 'Forerunner 265' },
+    recordedAt: new Date(),
+  };
+
+  const grantHealth = (granted: boolean) =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'circle', OTHER), {
+        memberUid: OTHER,
+        role: 'supporter',
+        permissions: {
+          checkins: false,
+          medication: false,
+          doses: false,
+          health: granted,
+          feed: false,
+          calendar: false,
+        },
+        grantedAt: new Date(),
+        revokedAt: null,
+      });
+    });
+
+  it('lets the person record their own night', async () => {
+    await assertSucceeds(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'health', '2026-08-04'), reading),
+    );
+  });
+
+  it('refuses a reading with no source', async () => {
+    /*
+     * Attribution is what keeps this a conduit. Relaying a device's own
+     * measurement, said to be that device's, is outside the MDR definition
+     * (MDCG 2019-11); an unattributed number in luwte's voice is luwte making
+     * a measurement claim.
+     */
+    const { source: _source, ...unattributed } = reading;
+    await assertFails(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'health', '2026-08-04'), unattributed),
+    );
+  });
+
+  it('refuses a reading filed under the wrong day', async () => {
+    // Same idempotency guard as a check-in, and it matters more here: an
+    // import re-runs over days it has already seen.
+    await assertFails(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'health', '2026-08-05'), reading),
+    );
+  });
+
+  it('lets a member read it when the person granted health', async () => {
+    await grantHealth(true);
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'health', '2026-08-04'), reading);
+    });
+    await assertSucceeds(getDoc(doc(asOther(), 'patients', JONAS, 'health', '2026-08-04')));
+  });
+
+  it('refuses a member who was granted everything except health', async () => {
+    await grantHealth(false);
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'health', '2026-08-04'), reading);
+    });
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'health', '2026-08-04')));
+  });
+
+  it('never lets a member write a reading, however much they were granted', async () => {
+    await grantHealth(true);
+    await assertFails(
+      setDoc(doc(asOther(), 'patients', JONAS, 'health', '2026-08-04'), reading),
+    );
+  });
+
+  it('refuses an unauthenticated reader', async () => {
+    await assertFails(getDoc(doc(asStranger(), 'patients', JONAS, 'health', '2026-08-04')));
+  });
+});
+
+/**
  * GDPR Art. 17.
  *
  * The point of these is the pair: **the same delete is refused before the

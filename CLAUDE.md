@@ -260,7 +260,7 @@ patient and change what is prescribed; the calendar takes suggestions that
 never place themselves; finishing something planned shares it to the circle,
 who can only answer warmly.
 
-**382 unit tests plus 186 security-rules tests.** `pnpm verify` green.
+**563 unit tests plus 245 security-rules tests.** `pnpm verify` green.
 
 The product produces the thing that changes an appointment: a chart with
 medication changes as vertical rules, adherence as a count, and the person's
@@ -285,17 +285,26 @@ Every screen, by who it is for:
 deletion, and the family pilot. Phase 10 is the thirteen features Thomas
 asked for; the plan and its priority order are in
 [docs/superpowers/plans/2026-08-05-phase-10-thirteen-features.md](docs/superpowers/plans/2026-08-05-phase-10-thirteen-features.md).
-**Twelve of the thirteen are built.** Only **feature 11, the watch data**, is
-not — and it is **not blocked**, which reverses what this file said on
-2026-08-05. See "Watch data comes through the phone, not through Garmin" below.
+**All thirteen now have their data layer.** Feature 11, the watch data, was
+never blocked — see "Watch data comes through the phone, not through Garmin"
+below — and its model, rules, consent item, platform seam and import are built.
+**Only the Android shell that calls them is missing**, and only because no
+Android SDK is installed here.
 
 **Now: Phase 8 — Milestone B.** The plan is
 [docs/superpowers/plans/2026-08-05-phase-8-and-android.md](docs/superpowers/plans/2026-08-05-phase-8-and-android.md),
-which also covers the Android app. Started: the accessibility pass. Still
-open: GDPR export and deletion, the full rules matrix, the error-handling
-sweep, DPIA-lite and retention docs, and the family pilot. **Exit is v1 live,
-and then the PRD's own rule applies — stop, and two months of real use before
-building anything else.**
+which also covers the Android app.
+
+Done: the accessibility pass's **colour half**, **GDPR export and erasure**
+(P8.2), and the paperwork as [docs/GDPR.md](docs/GDPR.md) (P8.5).
+
+Still open: the accessibility pass's **keyboard and screen-reader half**, the
+full rules matrix (P8.3), the error-handling sweep (P8.4), and the family pilot
+(P8.6). **Exit is v1 live, and then the PRD's own rule applies — stop, and two
+months of real use before building anything else.**
+
+**Prod is live and empty on purpose.** Nobody signs in until the pilot, and the
+pilot needed P8.2 to exist first — which it now does.
 
 ### Watch data comes through the phone, not through Garmin
 
@@ -537,6 +546,40 @@ patient's own invites (D17).
 `create` and the document already exists. That is the right fence, but it
 means the patient must be able to restore, or revoking by accident locks
 someone out for good. Hence "weer toelaten" on the member screen (D18).
+
+### Erasure is a separate path, which is why every other refusal survives
+
+GDPR Art. 15 and Art. 17, both **on the device** — the report set that
+precedent (D16) and a Cloud Function would need Blaze to do what the client
+already has permission for. Full reasoning in [docs/GDPR.md](docs/GDPR.md).
+
+This database refuses `delete` nearly everywhere **on purpose**, and those
+refusals are load-bearing: `changeLog` may only grow because it draws the
+vertical rules on the chart a psychiatrist reads. Erasure is not an edit — it
+is the record ceasing to exist — but a rule cannot tell the two apart by
+looking at one delete. So the person writes **`erasureStartedAt`** onto their
+own patient document and `erasing()` is what opens the door. Normal operation
+is untouched.
+
+**`erasing()` requires the patient document to exist.** It briefly did not, on
+the theory that a missing one proved erasure was under way. Ten rules tests
+failed and all were right: **no patient document is the ordinary state before
+onboarding finishes**, so the permissive version switched off delete-protection
+for anybody who had not got that far. Nothing is lost — the patient document is
+removed *after* the subtree it heads, so nothing is ever stranded, and the
+recovery is to re-create it, which `create` already allows.
+
+**`PATIENT_SUBCOLLECTIONS` is enumerated, and a test reads `paths.ts` and fails
+on anything it does not cover.** Same guard as `contrast.test.ts`, with a worse
+failure mode: there it costs an unreadable label, here it costs health data
+outliving somebody's request to erase it, with nothing on either side to show
+it. It earned its keep the day it was written, failing within a minute of
+`health` being added to paths.
+
+Two conflicts are decided rather than left implicit, and both are written down:
+a supporter's **comment goes with the post** it hangs on, and a **decided**
+verification request is **kept** under Art. 17(3)(e), so a clinician erasing
+their account leaves that one document behind.
 
 ### Medication ownership — settled
 
@@ -800,6 +843,8 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-05 | **The watch-data layer, without a line of Android.** Model, rules, consent item, the platform seam and the import — everything that has to be right regardless of transport. **A night belongs to the day you wake up**, tested across both DST transitions, because keying it to the day you fell asleep prefills the wrong check-in and does so invisibly. Split sessions are summed; several resting readings take the **lowest, never an average**, since averaging in a reading taken on the stairs reports a number that never happened and this product may relay a measurement and never manufacture one. `source` is required by the schema *and* the rules: relaying a device's own result, attributed to it, is a conduit under MDCG 2019-11, and an unattributed number in luwte's voice is luwte making a measurement claim. Its **own consent item** — agreeing to keep a logbook is not agreeing to let an app read what your watch recorded while you slept — so `CONSENT_VERSION` moved to `2026-08-05`. The seam (`health/bridge.ts`) is three methods and the browser implementation reports itself **unavailable**, with `read` throwing rather than returning empty: empty would mean "the watch recorded nothing", which is a claim about somebody's night. Only sleep and resting heart rate are read, asserted by a test — steps invite the self-scoring BRAND refuses, and every type added is another Play justification. **The Android shell is deliberately not scaffolded**: no SDK on this machine, and a hundred generated files nobody can build is worse than none. 23 more unit tests (563), 7 more rules tests (245). |
+| 2026-08-05 | **GDPR export and erasure, both on the device** (P8.2), plus [docs/GDPR.md](docs/GDPR.md). The problem worth recording: this database refuses `delete` nearly everywhere **on purpose**, and a rule cannot tell an erasure from somebody deleting one inconvenient day. So `erasureStartedAt` goes on the patient document first and `erasing()` is what opens the door — normal operation keeps every refusal it had. **The order is the design**: invites, then the circle, then content, so a teardown interrupted by a flat battery leaves the person with their own data and nobody else's access to it rather than the reverse. Two conflicts decided out loud: a supporter's comment **goes with the post** it hangs on, and a *decided* verification request is **kept** under Art. 17(3)(e) — so a clinician erasing their account leaves that one document behind, which the docs say rather than bury. **`erasing()` was first written to also permit deletes when the patient document is missing**, reasoning that its absence proved erasure was under way; ten existing rules tests failed and every one was right, because no patient document is the ordinary state before onboarding finishes — that version quietly switched off delete-protection for anyone who had not got that far. The `users/{uid}` test asserting deletion was refused "because deletion must cascade" was **rewritten rather than deleted**: that cascade was a Cloud Function the project had already decided against, so Art. 17 was unimplementable and nobody had noticed. `PATIENT_SUBCOLLECTIONS` is enumerated with a guard that reads `paths.ts` — and it **earned its keep the same day**, failing within a minute of `health` being added. 23 more unit tests, 18 more rules tests. |
 | 2026-08-05 | **The production project was not deployable, and "not hosted" understated it.** The hosting *site* existed and nothing else did: **no web app**, so no `VITE_FIREBASE_*` config at all; **Firestore API not even enabled**, so no database; and on GitHub **neither environment existed and not one secret was set**. A prod deploy would have failed at the first step — or, with secrets but no web app, *succeeded* and served the blank white screen this file warns about. Now: web app registered, Firestore in **`eur3` with delete protection** (the location is permanent, so it was taken from PRD §4 rather than chosen), both GitHub environments created, config secrets set per environment, and email plus passwordless link confirmed on prod. **CI authenticates by Workload Identity Federation, so no key exists anywhere** — chosen over a service account JSON because a permanent credential to a project holding one family's health records is a thing nobody remembers to rotate. Two clauses carry it: `assertion.repository` pins the trust to this repo, without which a provider trusts *every* workflow on GitHub, and `assertion.environment == 'production'` means the prod identity can only be assumed by a run somebody already approved — the standing rule enforced by Google IAM rather than by memory. The deployer holds hosting, rules and index roles and **no datastore role**, so a compromised run could serve a bad build and still not read a check-in. Verified by deploying rules and indexes to dev, which compiled and released cleanly. New guard in the workflow: the built bundle's project id must match the project being deployed, so a `production` environment holding dev's secrets fails in CI instead of serving a bundle that talks to `luwte-dev` from the prod domain. Written down in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). **Prod is deliberately live and empty** — P8.2 does not exist yet, and Art. 15 and Art. 17 are not optional for Art. 9 records. |
 | 2026-08-05 | **Phase 8 opened with the accessibility pass, and it found a second failure immediately.** `contrast.test.ts` said "these are the pairs actually rendered today" — an instruction followed for the pairs somebody thought about and missed for the ones nobody did, which is how a light-mode failure shipped from Phase 5 to August. It now **enumerates**: every token × both surfaces × both themes, plus a guard that reads every stylesheet and fails on any colour it does not cover. The guard was proved by adding a fake token and watching it fail. The enumeration then caught `--line` at 1.18–1.33:1 doing the job of a control edge — field borders, the unticked dose ring, unselected scale dots, progress pips — where 1.4.11 asks 3:1. New `--edge` token, sixteen declarations moved, and `--line` keeps only the decoration. Same shape as the `--self-text` fix: a new token, never a relaxed floor. |
 | 2026-08-05 | **Reactions became icons** — heart, applause, a sparkle for "trots" — with the word kept as the accessible name. Not a star and not a medal: a star is the rating glyph and a medal is a badge, and an icon can smuggle in gamification where the copy never would. The clap took three attempts, and the first two were only rejected by rendering them at 150px and looking: anatomy does not survive 24px. **And fewer commas** — 25 strings, plus a copy-lint rule refusing `, en` and `, of` in Dutch so it stays fixed. Narrow on purpose: `Mis je ze, dan gebeurt er niets` and every list keep theirs. |

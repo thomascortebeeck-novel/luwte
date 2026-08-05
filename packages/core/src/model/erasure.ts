@@ -40,6 +40,13 @@ export const PATIENT_SUBCOLLECTIONS = [
   'weekly',
   'medications',
   'doses',
+  /*
+   * Added the day the guard above earned its keep. `health` was written into
+   * `paths.ts` and this test failed within the minute — watch data, the most
+   * sensitive thing in the schema, would otherwise have survived erasure with
+   * nothing on either side to show it.
+   */
+  'health',
   'activities',
   'completions',
   'posts',

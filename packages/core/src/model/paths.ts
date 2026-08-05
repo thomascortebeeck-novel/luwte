@@ -84,6 +84,14 @@ export const paths = {
   plan: (patientId: string) => `patients/${patientId}/plan`,
   planEntry: (patientId: string, id: string) => `patients/${patientId}/plan/${id}`,
 
+  /**
+   * Watch data, one document per day, keyed like a check-in. Written by the
+   * Android app from Health Connect; the browser cannot reach that API and
+   * simply never writes here.
+   */
+  health: (patientId: string) => `patients/${patientId}/health`,
+  healthDay: (patientId: string, dateKey: string) => `patients/${patientId}/health/${dateKey}`,
+
   doses: (patientId: string) => `patients/${patientId}/doses`,
   /** doseId is `yyyy-MM-dd_medId_HHmm`. */
   dose: (patientId: string, id: string) => `patients/${patientId}/doses/${id}`,

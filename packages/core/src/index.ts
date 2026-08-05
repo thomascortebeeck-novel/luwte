@@ -191,6 +191,22 @@ export {
 } from './model/patient';
 export { paths } from './model/paths';
 export {
+  CHARTS_RESTING_HEART_RATE_BY_DEFAULT,
+  HEALTH_CONNECT_TYPES,
+  buildHealthDays,
+  formatSleep,
+  healthDaySchema,
+  healthSourceSchema,
+  sleepDateKey,
+  sleepHoursFromMinutes,
+  totalSleepMinutes,
+  type HealthConnectType,
+  type HealthDay,
+  type HealthSource,
+  type RawRestingHeartRate,
+  type RawSleepSession,
+} from './model/health';
+export {
   COMMENTS_DIE_WITH_THE_POST,
   ERASURE_ORDER,
   EXPORT_SECTIONS,

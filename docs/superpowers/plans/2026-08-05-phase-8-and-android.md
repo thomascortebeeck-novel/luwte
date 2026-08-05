@@ -1,5 +1,17 @@
 # luwte — Phase 8, the Android app, and the Garmin question
 
+> **Status, 2026-08-05.** P8.1 (colour half), **P8.2 GDPR export and erasure**,
+> and P8.5 (the paperwork, as [docs/GDPR.md](../../GDPR.md)) are built. The
+> **watch-data layer is built too** — model, security rules, consent item, the
+> platform bridge and the import — so the only thing left for section 3(d) is
+> the Android shell that calls it. What remains: P8.1's keyboard and screen
+> reader half, P8.3 the rules matrix, P8.4 the error sweep, P8.6 the pilot, and
+> Phase A (a) to (c).
+>
+> **The Android shell is not scaffolded**, because no Android SDK is installed
+> on this machine and committing a hundred generated files nobody can build or
+> run is worse than not having them. See "What the Android step still needs".
+
 **Written 2026-08-05**, after Phase 10 closed with twelve of thirteen features
 built. Three questions, in the order they change the work:
 
@@ -225,6 +237,41 @@ Worth testing explicitly: the link arriving for somebody with **no account**,
 which is the case the whole flow was designed around.
 
 ---
+
+## What the Android step still needs
+
+The data layer is done and it is the half that had to be right. Everything
+below is shell work, and none of it can change the decisions already taken.
+
+**Built and tested, on this machine, with no Android involved:**
+
+| | Where |
+|---|---|
+| `HealthDay` schema, sleep and resting heart rate, `source` required | `packages/core/src/model/health.ts` |
+| A night belongs to the day you **wake up**, across both DST transitions | `sleepDateKey`, tested |
+| Split sessions summed; lowest resting reading, never an average | `totalSleepMinutes`, `buildHealthDays` |
+| `patients/{pid}/health/{dateKey}`, own permission, patient-write-only | `firestore.rules`, 7 rules tests |
+| Its own consent item, `CONSENT_VERSION` bumped | `model/consent.ts` |
+| The platform seam, with a browser no-op that reports itself unavailable | `apps/web/src/health/bridge.ts` |
+| Import and read-back, idempotent by date key | `apps/web/src/firebase/health.ts` |
+
+**Still needed, and it needs an Android SDK:**
+
+1. `pnpm add -w @capacitor/core @capacitor/cli @capacitor/android`, a
+   `capacitor.config.ts` pointing `webDir` at `apps/web/dist`, then
+   `npx cap add android`.
+2. A Health Connect plugin, and **choosing it is a real decision, not a
+   default** — it will read Article 9 data on a device belonging to somebody
+   with a psychosis history. Read the source before adding it. The interface it
+   has to satisfy is already written and is three methods long.
+3. `setHealthBridge()` called once from the Capacitor entry point. Nothing else
+   in the app changes: every caller already handles unavailable, because that
+   is what the browser reports.
+4. The Play health declaration, with a per-data-type justification for
+   `SleepSession` and `RestingHeartRate` — and no others, which is why the list
+   is a tested constant rather than a comment.
+5. **On a real device with a real watch:** whether Garmin populates HRV. The
+   sources disagree, so it is not designed around either way.
 
 ## Order
 

@@ -230,6 +230,14 @@ export const nl = {
   consentRemindersLabel: 'Je een herinnering sturen',
   consentRemindersExplanation:
     'Eén melding per dag op het uur dat jij koos. Je kan dit later uitzetten.',
+  consentWatchLabel: 'Gegevens van je horloge',
+  /*
+   * Wat er gelezen wordt, waar het blijft en wat luwte er niet mee doet. Die
+   * laatste zin is geen bescheidenheid maar de MDR-lijn: luwte mag een
+   * meting doorgeven en er nooit zelf iets uit besluiten.
+   */
+  consentWatchExplanation:
+    'Hoe lang je sliep en wat je hartslag in rust was. Dat blijft op je telefoon tot jij het deelt en luwte zegt er nooit iets over.',
   consentRequired: 'Nodig',
   consentOptional: 'Mag je weigeren',
   consentAccept: 'Ja, dat mag',
