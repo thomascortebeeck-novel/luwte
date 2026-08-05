@@ -199,7 +199,7 @@ BRAND warning was about the second. So, per datum:
 |---|---|---|---|
 | **Sleep duration** | shown plainly | under `health` | grantable, off by default |
 | **Resting heart rate, HRV** | **stored, not charted by default** — switchable on in settings | under `health` | grantable, off by default |
-| **ECG, rhythm, any alert** | never collected at all | — | — |
+| **ECG result, rhythm, Garmin's own alerts** | stored, off by default, switchable on | under `health` | **never offered** |
 
 The middle row is the whole of it. A resting rate of 96 shown unprompted to an
 anxious person starts a spiral, and a normal one shown to somebody genuinely
@@ -214,12 +214,56 @@ both.
 as a permission, already reads *"Kan zien wat je horloge doorgaf"*, and already
 resolves through the circle. What is new is the ingestion tier, not the rules.
 
-**Still refused, and not on taste:** no ECG, and no relapse predictor. Under EU
-MDR it is *intended purpose* that makes software a medical device. "You may be
-relapsing" is clinical monitoring and "this rhythm looks abnormal" is
-diagnosis; either pulls luwte out of the wellness exemption into Class IIa with
-a notified body. Collect the data, show it in context to a clinician, and let
-the clinician be the one who concludes something.
+### ECG, rhythm and alerts — the line is not where I first drew it
+
+Thomas asked for these too, and on a second look **"never touch ECG" was too
+broad.** The distinction that matters is not *which* data, it is **who draws
+the conclusion**.
+
+Under EU MDR what makes software a medical device is its *intended purpose*,
+and MDCG 2019-11 is explicit that software performing **storage, archival,
+communication or simple search, without modifying the data**, is not medical
+device software. Garmin's ECG feature is itself a regulated, CE-marked device
+that produces an already-interpreted result — "sinus rhythm", "atrial
+fibrillation". luwte receiving that result and showing it verbatim is a
+conduit. luwte *deciding* something about a waveform is not.
+
+So:
+
+| luwte does this | Verdict |
+|---|---|
+| Stores Garmin's ECG result and shows it unchanged, attributed to Garmin | conduit — carry it |
+| Relays an alert **Garmin generated** | conduit — carry it |
+| Generates its own alert from heart-rate or HRV data | **medical device, Class IIa** |
+| Says "your rhythm looks abnormal" in its own voice | **medical device, Class IIa** |
+| Says "you may be relapsing" | **medical device, Class IIa** — clinical monitoring |
+
+**The rule to hold, and the one to write on the wall: luwte may carry a
+conclusion somebody else is licensed to draw, and may never draw one.** Every
+cardiac item is shown attributed — *Garmin, 14 augustus* — never in luwte's
+own voice, because the attribution is what keeps it a conduit.
+
+Two consequences worth stating plainly.
+
+**It is never offered to a supporter**, unlike the other health items. A
+family member reading "atrial fibrillation" about somebody they love, with no
+way to interpret it and no clinician in the room, is the harm BRAND named,
+arriving through a third party's words instead of ours.
+
+**And it stays off by default for the person too.** A CE-marked interpretation
+is not the same as an uninterpreted number, so the BRAND objection is weaker
+here than for a raw resting rate — but "AFib detected" landing on somebody
+mid-episode is still a real harm, and the point of the default is that they
+meet it when they have chosen to, not when the app decides.
+
+**Unchanged and still refused: a relapse predictor.** That is luwte drawing the
+conclusion, which is the one thing the table above forbids — and it is also the
+line the product's own principle draws. A logbook and a nudge, not a doctor.
+
+**To confirm at application time:** whether the Health API exposes ECG at all.
+It certainly carries heart rate, HRV, sleep, stress and respiration; ECG may
+sit behind a different agreement or not be available to partners. Worth asking
+Garmin directly rather than designing around an assumption.
 
 ---
 
