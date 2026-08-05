@@ -191,6 +191,21 @@ export {
 } from './model/patient';
 export { paths } from './model/paths';
 export {
+  COMMENTS_DIE_WITH_THE_POST,
+  ERASURE_ORDER,
+  EXPORT_SECTIONS,
+  EXPORT_VERSION,
+  PATIENT_SUBCOLLECTIONS,
+  POST_SUBCOLLECTIONS,
+  buildExport,
+  erasureStillPermitted,
+  exportEnvelopeSchema,
+  exportFilename,
+  type ExportEnvelope,
+  type ExportSection,
+  type PatientSubcollection,
+} from './model/erasure';
+export {
   PLAN_EXAMPLE_KEYS,
   hasPlan,
   planEntrySchema,

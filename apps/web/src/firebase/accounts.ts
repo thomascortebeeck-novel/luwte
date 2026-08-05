@@ -64,6 +64,9 @@ export async function readPatient(uid: string): Promise<PatientRecord | null> {
     timezone: data.timezone ?? DEFAULT_TIMEZONE,
     onboarded: data.onboarded === true,
     createdAt: data.createdAt?.toDate?.() ?? null,
+    // Absent on every account written before Art. 17 erasure existed, which
+    // reads correctly as "this person is not erasing themselves".
+    erasureStartedAt: data.erasureStartedAt?.toDate?.() ?? null,
     notifications: { ...DEFAULT_NOTIFICATION_SETTINGS, ...(data.notifications ?? {}) },
     share: { ...DEFAULT_SHARE_SETTINGS, ...(data.share ?? {}) },
   };

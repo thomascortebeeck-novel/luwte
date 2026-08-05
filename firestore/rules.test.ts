@@ -140,11 +140,29 @@ describe('users/{uid}', () => {
     await assertFails(getDoc(doc(asStranger(), 'users', JONAS)));
   });
 
-  it('refuses client-side deletion, because deletion must cascade', async () => {
+  it('lets a person delete their own account document', async () => {
+    /*
+     * This test previously asserted the opposite, "because deletion must
+     * cascade" through a GDPR Cloud Function. **That function was never going
+     * to exist**: erasure runs on the device like the printable report (D16),
+     * so a rule waiting for a server was waiting for something the project had
+     * already decided against, and Article 17 was unimplementable.
+     *
+     * Cascading is answered by ordering instead — this document goes last,
+     * after the subtree it heads. Rewritten rather than deleted, so the
+     * reversal is visible in the diff.
+     */
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(doc(ctx.firestore(), 'users', JONAS), { displayName: 'Jonas' });
     });
-    await assertFails(deleteDoc(doc(asJonas(), 'users', JONAS)));
+    await assertSucceeds(deleteDoc(doc(asJonas(), 'users', JONAS)));
+  });
+
+  it('still refuses to let anybody else delete it', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'users', JONAS), { displayName: 'Jonas' });
+    });
+    await assertFails(deleteDoc(doc(asOther(), 'users', JONAS)));
   });
 });
 
@@ -2793,6 +2811,177 @@ describe('an invite addressed to one person', () => {
         }),
       ),
     );
+  });
+});
+
+/**
+ * GDPR Art. 17.
+ *
+ * The point of these is the pair: **the same delete is refused before the
+ * marker and permitted after it.** That is what makes erasure a separate path
+ * rather than a hole in the refusals the rest of this file exists to enforce.
+ */
+describe('erasure', () => {
+  /** A patient document, with or without the marker down. */
+  const seedPatient = (erasureStartedAt: Date | null = null) =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS), {
+        displayName: 'Jonas',
+        checkinHour: 20,
+        timezone: 'Europe/Brussels',
+        onboarded: true,
+        createdAt: new Date(),
+        erasureStartedAt,
+      });
+    });
+
+  const seed = (path: string[], data: Record<string, unknown> = { any: true }) =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), path[0]!, ...path.slice(1)), data);
+    });
+
+  it('lets a person start erasing themselves', async () => {
+    await seedPatient(null);
+    await assertSucceeds(
+      updateDoc(doc(asJonas(), 'patients', JONAS), { erasureStartedAt: new Date() }),
+    );
+  });
+
+  it('does not let anybody else start it for them', async () => {
+    await seedPatient(null);
+    await assertFails(
+      updateDoc(doc(asOther(), 'patients', JONAS), { erasureStartedAt: new Date() }),
+    );
+  });
+
+  it('refuses to delete a check-in while they are not erasing', async () => {
+    // The invariant the rest of the database depends on: a record of what
+    // happened cannot be quietly shortened one inconvenient day at a time.
+    await seedPatient(null);
+    await seed(['patients', JONAS, 'checkins', '2026-08-05'], { mood: 4 });
+    await assertFails(deleteDoc(doc(asJonas(), 'patients', JONAS, 'checkins', '2026-08-05')));
+  });
+
+  it('permits exactly that delete once erasure has started', async () => {
+    await seedPatient(new Date());
+    await seed(['patients', JONAS, 'checkins', '2026-08-05'], { mood: 4 });
+    await assertSucceeds(deleteDoc(doc(asJonas(), 'patients', JONAS, 'checkins', '2026-08-05')));
+  });
+
+  it('refuses to let a medication line be erased while not erasing', async () => {
+    // changeLog draws the vertical rules on the chart a psychiatrist reads.
+    await seedPatient(null);
+    await seed(['patients', JONAS, 'medications', 'med-1'], { name: 'Abilify' });
+    await assertFails(deleteDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med-1')));
+  });
+
+  it('does not let somebody else delete your data even while you are erasing', async () => {
+    // The marker opens the door for its owner and for nobody else.
+    await seedPatient(new Date());
+    await seed(['patients', JONAS, 'checkins', '2026-08-05'], { mood: 4 });
+    await assertFails(deleteDoc(doc(asOther(), 'patients', JONAS, 'checkins', '2026-08-05')));
+  });
+
+  it('does not let a member in the circle delete anything', async () => {
+    await seedPatient(new Date());
+    await seed(['patients', JONAS, 'circle', OTHER], {
+      memberUid: OTHER,
+      role: 'supporter',
+      permissions: { checkins: true, medication: false, doses: false, health: false, feed: true, calendar: true },
+      grantedAt: new Date(),
+      revokedAt: null,
+    });
+    await seed(['patients', JONAS, 'checkins', '2026-08-05'], { mood: 4 });
+    await assertFails(deleteDoc(doc(asOther(), 'patients', JONAS, 'checkins', '2026-08-05')));
+  });
+
+  it('lets the person cut off the circle during erasure', async () => {
+    await seedPatient(new Date());
+    await seed(['patients', JONAS, 'circle', OTHER], { memberUid: OTHER, revokedAt: null });
+    await assertSucceeds(deleteDoc(doc(asJonas(), 'patients', JONAS, 'circle', OTHER)));
+  });
+
+  it("lets the person remove somebody else's reaction from their own post", async () => {
+    // A reaction is normally the reactor's alone to place or remove. Erasing
+    // the patient takes the post it hangs on, so it goes with it.
+    await seedPatient(new Date());
+    await seed(['patients', JONAS, 'posts', 'post-1'], { kind: 'completion' });
+    await seed(['patients', JONAS, 'posts', 'post-1', 'reactions', OTHER], { type: 'heart' });
+    await assertSucceeds(
+      deleteDoc(doc(asJonas(), 'patients', JONAS, 'posts', 'post-1', 'reactions', OTHER)),
+    );
+  });
+
+  it('keeps the permission log unforgeable while making it erasable', async () => {
+    await seedPatient(new Date());
+    await seed(['patients', JONAS, 'permissionLog', 'entry-1'], { memberUid: OTHER });
+    // Still cannot be rewritten — erasure is not an edit.
+    await assertFails(
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'permissionLog', 'entry-1'), { memberUid: 'x' }),
+    );
+    await assertSucceeds(deleteDoc(doc(asJonas(), 'patients', JONAS, 'permissionLog', 'entry-1')));
+  });
+
+  it('erases the consent record, which is otherwise append-only', async () => {
+    await seedPatient(new Date());
+    await seed(['patients', JONAS, 'consents', '2026-08-04'], validConsent);
+    await assertSucceeds(deleteDoc(doc(asJonas(), 'patients', JONAS, 'consents', '2026-08-04')));
+  });
+
+  it('finishes: the patient document and then the account document', async () => {
+    await seedPatient(new Date());
+    await seed(['users', JONAS], { displayName: 'Jonas' });
+    await assertSucceeds(deleteDoc(doc(asJonas(), 'patients', JONAS)));
+    await assertSucceeds(deleteDoc(doc(asJonas(), 'users', JONAS)));
+  });
+
+  it('refuses deletes when there is no patient document, marker or not', async () => {
+    /*
+     * `erasing()` was briefly written to permit this, reasoning that a missing
+     * patient document proves erasure was under way — the marker lives on it.
+     *
+     * Ten tests in this file failed and all of them were right. **No patient
+     * document is the ordinary state before onboarding finishes**, so that
+     * version quietly switched off delete-protection for anybody who had not
+     * got that far. Kept as a regression, because the reasoning was plausible
+     * enough to write once and would be plausible enough to write again.
+     */
+    await seed(['patients', JONAS, 'checkins', '2026-08-05'], { mood: 4 });
+    await assertFails(deleteDoc(doc(asJonas(), 'patients', JONAS, 'checkins', '2026-08-05')));
+  });
+
+  it('lets somebody in that state recover by re-creating the document', async () => {
+    // The recovery that makes the strict rule safe, and it needs no special
+    // permission: creating your own patient document is always allowed.
+    await seed(['patients', JONAS, 'checkins', '2026-08-05'], { mood: 4 });
+    await assertSucceeds(
+      setDoc(doc(asJonas(), 'patients', JONAS), {
+        displayName: 'Jonas',
+        checkinHour: 20,
+        timezone: 'Europe/Brussels',
+        onboarded: true,
+        createdAt: new Date(),
+        erasureStartedAt: new Date(),
+      }),
+    );
+    await assertSucceeds(deleteDoc(doc(asJonas(), 'patients', JONAS, 'checkins', '2026-08-05')));
+  });
+
+  it('lets somebody withdraw a verification request nobody has decided', async () => {
+    await seed(['clinicianRequests', JONAS], { outcome: null, riziv: '12345678901' });
+    await assertSucceeds(deleteDoc(doc(asJonas(), 'clinicianRequests', JONAS)));
+  });
+
+  it('keeps a decided one, because it records access somebody was granted', async () => {
+    // A deliberate limit on erasure, not an oversight — Art. 17(3)(e). Written
+    // down in docs/GDPR.md and told to anybody it affects.
+    await seed(['clinicianRequests', JONAS], { outcome: 'approved', decidedBy: ADMIN });
+    await assertFails(deleteDoc(doc(asJonas(), 'clinicianRequests', JONAS)));
+  });
+
+  it('does not let one person withdraw another person\'s request', async () => {
+    await seed(['clinicianRequests', DOCTOR], { outcome: null });
+    await assertFails(deleteDoc(doc(asJonas(), 'clinicianRequests', DOCTOR)));
   });
 });
 

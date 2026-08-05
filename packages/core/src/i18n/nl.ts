@@ -266,6 +266,28 @@ export const nl = {
   settingsReminderHour: 'Je herinnering',
   settingsSaved: 'Bewaard.',
 
+  // Wat je opschreef is van jou: meenemen of laten verdwijnen (AVG art. 15 en 17).
+  settingsData: 'Je gegevens',
+  settingsDataIntro: 'Alles wat je opschreef is van jou. Je kan het meenemen of laten verdwijnen.',
+  settingsExport: 'Alles downloaden',
+  settingsExportExplanation:
+    'Eén bestand met alles wat je ooit invulde. Het wordt op je toestel gemaakt en gaat nergens langs.',
+  settingsExporting: 'Bezig met verzamelen.',
+  settingsDelete: 'Alles verwijderen',
+  settingsDeleteExplanation:
+    'Je logboek, je medicatie, je kring en je account. Daarna is er niets meer.',
+  settingsDeleteConfirm: 'Wil je echt alles verwijderen?',
+  settingsDeleteConfirmAction: 'Ja, verwijder alles',
+  settingsDeleteCancel: 'Toch niet',
+  settingsDeleting: 'Bezig met verwijderen.',
+  /*
+   * Firebase weigert het verwijderen van een aanmelding die te lang geleden
+   * is. De gegevens zijn dan al weg, dus dat eerst zeggen — anders lijkt het
+   * alsof er niets gebeurd is.
+   */
+  settingsDeleteSignInAgain:
+    'Je gegevens zijn weg. Meld je opnieuw aan om ook je aanmelding te verwijderen.',
+
   notifyCheckinLabel: 'Je dagelijkse herinnering',
   notifyCheckinExplanation: 'Eén melding op het uur dat jij koos. Mis je ze, dan gebeurt er niets.',
   notifyMedicationLabel: 'Je medicatie',

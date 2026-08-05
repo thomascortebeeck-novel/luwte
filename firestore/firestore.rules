@@ -49,6 +49,48 @@ service cloud.firestore {
     }
 
     /*
+     * GDPR Art. 17, and the reason it needs a marker rather than just a
+     * button.
+     *
+     * This database refuses `delete` nearly everywhere **on purpose**. A dose
+     * log that can be shortened is not a record; `changeLog` may only grow
+     * because it draws the vertical rules on the chart a psychiatrist reads;
+     * a comment cannot be unsaid once it has been read. Those refusals
+     * protect the integrity of a record *while it exists*.
+     *
+     * Erasure is not an edit — it is the record ceasing to exist — but a rule
+     * cannot tell the two apart by looking at one delete. So the person
+     * writes `erasureStartedAt` onto their own patient document first, and
+     * that is what opens the door. Normal operation keeps every refusal it
+     * had; erasure is a deliberate, separate path, and it is visible in the
+     * data rather than only in the screen that offered it.
+     *
+     * **This was briefly written to also permit deletes when the patient
+     * document is missing**, on the theory that an erasure interrupted after
+     * that document is removed would otherwise strand the rest. Ten existing
+     * tests failed and every one of them was right: a missing patient
+     * document is the *normal* state before onboarding finishes, so that
+     * version quietly switched off the delete-protection this whole file
+     * exists to provide, for anybody who had not got that far.
+     *
+     * The interruption it guarded against cannot happen anyway — the patient
+     * document goes **after** the content it heads (`ERASURE_ORDER`), so by
+     * the time it is gone there is nothing left to strand. And if one ever
+     * did occur, the recovery needs no weakening here: the person re-creates
+     * their patient document, which `create` already permits them to do, sets
+     * the marker again, and carries on.
+     *
+     * `exists` before `get` so an absent document is a clean `false` rather
+     * than an evaluation error. Both deny; only one can be reasoned about.
+     */
+    function erasing(pid) {
+      return isSelf(pid)
+             && exists(/databases/$(database)/documents/patients/$(pid))
+             && get(/databases/$(database)/documents/patients/$(pid))
+                  .data.get('erasureStartedAt', null) != null;
+    }
+
+    /*
      * D29 — *what you are prescribed* and *whether you took it* are two
      * permissions, and either can be granted to anybody the person chooses.
      *
@@ -273,14 +315,33 @@ service cloud.firestore {
     // Identity and settings. Nothing clinical lives here.
     match /users/{uid} {
       allow read, create, update: if isSelf(uid);
-      // Account deletion goes through the GDPR Art. 17 Cloud Function, which
-      // cascades. A client-side delete would orphan the subtree.
-      allow delete: if false;
+      /*
+       * GDPR Art. 17, and this comment used to describe a Cloud Function that
+       * does not exist and is not wanted. Erasure runs **on the device**, like
+       * the printable report (D16): a function would need Blaze to do what the
+       * client already has the permissions for, and Article 9 data is better
+       * off not making the trip.
+       *
+       * The orphaning worry was real and is answered by ordering rather than
+       * by a server — this document goes last, after the subtree it heads. See
+       * `ERASURE_ORDER` in core, and `erasing()` above for what happens when
+       * the process dies partway.
+       */
+      allow delete: if isSelf(uid);
     }
 
     match /patients/{patientId} {
       allow read, create, update: if isSelf(patientId);
-      allow delete: if false;
+      /*
+       * Deletable by its owner, and deliberately **not** gated on `erasing()`.
+       *
+       * Gating it would be circular: this document carries the marker the gate
+       * reads, so it could never be the last thing removed. **Ordering is what
+       * makes that safe** — everything under it goes first (`ERASURE_ORDER`),
+       * so by the time this document is deleted the subtree it heads is
+       * already empty and there is nothing left to become unreachable.
+       */
+      allow delete: if isSelf(patientId);
 
       /*
        * GDPR Art. 9 consent log. Append-only by design: a consent record that
@@ -308,7 +369,7 @@ service cloud.firestore {
                               && request.resource.data.date == dateKey;
         // Erasing a day would leave a silent hole in the clinical record.
         // Deletion happens through the GDPR Art. 17 function, which cascades.
-        allow delete: if false;
+        allow delete: if erasing(patientId);
       }
 
       /*
@@ -370,7 +431,7 @@ service cloud.firestore {
 
         // Deleting a medication would erase the history of taking it.
         // Stopping one sets activeTo instead.
-        allow delete: if false;
+        allow delete: if erasing(patientId);
       }
 
       /*
@@ -391,7 +452,7 @@ service cloud.firestore {
          */
         allow read: if canReadDoses(patientId);
         allow create, update: if isSelf(patientId);
-        allow delete: if false;
+        allow delete: if erasing(patientId);
       }
 
       /*
@@ -434,7 +495,7 @@ service cloud.firestore {
         allow update: if isSelf(patientId);
         // Removing something from the day is declining it, which keeps the
         // record of what was offered without putting it on the calendar.
-        allow delete: if false;
+        allow delete: if erasing(patientId);
       }
 
       /*
@@ -450,7 +511,7 @@ service cloud.firestore {
        */
       match /completions/{completionKey} {
         allow read, create, update: if isSelf(patientId);
-        allow delete: if false;
+        allow delete: if erasing(patientId);
       }
 
       /*
@@ -479,7 +540,7 @@ service cloud.firestore {
         // The weekly items are check-in data, so they follow that permission.
         allow read: if canRead(patientId, 'checkins');
         allow create, update: if isSelf(patientId);
-        allow delete: if false;
+        allow delete: if erasing(patientId);
       }
 
       /*
@@ -533,7 +594,7 @@ service cloud.firestore {
         allow update: if isSelf(patientId)
                       && honestMemberUid(memberUid)
                       && careRoleIsVerified(memberUid);
-        allow delete: if false;
+        allow delete: if erasing(patientId);
       }
 
       /*
@@ -553,7 +614,8 @@ service cloud.firestore {
        */
       match /permissionLog/{entryId} {
         allow read, create: if isSelf(patientId);
-        allow update, delete: if false;
+        allow update: if false;
+        allow delete: if erasing(patientId);
       }
 
       /*
@@ -569,7 +631,7 @@ service cloud.firestore {
       match /posts/{postId} {
         allow read: if canRead(patientId, 'feed');
         allow create, update: if isSelf(patientId);
-        allow delete: if false;
+        allow delete: if erasing(patientId);
 
         /*
          * One reaction per person per post, keyed by uid, so reacting twice
@@ -585,7 +647,7 @@ service cloud.firestore {
           allow create, update: if isSelf(memberUid)
                                 && canRead(patientId, 'feed')
                                 && request.resource.data.type in ['heart', 'clap', 'proud'];
-          allow delete: if isSelf(memberUid);
+          allow delete: if isSelf(memberUid) || erasing(patientId);
         }
 
         match /comments/{commentId} {
@@ -621,7 +683,7 @@ service cloud.firestore {
                       && (request.resource.data.grants.get('healthData', false) == true
                           || request.resource.data.grants.get('confidentiality', false) == true);
         allow update: if isSelf(patientId);
-        allow delete: if false;
+        allow delete: if erasing(patientId);
       }
     }
 
@@ -733,9 +795,31 @@ service cloud.firestore {
                         && request.resource.data.decidedBy == null)
                     || (isAdmin() && onlyDecides());
 
-      // A decided request is kept. Who asked to be trusted with somebody
-      // else's clinical record is not a thing this project erases.
-      allow delete: if false;
+      /*
+       * An **undecided** request is the applicant's own data and nothing has
+       * been granted on the strength of it, so Art. 17 applies plainly.
+       *
+       * A **decided** one is kept, and that is a deliberate limit on erasure
+       * rather than an oversight. It records that an admin granted somebody
+       * clinical access to other people's records — the accountability trail
+       * for a decision already acted upon, which Art. 17(3)(e) contemplates.
+       * Erasing it would leave a verified clinician in circles with no record
+       * of who checked them or when.
+       *
+       * Consequence, stated rather than hidden: a clinician who erases their
+       * account leaves this document behind. Anyone whose erasure this
+       * affects is told so, and it is written down in docs/GDPR.md.
+       */
+      /*
+       * `resource != null` and `.get` rather than `resource.data.outcome`,
+       * because a rule that *throws* on a missing document or a missing field
+       * is a rule nobody can reason about. It denies either way, so the bug
+       * would never show as a leak — it would show as somebody unable to
+       * withdraw a request, with an evaluation error and no explanation.
+       */
+      allow delete: if isSelf(uid)
+                    && resource != null
+                    && resource.data.get('outcome', null) == null;
     }
 
     /*

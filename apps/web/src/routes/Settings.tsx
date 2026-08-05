@@ -5,6 +5,7 @@ import {
   checkinReminderCalendarLink,
   dateKey,
   DEFAULT_SHARE_SETTINGS,
+  exportFilename,
   type NotificationSettings,
   type ShareSettings,
 } from '@luwte/core';
@@ -18,6 +19,7 @@ import {
 } from '../firebase/accounts';
 import { readMemberships } from '../firebase/circle';
 import { isVerifiedClinician } from '../firebase/clinician';
+import { eraseEverything, exportEverything } from '../firebase/gdpr';
 import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
 import { useLocale } from '../providers/LocaleProvider';
@@ -43,6 +45,10 @@ export function Settings() {
     patient?.notifications ?? DEFAULT_NOTIFICATION_SETTINGS,
   );
   const [hour, setHour] = useState(patient?.checkinHour ?? 20);
+  /** Art. 15 / Art. 17. One at a time, so neither can be started twice. */
+  const [busy, setBusy] = useState<'export' | 'delete' | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [dataMessage, setDataMessage] = useState<string | null>(null);
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>(() =>
     typeof Notification === 'undefined' ? 'unsupported' : Notification.permission,
   );
@@ -258,6 +264,118 @@ export function Settings() {
             {t(theme === 'dark' ? 'themeLight' : 'themeDark')}
           </Button>
         </div>
+      </section>
+
+      <Hairline />
+
+      {/*
+        GDPR Art. 15 and Art. 17, and both run on this device — the report set
+        that precedent (D16) and Article 9 data is better off not making the
+        trip to a server that would have to exist first.
+
+        Deliberately the last section on the screen and drawn as quietly as
+        everything else. Nothing here is styled as a warning: red is not in
+        this palette, and a person deciding to take their data and go is
+        making an ordinary choice, not a dangerous one. The only friction is
+        the confirmation, because the copy already says weg is weg.
+      */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>{t('settingsData')}</h2>
+        <p className={styles.note}>{t('settingsDataIntro')}</p>
+
+        <div className={styles.items}>
+          <div>
+            <Button
+              variant="quiet"
+              disabled={busy !== null}
+              onClick={() => {
+                if (!user) return;
+                setBusy('export');
+                setDataMessage(null);
+                void exportEverything(user.uid)
+                  .then((payload) => {
+                    const url = URL.createObjectURL(
+                      new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }),
+                    );
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = exportFilename(patient?.displayName ?? 'export', new Date());
+                    link.click();
+                    URL.revokeObjectURL(url);
+                  })
+                  .catch(() => setDataMessage(t('genericError')))
+                  .finally(() => setBusy(null));
+              }}
+            >
+              {busy === 'export' ? t('settingsExporting') : t('settingsExport')}
+            </Button>
+            <p className={styles.note}>{t('settingsExportExplanation')}</p>
+          </div>
+
+          <div>
+            {confirmingDelete ? (
+              <>
+                <p className={styles.note}>{t('settingsDeleteConfirm')}</p>
+                <p className={styles.note}>{t('dataDeletion')}</p>
+                <div className={styles.row}>
+                  <Button
+                    variant="quiet"
+                    disabled={busy !== null}
+                    onClick={() => {
+                      if (!user) return;
+                      setBusy('delete');
+                      setDataMessage(null);
+                      void eraseEverything(user.uid)
+                        .then(() => navigate('/'))
+                        .catch((error: unknown) => {
+                          /*
+                           * The data is already gone by the time this can
+                           * fail — only the sign-in itself is left, and
+                           * Firebase refuses that when the session is old.
+                           * Saying so beats a generic failure that reads as
+                           * "nothing happened".
+                           */
+                          const code = (error as { code?: string })?.code;
+                          setDataMessage(
+                            code === 'auth/requires-recent-login'
+                              ? t('settingsDeleteSignInAgain')
+                              : t('genericError'),
+                          );
+                        })
+                        .finally(() => setBusy(null));
+                    }}
+                  >
+                    {busy === 'delete' ? t('settingsDeleting') : t('settingsDeleteConfirmAction')}
+                  </Button>
+                  <Button
+                    variant="quiet"
+                    disabled={busy !== null}
+                    onClick={() => setConfirmingDelete(false)}
+                  >
+                    {t('settingsDeleteCancel')}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="quiet"
+                  disabled={busy !== null}
+                  onClick={() => setConfirmingDelete(true)}
+                >
+                  {t('settingsDelete')}
+                </Button>
+                <p className={styles.note}>{t('settingsDeleteExplanation')}</p>
+              </>
+            )}
+          </div>
+        </div>
+
+        {dataMessage ? (
+          <p className={styles.note} role="status">
+            {dataMessage}
+          </p>
+        ) : null}
       </section>
     </Screen>
   );

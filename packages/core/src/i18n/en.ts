@@ -262,6 +262,28 @@ export const en: Dictionary = {
   settingsReminderHour: 'Your reminder',
   settingsSaved: 'Saved.',
 
+  // What you wrote down is yours: take it with you or let it go (GDPR 15 and 17).
+  settingsData: 'Your data',
+  settingsDataIntro:
+    'Everything you wrote down is yours. You can take it with you or let it go.',
+  settingsExport: 'Download everything',
+  settingsExportExplanation:
+    'One file with everything you ever filled in. It is made on your device and goes nowhere else.',
+  settingsExporting: 'Collecting.',
+  settingsDelete: 'Delete everything',
+  settingsDeleteExplanation:
+    'Your logbook, your medication, your circle and your account. After that there is nothing left.',
+  settingsDeleteConfirm: 'Do you really want to delete everything?',
+  settingsDeleteConfirmAction: 'Yes, delete everything',
+  settingsDeleteCancel: 'Not now',
+  settingsDeleting: 'Deleting.',
+  /*
+   * Firebase refuses to delete a sign-in that is too old. The data is already
+   * gone by then, so say that first — otherwise it reads as nothing happened.
+   */
+  settingsDeleteSignInAgain:
+    'Your data is gone. Sign in again to remove your sign-in as well.',
+
   notifyCheckinLabel: 'Your daily reminder',
   notifyCheckinExplanation: 'One notification, at the hour you chose. If you miss it, nothing happens.',
   notifyMedicationLabel: 'Your medication',
