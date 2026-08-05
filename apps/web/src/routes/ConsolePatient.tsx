@@ -5,13 +5,14 @@ import {
   isPrescribed,
   type Medication,
 } from '@luwte/core';
-import { Button, Field, Hairline, Screen } from '@luwte/ui';
+import { Button, Field, Hairline, HumanText, Screen } from '@luwte/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { readMemberships, type Membership } from '../firebase/circle';
 import {
   createMedication,
   readActiveMedications,
+  resolvePendingChange,
   updateMedication,
   type MedicationRecord,
 } from '../firebase/medication';
@@ -97,6 +98,12 @@ export function ConsolePatient() {
       times: (medication?.times ?? ['08:00']).join(', '),
       purpose: medication?.purpose ?? '',
     });
+  };
+
+  const resolve = async (medication: MedicationRecord, approve: boolean) => {
+    if (!user) return;
+    await resolvePendingChange(patientId, medication, user.uid, approve);
+    loadMedications();
   };
 
   const save = async () => {
@@ -201,6 +208,34 @@ export function ConsolePatient() {
                           : 'consoleMedicationOwn',
                       )}
                     </span>
+                    {/* What the person asked for, in their own words, with
+                        one tap to make it so. The values are exact, so
+                        approving cannot mistranscribe what they wanted. */}
+                    {medication.pendingChange ? (
+                      <div className={styles.pending}>
+                        <span className={styles.quiet}>{t('consolePendingBy')}</span>
+                        {medication.pendingChange.dose ? (
+                          <span className={styles.name}>
+                            {medication.dose} → {medication.pendingChange.dose}
+                          </span>
+                        ) : null}
+                        {medication.pendingChange.stopping ? (
+                          <span className={styles.name}>{t('medicationStopping')}</span>
+                        ) : null}
+                        {medication.pendingChange.note ? (
+                          <HumanText>{medication.pendingChange.note}</HumanText>
+                        ) : null}
+                        <div className={styles.decide}>
+                          <Button variant="quiet" onClick={() => void resolve(medication, true)}>
+                            {t('consoleApprove')}
+                          </Button>
+                          <Button variant="quiet" onClick={() => void resolve(medication, false)}>
+                            {t('consoleDeclineChange')}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : null}
+
                     <Button variant="quiet" onClick={() => startEditing(medication)}>
                       {t(isPrescribed(medication) ? 'circleChange' : 'consoleTakeOver')}
                     </Button>

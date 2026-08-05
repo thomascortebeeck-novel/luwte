@@ -47,14 +47,35 @@ at any moment.
 ## 3. Your question: who controls the medication list?
 
 **Both, and which one is written down.** A line the person added themselves is
-theirs to change. A line their clinician set is the clinician's, and the
-person can see it, tick it off, but not edit it — the app says which is which,
-because "your care team set this one" is care, and silently refusing an edit
-is being locked out of your own record.
+theirs to change outright. A line their clinician set is the clinician's — and
+the person can still **ask for it to be changed**, in their own words, with
+the exact new dose they want.
+
+The request waits until the clinician approves it. Approving applies exactly
+what was asked and logs it; declining clears the request and changes nothing.
+No refusal message is delivered — the request simply stops being pending, and
+whatever needs saying is said between two people.
+
+**"If a doctor is assigned, they approve" is answered per medication.** A
+doctor is assigned to a prescription, and the app knows which prescriptions
+have one. Nothing the patient can write changes that answer, which is what
+makes it worth relying on.
 
 The patient keeps their own list until a clinician arrives, which is the only
 way a list can exist before the psychiatrist has an account. When a clinician
-takes a line on, it becomes theirs.
+takes a line on, it becomes theirs — and the person keeps the right to ask.
+
+### Only the care team sees medication
+
+Family and friends are **never offered** the medication permission. Not hidden
+behind a condition — absent from the list of things a supporter can be
+granted, and refused by the database even if a permission record somehow says
+otherwise. This was checked by hand: a brother whose card carried medication
+access was still refused both the prescriptions and the doses.
+
+What someone is prescribed is the most diagnostic thing this app holds. A
+permission that cannot be given to the wrong person cannot be given to them on
+a bad day.
 
 **A clinician may only write it if all three are true:**
 
@@ -76,6 +97,7 @@ reading.
 | Thing | Who writes it | Why |
 |---|---|---|
 | *What you are prescribed* | The clinician who set it | It is a clinical decision |
+| *A request to change it* | The patient, always | Being unable to edit is not the same as having no say |
 | *Whether you took it* | The patient, always | Nobody may record adherence on someone else's behalf |
 
 The second row holds without exception. A psychiatrist can see that a dose was
@@ -296,13 +318,13 @@ account is a separate, deliberate act that removes everything at once.
 Every person with access has a card in the patient's circle. That card lists
 five things they may or may not see:
 
-| Toggle | In plain words |
-|---|---|
-| Check-ins | Can see how you felt |
-| Medication | Can see what you take and whether you took it |
-| Health | Can see what your watch reported |
-| Feed | Can see what you share, and can respond |
-| Calendar | Can see your calendar and suggest something |
+| Toggle | In plain words | Offered to |
+|---|---|---|
+| Check-ins | Can see how you felt | Anyone |
+| Medication | Can see what you take and whether you took it | **Care team only** |
+| Health | Can see what your watch reported | Anyone |
+| Feed | Can see what you share, and can respond | Anyone |
+| Calendar | Can see your calendar and suggest something | Anyone |
 
 The permissions screen shows these as sentences, never as toggle names.
 Nobody meaningfully agrees to "checkins: true".

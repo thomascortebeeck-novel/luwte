@@ -1,9 +1,10 @@
 import { doseTimeSchema, isPrescribed, type Medication as MedicationModel } from '@luwte/core';
-import { Button, Field, Hairline, Screen } from '@luwte/ui';
+import { Button, Choice, Field, Hairline, Screen } from '@luwte/ui';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
   createMedication,
+  proposeMedicationChange,
   readActiveMedications,
   type MedicationRecord,
 } from '../firebase/medication';
@@ -31,6 +32,8 @@ export function Medication() {
   const [times, setTimes] = useState('08:00');
   const [purpose, setPurpose] = useState('');
   const [busy, setBusy] = useState(false);
+  const [proposing, setProposing] = useState<MedicationRecord | null>(null);
+  const [proposal, setProposal] = useState({ dose: '', note: '', stopping: false });
 
   const load = () => {
     if (!user) return;
@@ -71,6 +74,63 @@ export function Medication() {
       setBusy(false);
     }
   };
+
+  const sendProposal = async () => {
+    if (!user || !proposing || busy) return;
+    setBusy(true);
+    try {
+      await proposeMedicationChange(user.uid, proposing.id, {
+        ...(proposal.dose.trim() ? { dose: proposal.dose.trim() } : {}),
+        ...(proposal.stopping ? { stopping: true } : {}),
+        ...(proposal.note.trim() ? { note: proposal.note.trim() } : {}),
+      });
+      setProposal({ dose: '', note: '', stopping: false });
+      setProposing(null);
+      load();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (proposing) {
+    const canSend =
+      (proposal.dose.trim().length > 0 || proposal.stopping || proposal.note.trim().length > 0) &&
+      !busy;
+
+    return (
+      <Screen
+        title={proposing.name}
+        action={
+          <>
+            <Button full disabled={!canSend} onClick={() => void sendProposal()}>
+              {t('medicationProposeSend')}
+            </Button>
+            <Button variant="quiet" onClick={() => setProposing(null)}>
+              {t('navBack')}
+            </Button>
+          </>
+        }
+      >
+        <p className={styles.purpose}>{t('medicationProposeIntro')}</p>
+        <Field
+          label={t('medicationDose')}
+          value={proposal.dose}
+          onChange={(e) => setProposal({ ...proposal, dose: e.target.value })}
+        />
+        <Choice
+          label={t('medicationStopping')}
+          checked={proposal.stopping}
+          onChange={(checked) => setProposal({ ...proposal, stopping: checked })}
+        />
+        <Field
+          label={t('medicationProposeNote')}
+          message={t('medicationProposeNoteHint')}
+          value={proposal.note}
+          onChange={(e) => setProposal({ ...proposal, note: e.target.value })}
+        />
+      </Screen>
+    );
+  }
 
   return (
     <Screen
@@ -136,6 +196,19 @@ export function Medication() {
                   locked out of your own record. */}
               {isPrescribed(medication) ? (
                 <span className={styles.purpose}>{t('medicationByClinician')}</span>
+              ) : null}
+
+              {/* A clinician owns this one, so the person can ask but not
+                  change it. Asking is always available — being unable to
+                  edit is not the same as having no say. */}
+              {isPrescribed(medication) ? (
+                medication.pendingChange ? (
+                  <span className={styles.purpose}>{t('medicationProposePending')}</span>
+                ) : (
+                  <Button variant="quiet" onClick={() => setProposing(medication)}>
+                    {t('medicationPropose')}
+                  </Button>
+                )
               ) : null}
               <Hairline />
             </li>

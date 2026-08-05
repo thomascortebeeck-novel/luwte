@@ -39,3 +39,23 @@
   line-height: var(--leading-sm);
   color: var(--text-quiet);
 }
+
+/*
+ * Something the person asked for. BRAND 3.4 — --amber is where another human
+ * has been, and from the clinician's side that is exactly what this is: the
+ * patient reaching into the console. Never used for the app's own voice.
+ */
+.pending {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: flex-start;
+  padding-left: var(--space-2);
+  border-left: 2px solid var(--human);
+}
+
+.decide {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}

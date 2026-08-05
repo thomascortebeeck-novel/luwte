@@ -164,6 +164,20 @@ export const en: Dictionary = {
   medicationTaken: 'Taken',
   medicationHistory: 'What changed',
   medicationByClinician: 'Your care team set this one.',
+  medicationPropose: 'Ask for a change',
+  medicationProposeIntro:
+    'Your care team set this one, so they look at it first. Write down what you would want instead.',
+  medicationProposeNote: 'Why?',
+  medicationProposeNoteHint: 'In your own words. Only your care team reads this.',
+  medicationStopping: 'I would like to stop taking this',
+  medicationProposeSend: 'Send',
+  medicationProposePending: 'You asked for a change. Your care team is looking at it.',
+  medicationOnlyClinician: 'Only your care team sees your medication.',
+
+  consolePendingTitle: 'Changes asked for',
+  consolePendingBy: 'Asked for by the person themselves.',
+  consoleApprove: 'Make the change',
+  consoleDeclineChange: 'Leave it',
 
   // Optional practices — offered, never tracked
   practicesTitle: 'If you feel like it',

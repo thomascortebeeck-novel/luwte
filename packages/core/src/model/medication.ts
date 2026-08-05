@@ -48,9 +48,72 @@ export const medicationSchema = z.object({
   prescribedBy: z.string().nullable().default(null),
 });
 
+/**
+ * PRD 5.3 — medication is the one thing only a clinician may see.
+ *
+ * Family and friends are never offered it. Not because a brother cannot be
+ * trusted, but because what someone is prescribed is the most identifying,
+ * most diagnostic thing this app holds — and a permission that is never
+ * offered cannot be granted by mistake on a bad day.
+ */
+export const CLINICAL_PERMISSION_KEYS = ['medication'] as const;
+
 /** Whether this entry is a clinical decision rather than a personal note. */
 export function isPrescribed(medication: Pick<Medication, 'prescribedBy'>): boolean {
   return typeof medication.prescribedBy === 'string' && medication.prescribedBy.length > 0;
+}
+
+/**
+ * A change the person wants made to something their clinician prescribed.
+ *
+ * They can always ask. What they cannot do is apply it themselves, because
+ * the entry is a clinical decision and somebody made it. The proposal sits
+ * here until that person approves it or does not.
+ *
+ * This is deliberately not a message: it is the exact new values, so
+ * approving is one tap and cannot be mistranscribed.
+ */
+export const pendingChangeSchema = z.object({
+  proposedBy: z.string().min(1),
+  proposedAt: z.date(),
+  name: z.string().min(1).max(120).optional(),
+  dose: z.string().min(1).max(60).optional(),
+  times: z.array(doseTimeSchema).min(1).max(6).optional(),
+  purpose: z.string().max(300).optional(),
+  /** Set when what they are asking for is to stop taking it. */
+  stopping: z.boolean().optional(),
+  /** Their own words about why. Read by a person, never parsed. */
+  note: z.string().max(500).optional(),
+});
+
+export type PendingChange = z.infer<typeof pendingChangeSchema>;
+
+export function hasPendingChange(medication: {
+  pendingChange?: PendingChange | null;
+}): boolean {
+  return medication.pendingChange != null;
+}
+
+/**
+ * Whether this person can just make the change, or has to ask.
+ *
+ * The test is whether a clinician owns this entry — which is what "a doctor
+ * is assigned" means for one medication. Nobody prescribed it, nobody needs
+ * to approve a change to it.
+ */
+export function needsApproval(medication: Pick<Medication, 'prescribedBy'>): boolean {
+  return isPrescribed(medication);
+}
+
+/** The values a proposal would produce, for showing what would change. */
+export function applyPendingChange(change: PendingChange): Partial<Medication> {
+  return {
+    ...(change.name === undefined ? {} : { name: change.name }),
+    ...(change.dose === undefined ? {} : { dose: change.dose }),
+    ...(change.times === undefined ? {} : { times: change.times }),
+    ...(change.purpose === undefined ? {} : { purpose: change.purpose }),
+    ...(change.stopping === true ? { activeTo: new Date() } : {}),
+  };
 }
 
 export type Medication = z.infer<typeof medicationSchema>;

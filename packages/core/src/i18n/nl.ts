@@ -168,6 +168,20 @@ export const nl = {
   medicationTaken: 'Genomen',
   medicationHistory: 'Wat er veranderde',
   medicationByClinician: 'Dit zette je zorgverlener klaar.',
+  medicationPropose: 'Vraag een wijziging',
+  medicationProposeIntro:
+    'Je zorgverlener zette dit klaar, dus die kijkt er eerst naar. Schrijf op wat je anders zou willen.',
+  medicationProposeNote: 'Waarom?',
+  medicationProposeNoteHint: 'In je eigen woorden. Alleen je zorgverlener leest dit.',
+  medicationStopping: 'Ik zou hiermee willen stoppen',
+  medicationProposeSend: 'Versturen',
+  medicationProposePending: 'Je vroeg een wijziging. Je zorgverlener kijkt ernaar.',
+  medicationOnlyClinician: 'Alleen je zorgverlener ziet je medicatie.',
+
+  consolePendingTitle: 'Gevraagde wijzigingen',
+  consolePendingBy: 'Gevraagd door de persoon zelf.',
+  consoleApprove: 'Doorvoeren',
+  consoleDeclineChange: 'Niet doen',
 
   // Optional practices — offered, never tracked
   practicesTitle: 'Als je zin hebt',

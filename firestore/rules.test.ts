@@ -922,6 +922,200 @@ describe('patients/{patientId}/posts', () => {
   });
 });
 
+/*
+ * Medication is a clinician's business and nobody else's, and a change to it
+ * is a clinical decision even when the patient is the one asking for it.
+ */
+describe('who may see and change medication', () => {
+  const medication = {
+    name: 'Quetiapine',
+    dose: '200 mg',
+    times: ['08:00'],
+    purpose: 'Om je gedachten rustiger te maken.',
+    activeFrom: new Date(),
+    activeTo: null,
+    changeLog: [],
+    prescribedBy: null,
+    pendingChange: null,
+  };
+
+  const seedMedication = (overrides: Record<string, unknown> = {}) =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'medications', 'med1'), {
+        ...medication,
+        ...overrides,
+      });
+    });
+
+  const seedMember = (role: string, medicationGranted: boolean) =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'circle', OTHER), {
+        memberUid: OTHER,
+        role,
+        permissions: {
+          checkins: true,
+          medication: medicationGranted,
+          health: false,
+          feed: true,
+          calendar: true,
+        },
+        grantedAt: new Date(),
+        revokedAt: null,
+      });
+    });
+
+  /*
+   * The one the requirement turns on: family and friends never see this,
+   * even if a circle document somehow says they may. The role is checked as
+   * well as the permission, so a supporter card carrying `medication: true`
+   * grants nothing.
+   */
+  it('REFUSES a supporter reading medication even when the card says they may', async () => {
+    await seedMember('supporter', true);
+    await seedMedication();
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'medications', 'med1')));
+  });
+
+  it('REFUSES a supporter reading doses even when the card says they may', async () => {
+    await seedMember('supporter', true);
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'doses', '2026-08-05_med1_0800'), {
+        medId: 'med1',
+        status: 'taken',
+      });
+    });
+    await assertFails(
+      getDoc(doc(asOther(), 'patients', JONAS, 'doses', '2026-08-05_med1_0800')),
+    );
+  });
+
+  it('lets a clinician granted medication read it', async () => {
+    await seedMember('clinician', true);
+    await seedMedication();
+    await assertSucceeds(getDoc(doc(asOther(), 'patients', JONAS, 'medications', 'med1')));
+  });
+
+  it('REFUSES a clinician who was not granted medication', async () => {
+    await seedMember('clinician', false);
+    await seedMedication();
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'medications', 'med1')));
+  });
+
+  it('lets the patient read their own, always', async () => {
+    await seedMedication({ prescribedBy: DOCTOR });
+    await assertSucceeds(getDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1')));
+  });
+
+  /*
+   * No clinician owns this entry, so nobody has to approve a change to it.
+   * "If there is a doctor assigned" is answered by `prescribedBy`.
+   */
+  it('lets the patient change their own entry outright when no clinician owns it', async () => {
+    await seedMedication();
+    await assertSucceeds(
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1'), { dose: '300 mg' }),
+    );
+  });
+
+  it('lets the patient ask for a change to what a clinician prescribed', async () => {
+    await seedMedication({ prescribedBy: DOCTOR });
+    await assertSucceeds(
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1'), {
+        pendingChange: {
+          proposedBy: JONAS,
+          proposedAt: new Date(),
+          dose: '100 mg',
+          note: 'Ik voel me er heel suf van.',
+        },
+      }),
+    );
+  });
+
+  it('REFUSES the patient applying that change themselves', async () => {
+    // The whole point of asking. Proposing and doing are different writes.
+    await seedMedication({ prescribedBy: DOCTOR });
+    await assertFails(
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1'), { dose: '100 mg' }),
+    );
+  });
+
+  it('REFUSES the patient smuggling a change in beside the proposal', async () => {
+    await seedMedication({ prescribedBy: DOCTOR });
+    await assertFails(
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1'), {
+        dose: '100 mg',
+        pendingChange: { proposedBy: JONAS, proposedAt: new Date(), dose: '100 mg' },
+      }),
+    );
+  });
+
+  it('REFUSES a proposal signed with somebody else’s name', async () => {
+    await seedMedication({ prescribedBy: DOCTOR });
+    await assertFails(
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1'), {
+        pendingChange: { proposedBy: DOCTOR, proposedAt: new Date(), dose: '100 mg' },
+      }),
+    );
+  });
+
+  it('lets the prescriber approve, applying the change and clearing it', async () => {
+    await verifyClinician(DOCTOR);
+    await seedClinicianCircle(DOCTOR);
+    await seedMedication({
+      prescribedBy: DOCTOR,
+      pendingChange: { proposedBy: JONAS, proposedAt: new Date(), dose: '100 mg' },
+    });
+    await assertSucceeds(
+      updateDoc(doc(asDoctor(), 'patients', JONAS, 'medications', 'med1'), {
+        dose: '100 mg',
+        prescribedBy: DOCTOR,
+        pendingChange: null,
+        changeLog: [{ at: new Date(), field: 'dose', from: '200 mg', to: '100 mg', by: DOCTOR }],
+      }),
+    );
+  });
+
+  it('lets the prescriber decline by clearing it, changing nothing else', async () => {
+    await verifyClinician(DOCTOR);
+    await seedClinicianCircle(DOCTOR);
+    await seedMedication({
+      prescribedBy: DOCTOR,
+      pendingChange: { proposedBy: JONAS, proposedAt: new Date(), dose: '100 mg' },
+    });
+    await assertSucceeds(
+      updateDoc(doc(asDoctor(), 'patients', JONAS, 'medications', 'med1'), {
+        prescribedBy: DOCTOR,
+        pendingChange: null,
+      }),
+    );
+  });
+
+  it('REFUSES a supporter proposing anything at all', async () => {
+    await seedMember('supporter', true);
+    await seedMedication({ prescribedBy: DOCTOR });
+    await assertFails(
+      updateDoc(doc(asOther(), 'patients', JONAS, 'medications', 'med1'), {
+        pendingChange: { proposedBy: OTHER, proposedAt: new Date(), dose: '100 mg' },
+      }),
+    );
+  });
+
+  it('REFUSES an unverified clinician approving', async () => {
+    await seedClinicianCircle(DOCTOR);
+    await seedMedication({
+      prescribedBy: DOCTOR,
+      pendingChange: { proposedBy: JONAS, proposedAt: new Date(), dose: '100 mg' },
+    });
+    await assertFails(
+      updateDoc(doc(asDoctor(), 'patients', JONAS, 'medications', 'med1'), {
+        dose: '100 mg',
+        prescribedBy: DOCTOR,
+        pendingChange: null,
+      }),
+    );
+  });
+});
+
 describe('clinicians/{uid}', () => {
   it('lets a clinician see that they were verified', async () => {
     await verifyClinician(DOCTOR);

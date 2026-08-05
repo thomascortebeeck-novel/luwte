@@ -13,8 +13,9 @@ import {
   isActive,
   isInviteUsable,
   permissionKeys,
+  permissionsForRole,
 } from './circle';
-import { isPrescribed } from './medication';
+import { applyPendingChange, hasPendingChange, isPrescribed, needsApproval } from './medication';
 
 describe('permissions', () => {
   it('starts a supporter on feed and calendar only', () => {
@@ -139,6 +140,80 @@ describe('who owns a medication line', () => {
     // A blank uid would read as prescribed and lock the person out of their
     // own entry, with nobody able to edit it.
     expect(isPrescribed({ ...line, prescribedBy: '' })).toBe(false);
+  });
+});
+
+describe('who may be offered medication', () => {
+  /*
+   * The rule the whole clinical fence rests on: family and friends are never
+   * shown the toggle. Not hidden conditionally somewhere in a screen —
+   * absent from the list a screen can render.
+   */
+  it('never offers medication to a supporter', () => {
+    expect(permissionsForRole('supporter').map((entry) => entry.key)).toEqual([
+      'checkins',
+      'health',
+      'feed',
+      'calendar',
+    ]);
+  });
+
+  it('offers it to a clinician', () => {
+    expect(permissionsForRole('clinician').map((entry) => entry.key)).toContain('medication');
+  });
+
+  it('leaves every other sentence available to both', () => {
+    const supporter = permissionsForRole('supporter').map((e) => e.key);
+    const clinician = permissionsForRole('clinician').map((e) => e.key);
+    expect(clinician.filter((key) => !supporter.includes(key))).toEqual(['medication']);
+  });
+});
+
+describe('asking for a change to medication', () => {
+  const line = {
+    name: 'Quetiapine',
+    dose: '200 mg',
+    times: ['08:00'],
+    purpose: '',
+    activeFrom: new Date('2026-01-01T00:00:00Z'),
+    activeTo: null,
+  };
+
+  it('needs approval only when a clinician owns it', () => {
+    expect(needsApproval({ ...line, prescribedBy: 'uid-doctor' })).toBe(true);
+    expect(needsApproval({ ...line, prescribedBy: null })).toBe(false);
+  });
+
+  it('turns a proposal into exactly the fields that were asked for', () => {
+    expect(
+      applyPendingChange({ proposedBy: 'uid-jonas', proposedAt: new Date(), dose: '100 mg' }),
+    ).toEqual({ dose: '100 mg' });
+  });
+
+  it('leaves out anything not asked for, so approving changes nothing else', () => {
+    const result = applyPendingChange({
+      proposedBy: 'uid-jonas',
+      proposedAt: new Date(),
+      note: 'Ik voel me er suf van.',
+    });
+    expect(result).toEqual({});
+  });
+
+  it('stops the medication when that is what was asked', () => {
+    const result = applyPendingChange({
+      proposedBy: 'uid-jonas',
+      proposedAt: new Date(),
+      stopping: true,
+    });
+    expect(result.activeTo).toBeInstanceOf(Date);
+  });
+
+  it('knows whether something is waiting', () => {
+    expect(hasPendingChange({ pendingChange: null })).toBe(false);
+    expect(hasPendingChange({})).toBe(false);
+    expect(
+      hasPendingChange({ pendingChange: { proposedBy: 'uid-jonas', proposedAt: new Date() } }),
+    ).toBe(true);
   });
 });
 

@@ -1,8 +1,8 @@
 import {
   DEFAULT_CLINICIAN_PERMISSIONS,
   DEFAULT_PERMISSIONS,
-  PERMISSION_COPY,
   inviteLink,
+  permissionsForRole,
   type CircleRole,
   type PermissionKey,
   type Permissions,
@@ -129,8 +129,12 @@ export function Invite() {
       <Hairline />
 
       <h2 className={styles.sectionTitle}>{t('inviteWhatTheySee')}</h2>
+      {/* Medication is not on this list for family and friends. Not hidden —
+          never offered, and refused by the rules besides. A permission that
+          cannot be granted to the wrong person cannot be granted to them on
+          a bad day. */}
       <div className={styles.items}>
-        {PERMISSION_COPY.map((entry) => (
+        {permissionsForRole(role).map((entry) => (
           <Choice
             key={entry.key}
             label={t(entry.sentenceKey)}

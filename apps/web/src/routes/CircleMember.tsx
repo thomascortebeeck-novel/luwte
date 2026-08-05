@@ -1,4 +1,4 @@
-import { PERMISSION_COPY, isActive, type PermissionKey } from '@luwte/core';
+import { isActive, permissionsForRole, type PermissionKey } from '@luwte/core';
 import { Button, Choice, Field, Hairline, Screen } from '@luwte/ui';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
@@ -91,7 +91,7 @@ export function CircleMember() {
       <h2 className={styles.sectionTitle}>{t('circleWhatTheySee')}</h2>
       {live ? (
         <div className={styles.items}>
-          {PERMISSION_COPY.map((entry) => (
+          {permissionsForRole(member.role).map((entry) => (
             <Choice
               key={entry.key}
               label={t(entry.sentenceKey)}

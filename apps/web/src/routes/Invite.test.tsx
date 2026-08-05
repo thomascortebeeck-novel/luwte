@@ -45,8 +45,25 @@ describe('Invite', () => {
     expect(checkbox('Kan zien wat je deelt, en kan reageren.')).toBeChecked();
     expect(checkbox('Kan je agenda zien en iets voorstellen.')).toBeChecked();
     expect(checkbox('Kan zien hoe je je voelde.')).not.toBeChecked();
-    expect(checkbox('Kan zien wat je neemt en of je het nam.')).not.toBeChecked();
     expect(checkbox('Kan zien wat je horloge doorgaf.')).not.toBeChecked();
+  });
+
+  /*
+   * Family and friends are never offered medication at all. Absent rather
+   * than unticked: a toggle that is not there cannot be turned on by mistake
+   * on a bad day, and the rules refuse the read besides.
+   */
+  it('does not offer medication to family and friends at all', () => {
+    renderInvite();
+    expect(
+      screen.queryByRole('checkbox', { name: 'Kan zien wat je neemt en of je het nam.' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('offers it once the invite is for a clinician', async () => {
+    renderInvite();
+    await userEvent.click(screen.getByRole('radio', { name: 'Zorgverlener' }));
+    expect(checkbox('Kan zien wat je neemt en of je het nam.')).toBeChecked();
   });
 
   it('starts a clinician on the clinical picture and nothing social', async () => {

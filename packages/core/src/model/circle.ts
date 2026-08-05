@@ -81,6 +81,20 @@ export const PERMISSION_COPY: readonly PermissionCopy[] = [
   { key: 'calendar', sentenceKey: 'permCalendar' },
 ];
 
+/**
+ * Which sentences a given role may be offered at all.
+ *
+ * Medication is a clinician's only. A supporter is never shown the toggle,
+ * and the rules refuse the read even if a circle document somehow carries it
+ * — what someone is prescribed is the most diagnostic thing here, and a
+ * permission that is never offered cannot be granted by mistake.
+ */
+export function permissionsForRole(role: CircleRole): readonly PermissionCopy[] {
+  return role === 'clinician'
+    ? PERMISSION_COPY
+    : PERMISSION_COPY.filter((entry) => entry.key !== 'medication');
+}
+
 /** The same mapping, for screens that already know which keys they want. */
 export const PERMISSION_SENTENCE = Object.fromEntries(
   PERMISSION_COPY.map((entry) => [entry.key, entry.sentenceKey]),

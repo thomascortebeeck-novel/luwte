@@ -1,9 +1,11 @@
 import {
+  applyPendingChange,
   diffMedication,
   doseId,
   paths,
   type DoseStatus,
   type Medication,
+  type PendingChange,
 } from '@luwte/core';
 import {
   arrayUnion,
@@ -19,7 +21,27 @@ import {
 } from 'firebase/firestore';
 import { db } from './client';
 
-export type MedicationRecord = Medication & { id: string };
+export type MedicationRecord = Medication & {
+  id: string;
+  pendingChange: PendingChange | null;
+};
+
+const toPendingChange = (value: unknown): PendingChange | null => {
+  if (value == null || typeof value !== 'object') return null;
+  const data = value as Record<string, unknown>;
+  return {
+    proposedBy: (data.proposedBy ?? '') as string,
+    proposedAt:
+      (data.proposedAt as { toDate?: () => Date })?.toDate?.() ??
+      (data.proposedAt instanceof Date ? data.proposedAt : new Date()),
+    ...(data.name === undefined ? {} : { name: data.name as string }),
+    ...(data.dose === undefined ? {} : { dose: data.dose as string }),
+    ...(data.times === undefined ? {} : { times: data.times as string[] }),
+    ...(data.purpose === undefined ? {} : { purpose: data.purpose as string }),
+    ...(data.stopping === undefined ? {} : { stopping: data.stopping as boolean }),
+    ...(data.note === undefined ? {} : { note: data.note as string }),
+  };
+};
 
 export async function readActiveMedications(uid: string): Promise<MedicationRecord[]> {
   const snapshot = await getDocs(
@@ -38,6 +60,7 @@ export async function readActiveMedications(uid: string): Promise<MedicationReco
         activeFrom: data.activeFrom?.toDate?.() ?? new Date(),
         activeTo: null,
         prescribedBy: (data.prescribedBy ?? null) as string | null,
+        pendingChange: toPendingChange(data.pendingChange),
       };
     })
     .sort((a, b) => (a.times[0] ?? '').localeCompare(b.times[0] ?? ''));
@@ -129,6 +152,68 @@ export function setDose(
     { merge: true },
   );
   return id;
+}
+
+/**
+ * The person asking for a change to something their clinician prescribed.
+ *
+ * Only `pendingChange` is written, because that is the only field the rules
+ * will let them touch on a prescribed entry — and that refusal is the point:
+ * asking and doing are different acts, and only one of them is theirs.
+ */
+export async function proposeMedicationChange(
+  uid: string,
+  medId: string,
+  change: Omit<PendingChange, 'proposedBy' | 'proposedAt'>,
+): Promise<void> {
+  await updateDoc(doc(db, paths.medication(uid, medId)), {
+    pendingChange: { ...change, proposedBy: uid, proposedAt: serverTimestamp() },
+  });
+}
+
+/**
+ * The clinician deciding. Approving applies the values the person asked for
+ * and logs the change like any other; declining clears the request and
+ * changes nothing.
+ *
+ * Declining writes no message. The person sees their request is no longer
+ * pending, and whatever needs saying is said between them — the app does not
+ * deliver a refusal.
+ */
+export async function resolvePendingChange(
+  uid: string,
+  medication: MedicationRecord,
+  by: string,
+  approve: boolean,
+): Promise<void> {
+  if (!approve) {
+    await updateDoc(doc(db, paths.medication(uid, medication.id)), {
+      pendingChange: null,
+      prescribedBy: by,
+    });
+    return;
+  }
+
+  const change = medication.pendingChange;
+  if (!change) return;
+
+  const requested = applyPendingChange(change);
+  /*
+   * Merged over the current values before diffing. A proposal carries only
+   * the fields the person asked about, and diffing that against the whole
+   * medication reads every untouched field as having been cleared — which
+   * would write three phantom entries into the log for every approval, and
+   * the log is what draws the vertical rules on the chart.
+   */
+  const after = { ...medication, ...requested };
+  const changes = diffMedication(medication, after, by, new Date());
+
+  await updateDoc(doc(db, paths.medication(uid, medication.id)), {
+    ...requested,
+    prescribedBy: by,
+    pendingChange: null,
+    changeLog: arrayUnion(...changes),
+  });
 }
 
 export async function readMedication(uid: string, medId: string): Promise<Medication | null> {

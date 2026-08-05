@@ -48,6 +48,20 @@ service cloud.firestore {
       return isSelf(pid) || granted(pid, key);
     }
 
+    /*
+     * Medication and doses are a clinician's business and nobody else's.
+     *
+     * Family and friends are never offered the toggle, and the role is
+     * checked here as well — so a supporter card that somehow carries
+     * `medication: true` still grants nothing. What someone is prescribed is
+     * the most diagnostic thing this database holds, and a permission that
+     * cannot be granted to the wrong person cannot leak to them on a bad day.
+     */
+    function canReadClinical(pid) {
+      return isSelf(pid)
+             || (granted(pid, 'medication') && circleDoc(pid).role == 'clinician');
+    }
+
     function inviteData(code) {
       return get(/databases/$(database)/documents/invites/$(code)).data;
     }
@@ -101,6 +115,18 @@ service cloud.firestore {
     function honestMemberUid(memberUid) {
       return !('memberUid' in request.resource.data)
              || request.resource.data.memberUid == memberUid;
+    }
+
+    /*
+     * Asking for a change, as opposed to making one.
+     *
+     * `pendingChange` must be the *only* field that moved — otherwise a
+     * proposal would be a place to hide a real edit — and it must be signed
+     * by the person writing it.
+     */
+    function onlyProposes() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingChange'])
+             && request.resource.data.pendingChange.proposedBy == request.auth.uid;
     }
 
     function logOnlyGrows() {
@@ -182,17 +208,32 @@ service cloud.firestore {
        * nobody writes it for you — not even the person who prescribed it.
        */
       match /medications/{medId} {
-        allow read: if canRead(patientId, 'medication');
+        allow read: if canReadClinical(patientId);
 
         allow create: if (isSelf(patientId)
                           && request.resource.data.get('prescribedBy', null) == null)
                       || (isPrescriber(patientId)
                           && request.resource.data.prescribedBy == request.auth.uid);
 
+        /*
+         * Three ways this entry changes, and which one applies depends on
+         * whether a clinician owns it.
+         *
+         *   nobody prescribed it  → the patient edits it outright
+         *   a clinician did       → the patient may only *ask*
+         *   the prescriber        → applies, declines, edits
+         *
+         * "If there is a doctor assigned, they need to approve" is answered
+         * by `prescribedBy`: a doctor is assigned to a prescription, and
+         * that is a fact already on the document. Rules cannot query the
+         * circle for "is there a clinician somewhere", and a flag saying so
+         * would be written by the patient and therefore worth nothing.
+         */
         allow update: if logOnlyGrows()
                       && ((isSelf(patientId)
                            && resource.data.get('prescribedBy', null) == null
                            && request.resource.data.get('prescribedBy', null) == null)
+                          || (isSelf(patientId) && onlyProposes())
                           || (isPrescriber(patientId)
                               && request.resource.data.prescribedBy == request.auth.uid));
 
@@ -206,7 +247,9 @@ service cloud.firestore {
        * syncing twice records one dose rather than two.
        */
       match /doses/{doseKey} {
-        allow read: if canRead(patientId, 'medication');
+        // Whether you took it is as clinical as what you take. Family and
+        // friends see neither.
+        allow read: if canReadClinical(patientId);
         allow create, update: if isSelf(patientId);
         allow delete: if false;
       }

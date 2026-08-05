@@ -170,6 +170,9 @@ rest when `functions` and `apps/console` make per-package tasks real.
 - **Doses are never shared.** No post, no notification, no trace. `medications`
   and `doses` stay between the person and their clinician; a feed item for
   every pill turns adherence into a performance for the family.
+- **Family and friends never see medication or doses**, whatever a circle
+  document says. The role is checked as well as the permission, and the
+  toggle is never offered to a supporter.
 - **No red, no green-as-good, no traffic-light coding.** There is no bad score.
 - **No bold text.** Weights 400 and 500 only.
 - **`--zeeglas` is the person's own data. `--amber` is where another human has
@@ -190,7 +193,7 @@ changed; the psychiatrist can open a patient and change what is prescribed;
 the calendar takes suggestions that never place themselves; finishing
 something planned shares it to the circle, who can only answer warmly.
 
-**309 unit tests plus 119 security-rules tests.** `pnpm verify` green.
+**319 unit tests plus 133 security-rules tests.** `pnpm verify` green.
 
 The product produces the thing that changes an appointment: a chart with
 medication changes as vertical rules, adherence as a count, and the person's
@@ -317,6 +320,12 @@ someone out for good. Hence "weer toelaten" on the member screen (D18).
 
 ### Medication ownership — settled
 
+**Only the care team sees medication.** `canReadClinical` requires both the
+`medication` permission *and* `role == 'clinician'`, so a supporter card
+carrying `medication: true` grants nothing. `permissionsForRole` never offers
+the toggle to a supporter in the first place. Both halves matter: the UI stops
+it being granted by accident, the rules stop it mattering if it was.
+
 `medications/**` is writable by the patient **and** by a clinician who passes
 all three of: verified by an admin, in this patient's circle with `medication`
 granted, and holding `role == 'clinician'` there. Removing any one of the
@@ -325,6 +334,17 @@ three opens a hole, and there is a test for each.
 `prescribedBy` carries ownership. The patient may never set it — otherwise
 they could author provenance and "your doctor set this" would mean nothing —
 and once it is set, only that clinician edits the line.
+
+**The patient can always ask.** On a prescribed entry they may write
+`pendingChange` and nothing else — `onlyProposes()` requires it to be the sole
+changed key, so a request cannot hide a real edit. The prescriber applies or
+clears it.
+
+That is how "if a doctor is assigned, they approve" is enforced: **the answer
+is `prescribedBy`**, which is already on the document. Rules cannot query the
+circle for "is there a clinician somewhere", and a flag on the patient
+document saying so would be written by the patient and therefore worth
+nothing.
 
 **The line that must never blur:** *what you are prescribed* is a clinical
 decision; *whether you took it* (`doses/**`) is always the patient's own
@@ -391,6 +411,7 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-05 | Medication tightened to the care team, and the patient given a way to ask. Family and friends are never offered the `medication` toggle and are refused the read even when a card carries it — `canReadClinical` checks the role as well as the permission. On a prescribed entry the patient may write `pendingChange` and nothing else; the prescriber approves, which applies exactly what was asked and logs it, or clears it, which says nothing. "If a doctor is assigned they approve" resolves to `prescribedBy`, already on the document, because rules cannot query the circle and a patient-written flag would be worthless. 14 more rules tests (133). Caught in walking it: approving diffed a partial proposal against the whole medication and wrote three phantom log entries per approval — the log draws the chart's vertical rules, so that mattered. |
 | 2026-08-05 | The feed (PRD 6.4). Finishing a planned activity auto-posts it for whoever was granted `feed`; **a dose never posts**, enforced in `shouldPostCompletion` rather than left to each caller. Reactions are heart/clap/proud and the rules refuse anything else, so warm-only survives a client writing straight to Firestore. Comments cannot be edited after they are read. A supporter side (`/following`) shows who shares with them, their feed, and their calendar with a suggest form that says plainly it is an offer. `onPostCreate` written and loading in the emulator, not deployed; whom to notify is a pure tested function in core, and both the patient's grant and the supporter's own preference must agree. Sharing is on by default with a one-tap off switch. 14 more rules tests (119). Thomas confirmed suggest-then-accept stays — the calendar is not directly writable by supporters (D21). |
 | 2026-08-04 | Phase 5 — the calendar. A week with today in the middle, activities with daily/weekly/weekday recurrence expanded on the device, a separate suggestions tray, and the optional two-tap pleasure/mastery question after ticking something off. **A supporter may suggest and nothing else** — not place, not accept their own suggestion, not edit. And **declining is silent by rule, not by tact**: a member cannot read a declined activity at all, so their listing must filter on status or be refused. 17 more rules tests (105). Verified over the wire: suggest 200, place directly 403, accept own suggestion 403, read after decline 403, unfiltered listing 403 — while the patient keeps the full record of what was offered. |
 | 2026-08-04 | Phase 7 — the clinician console, as routes in `apps/web` rather than a separate app (D19). Patient list from a collection group query, per-patient overview reusing the same `PatientOverview` component the patient sees, and the medication editor. Medication ownership settled: `prescribedBy`, a verified-clinician document nobody can write from a client (D20, [docs/CLINICIAN-VERIFICATION.md](docs/CLINICIAN-VERIFICATION.md)), and a `changeLog` that may only grow. 24 more rules tests (88). Walked end to end: a verified psychiatrist prescribed, changed a dose, and the change appeared as a vertical rule on the patient's own chart. Confirmed over the wire that the patient cannot edit or disown a prescription, that a clinician cannot erase the log or tick a dose, and that self-verification is refused. |
