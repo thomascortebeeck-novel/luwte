@@ -24,6 +24,20 @@
   --bg: var(--diep);
   --surface: var(--luwte-1);
   --line: var(--luwte-2);
+  /*
+   * WCAG 1.4.11 — the edge of a *control*, as opposed to a decorative rule.
+   *
+   * `--line` is 1.33:1 against the background, which is right for a hairline
+   * between two sections and wrong for the border of a text field, the ring
+   * of an unticked dose, or an unselected dot on a scale. Those carry
+   * information — where the field is, what state it is in, how many options
+   * there are — and 1.4.11 asks for 3:1.
+   *
+   * Found in the Phase 8 pass, not by eye: `contrast.test.ts` now enumerates
+   * every token used as a border or a mark, so this could not stay invisible
+   * the way the light-mode `--self` failure did.
+   */
+  --edge: #63736f;
   --text: var(--mist);
   --text-quiet: var(--nevel);
   --self: var(--zeeglas);
@@ -49,6 +63,8 @@
   --bg: var(--diep-l);
   --surface: var(--luwte-1-l);
   --line: var(--luwte-2-l);
+  /* 3.24:1 on the background, 3.52:1 on a card. See the dark block. */
+  --edge: #788683;
   --text: var(--mist-l);
   --text-quiet: var(--nevel-l);
   --self: var(--zeeglas-l);

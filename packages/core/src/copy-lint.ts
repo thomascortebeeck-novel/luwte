@@ -78,6 +78,23 @@ const RULES: readonly Rule[] = [
     detail: 'apologetic error voice',
     test: /\b(oops|oeps|sorry|excuses)\b/i,
   },
+  {
+    /*
+     * Thomas, 2026-08-05: too many commas. He is right, and the fix is a rule
+     * rather than a sweep, because copy drifts back.
+     *
+     * Narrow on purpose: only a comma directly before `en` or `of`. Dutch
+     * essentially never needs one there, while the commas this app genuinely
+     * needs — `Mis je ze, dan gebeurt er niets`, `Als het nu te zwaar is, bel
+     * iemand`, and every list — are untouched. A broader rule would have
+     * flagged those and been relaxed within a week, which is worse than no
+     * rule at all.
+     */
+    rule: 'no-loose-comma',
+    detail: 'comma before en/of, which Dutch does not need',
+    locales: ['nl'],
+    test: /,\s+(en|of)\s/i,
+  },
 ];
 
 export function lintCopy(value: string, locale: Locale): Violation[] {

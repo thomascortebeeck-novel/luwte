@@ -56,7 +56,7 @@ describe('Circle', () => {
     readCircle.mockResolvedValue([member()]);
     renderCircle();
 
-    expect(await screen.findByText('Kan zien wat je deelt, en kan reageren.')).toBeInTheDocument();
+    expect(await screen.findByText('Kan zien wat je deelt en kan reageren.')).toBeInTheDocument();
     expect(screen.getByText('Kan je agenda zien en iets voorstellen.')).toBeInTheDocument();
     // Feed and calendar are the defaults; the three that are off must not
     // appear at all, as a list of what is being withheld.
@@ -78,7 +78,7 @@ describe('Circle', () => {
     renderCircle();
 
     expect(await screen.findByText('Ziet niets meer.')).toBeInTheDocument();
-    expect(screen.queryByText('Kan zien wat je deelt, en kan reageren.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Kan zien wat je deelt en kan reageren.')).not.toBeInTheDocument();
   });
 
   it('calls a person by the name the patient gave them', async () => {

@@ -58,7 +58,7 @@ describe('Join', () => {
   it('states what accepting gives access to, before accepting', async () => {
     renderJoin();
     expect(await screen.findByText('Als je dit aanneemt, zie je het volgende:')).toBeInTheDocument();
-    expect(screen.getByText('Kan zien wat je deelt, en kan reageren.')).toBeInTheDocument();
+    expect(screen.getByText('Kan zien wat je deelt en kan reageren.')).toBeInTheDocument();
     expect(screen.queryByText('Kan zien hoe je je voelde.')).not.toBeInTheDocument();
   });
 

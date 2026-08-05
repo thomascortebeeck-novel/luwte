@@ -41,14 +41,23 @@
  * Warm only: there is no cold variant of this button because there is no
  * cold reaction. Nothing here is red and nothing signals disapproval.
  */
+/*
+ * An icon and, when there is one, a count. Kept at the full tap target and a
+ * minimum width so a drawing is no harder to hit than a word was.
+ */
 .reaction {
   min-height: var(--tap-min);
+  min-width: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
   padding: 0 var(--space-2);
   font: inherit;
   font-family: var(--font-ui);
   color: var(--text-quiet);
   background: transparent;
-  border: 1px solid var(--line);
+  border: 1px solid var(--edge);
   border-radius: var(--radius-action);
   cursor: pointer;
 }

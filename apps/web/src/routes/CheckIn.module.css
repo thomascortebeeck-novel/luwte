@@ -37,7 +37,7 @@
   text-align: center;
   color: var(--text);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--edge);
   border-radius: var(--radius-input);
 }
 
@@ -55,7 +55,7 @@
   line-height: var(--leading-base);
   color: var(--text);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--edge);
   border-radius: var(--radius-input);
   resize: vertical;
 }
@@ -105,7 +105,7 @@
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: var(--line);
+  background: var(--edge);
 }
 
 .pip[data-done] {

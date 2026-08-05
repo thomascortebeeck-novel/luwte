@@ -42,7 +42,7 @@ describe('Invite', () => {
    */
   it('starts a supporter on feed and calendar, and nothing clinical', () => {
     renderInvite();
-    expect(checkbox('Kan zien wat je deelt, en kan reageren.')).toBeChecked();
+    expect(checkbox('Kan zien wat je deelt en kan reageren.')).toBeChecked();
     expect(checkbox('Kan je agenda zien en iets voorstellen.')).toBeChecked();
     expect(checkbox('Kan zien hoe je je voelde.')).not.toBeChecked();
     expect(checkbox('Kan zien wat je horloge doorgaf.')).not.toBeChecked();
@@ -70,7 +70,7 @@ describe('Invite', () => {
     // Adherence is the fact a clinician came for. They read it and, by the
     // rules, can never write it.
     expect(checkbox('Kan zien of je je medicatie nam.')).toBeChecked();
-    expect(checkbox('Kan zien wat je deelt, en kan reageren.')).not.toBeChecked();
+    expect(checkbox('Kan zien wat je deelt en kan reageren.')).not.toBeChecked();
   });
 
   it('sends exactly what was ticked, and no more', async () => {

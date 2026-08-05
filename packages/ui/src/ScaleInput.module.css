@@ -39,7 +39,7 @@
 .dot {
   display: block;
   border-radius: 999px;
-  background: var(--line);
+  background: var(--edge);
   transition:
     background-color var(--dur-quick) var(--ease-settle),
     box-shadow var(--dur-quick) var(--ease-settle);

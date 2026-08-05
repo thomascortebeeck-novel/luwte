@@ -20,7 +20,7 @@
   font-variant-numeric: tabular-nums;
   color: var(--text);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--edge);
   border-radius: var(--radius-input);
   width: 100%;
 }
@@ -43,7 +43,7 @@
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: var(--line);
+  background: var(--edge);
 }
 
 .pip[data-current] {

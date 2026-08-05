@@ -1,5 +1,5 @@
 import { REACTIONS, type ReactionType } from '@luwte/core';
-import { Button, Field, Hairline, HumanText, Screen } from '@luwte/ui';
+import { Button, Field, Hairline, HumanText, ReactionIcon, Screen } from '@luwte/ui';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { comment, createPost, react, readFeed, unreact, type PostRecord } from '../firebase/feed';
@@ -136,8 +136,12 @@ export function Feed() {
                         aria-label={t(reaction.labelKey)}
                         onClick={() => toggleReaction(post, reaction.id)}
                       >
-                        {t(reaction.labelKey)}
-                        {count > 0 ? <span className={styles.count}> {count}</span> : null}
+                        {/* Drawn, with the word kept as the button's
+                            accessible name — a picture that only works if you
+                            can see it would make the feed warm for some people
+                            and empty for others. */}
+                        <ReactionIcon name={reaction.id} />
+                        {count > 0 ? <span className={styles.count}>{count}</span> : null}
                       </button>
                     );
                   })}

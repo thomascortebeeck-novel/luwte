@@ -1,0 +1,10 @@
+/*
+ * Sized to the surrounding text rather than fixed, so it grows with the type
+ * at 200% zoom instead of shrinking into a dot beside a big word.
+ */
+.icon {
+  display: block;
+  width: 1.5em;
+  height: 1.5em;
+  color: inherit;
+}

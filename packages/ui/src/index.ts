@@ -5,6 +5,11 @@ export { Choice, type ChoiceProps } from './primitives/Choice';
 export { Field, type FieldProps } from './primitives/Field';
 export { Hairline } from './primitives/Hairline';
 export { HumanText, type HumanTextProps } from './primitives/HumanText';
+export {
+  ReactionIcon,
+  type ReactionIconName,
+  type ReactionIconProps,
+} from './primitives/ReactionIcon';
 export { Screen, type ScreenProps } from './primitives/Screen';
 export { ScaleInput, type ScaleInputProps, type ScaleValue } from './ScaleInput';
 export { Windline } from './windline/Windline';

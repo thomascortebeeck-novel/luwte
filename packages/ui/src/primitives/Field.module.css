@@ -17,7 +17,7 @@
   font-family: var(--font-ui);
   color: var(--text);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--edge);
   border-radius: var(--radius-input);
   width: 100%;
 }

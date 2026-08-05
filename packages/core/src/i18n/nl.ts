@@ -16,7 +16,7 @@ export const nl = {
   checkinEntry: 'Hoe was vandaag?',
   checkinMood: 'Hoe voelde je je?',
   // Bipolar: allebei de uiteinden zijn iets, geen tekort aan het andere.
-  checkinArousal: 'Was je onrustig, of eerder traag?',
+  checkinArousal: 'Was je onrustig of eerder traag?',
   checkinArousalLow: 'traag',
   checkinArousalHigh: 'onrustig',
   checkinFlatness: 'Kon je vandaag iets voelen?',
@@ -33,7 +33,7 @@ export const nl = {
 
   todayEmpty: 'Vandaag staat er niets. Dat mag.',
   optionalPractice: 'Als je zin hebt.',
-  medicationSection: 'Wat je vandaag neemt, en waarvoor.',
+  medicationSection: 'Wat je vandaag neemt en waarvoor.',
 
   feedEmpty: 'Nog niets vandaag.',
   kudosSent: 'Verstuurd.',
@@ -43,7 +43,7 @@ export const nl = {
   windlineLabel: 'Overzicht van de laatste veertien dagen',
 
   healthImportAsk:
-    'Je horloge weet wanneer je sliep. Wil je dat luwte dat overneemt, zodat je het niet hoeft in te vullen?',
+    'Je horloge weet wanneer je sliep. Wil je dat luwte dat overneemt zodat je het niet hoeft in te vullen?',
   dataDeletion: 'Weg is weg. Dat kunnen we niet terugdraaien.',
 
   genericError: 'Dat is niet gelukt. Probeer het straks nog eens.',
@@ -104,7 +104,7 @@ export const nl = {
     'Eén herinnering per dag. Mis je ze, dan gebeurt er niets.',
   onboardingDoctorTitle: 'Kijkt er een zorgverlener met je mee?',
   onboardingDoctorExplanation:
-    'Je kan die nu toevoegen, of later. Is er niemand, dan beheer je je medicatie gewoon zelf.',
+    'Je kan die nu toevoegen of later. Is er niemand, dan beheer je je medicatie gewoon zelf.',
   onboardingDoctorNow: 'Nu toevoegen',
   onboardingDoctorLater: 'Later',
   onboardingFinish: 'Klaar',
@@ -132,7 +132,7 @@ export const nl = {
   findIntro: 'Kreeg je een code van je dokter? Typ die hier. Of zoek op naam.',
   findCode: 'De code van je dokter',
   findLook: 'Opzoeken',
-  findUnknown: 'Die code kennen we niet. Kijk hem na, of vraag hem opnieuw.',
+  findUnknown: 'Die code kennen we niet. Kijk hem na of vraag hem opnieuw.',
   findConfirm: 'Klopt dat?',
   findAdd: 'Ja, dit is mijn dokter',
   findRelation: 'Wat is dit voor jou?',
@@ -144,7 +144,7 @@ export const nl = {
     'Je vindt hier alleen zorgverleners die luwte al gebruiken. Er bestaat geen lijst van alle dokters in België.',
   findSearch: 'Zoeken',
   findNobody:
-    'Niemand gevonden met die naam. Vraag je dokter naar een code, of nodig die uit met een link.',
+    'Niemand gevonden met die naam. Vraag je dokter naar een code of nodig die uit met een link.',
   findAsk: 'Dit vragen',
   findAskWhatTheySee:
     'Zegt die persoon ja, dan ziet die je check-ins en je medicatie. Jij kan dat altijd aanpassen.',
@@ -172,7 +172,7 @@ export const nl = {
   planTitle: 'Als het minder gaat',
   planLink: 'Als het minder gaat',
   planIntro:
-    'Waar merk je zelf het eerst aan dat het minder gaat, en wat doe je dan? Je eigen woorden. luwte kijkt hier niets mee na.',
+    'Waar merk je zelf het eerst aan dat het minder gaat en wat doe je dan? Je eigen woorden. luwte kijkt hier niets mee na.',
   planEmpty: 'Je hebt hier nog niets staan.',
   planSign: 'Wat merk je?',
   planAction: 'Wat doe je dan?',
@@ -202,16 +202,16 @@ export const nl = {
   onboardingSupporterWhat:
     'Iemand deelt hier iets met jou. Dit is hun schriftje, niet het jouwe.',
   onboardingSupporterSeeing:
-    'Je ziet alleen wat zij kiezen te delen. Zij kunnen dat elk moment veranderen, zonder het te zeggen.',
+    'Je ziet alleen wat zij kiezen te delen. Zij kunnen dat elk moment veranderen zonder het te zeggen.',
   onboardingClinicianWhat:
-    'Dit is het schriftje van je patiënt. Je ziet wat zij delen, en wanneer hun medicatie veranderde.',
+    'Dit is het schriftje van je patiënt. Je ziet wat zij delen en wanneer hun medicatie veranderde.',
   onboardingClinicianVerify:
     'Een mens kijkt na of je zorgverlener bent. Tot dat gebeurd is, zie je nog niets van iemand.',
 
   // Consent
   consentTitle: 'Waar je ja tegen zegt',
   consentIntro:
-    'luwte bewaart gezondheidsgegevens. Daar heb je uitdrukkelijk toestemming voor nodig, en die kan je later weer intrekken.',
+    'luwte bewaart gezondheidsgegevens. Daar heb je uitdrukkelijk toestemming voor nodig en die kan je later weer intrekken.',
   consentEssentialLabel: 'Een account en je instellingen bewaren',
   consentEssentialExplanation:
     'Je naam, je taal en het uur van je herinnering. Zonder dit werkt de app niet.',
@@ -267,7 +267,7 @@ export const nl = {
   settingsSaved: 'Bewaard.',
 
   notifyCheckinLabel: 'Je dagelijkse herinnering',
-  notifyCheckinExplanation: 'Eén melding, op het uur dat jij koos. Mis je ze, dan gebeurt er niets.',
+  notifyCheckinExplanation: 'Eén melding op het uur dat jij koos. Mis je ze, dan gebeurt er niets.',
   notifyMedicationLabel: 'Je medicatie',
   notifyMedicationExplanation: 'Een melding op de uren die op je medicatie staan.',
   notifyKudosLabel: 'Als iemand iets laat weten',
@@ -284,7 +284,7 @@ export const nl = {
   calendarEventDetails: 'Even stilstaan bij je dag.',
 
   // Medication
-  medicationEmpty: 'Hier komt wat je neemt, als je het invult.',
+  medicationEmpty: 'Hier komt wat je neemt als je het invult.',
   medicationAdd: 'Medicatie toevoegen',
   medicationName: 'Naam',
   medicationDose: 'Dosis',
@@ -299,7 +299,7 @@ export const nl = {
   doseNoteSaid: 'Je schreef er iets bij',
   doseNoteTitle: 'Wat nam je echt?',
   doseNoteActual: 'Wat je nam',
-  doseNoteActualHint: 'Bijvoorbeeld: de helft, of 150 mg.',
+  doseNoteActualHint: 'Bijvoorbeeld: de helft of 150 mg.',
   doseNoteWhy: 'Waarom, als je dat wil opschrijven',
   medicationPropose: 'Vraag een wijziging',
   medicationProposeIntro:
@@ -323,7 +323,7 @@ export const nl = {
   practicesTitle: 'Als je zin hebt',
   practiceGratitude: 'Schrijf iets op dat vandaag meeviel.',
   practiceBreathing: 'Adem een minuut traag in en uit.',
-  practiceGrounding: 'Kijk even rond, en tel mee.',
+  practiceGrounding: 'Kijk even rond en tel mee.',
   practiceWalk: 'Ga even naar buiten.',
 
   // Ademen — kort, met open ogen, en er wordt niets van bijgehouden.
@@ -375,14 +375,14 @@ export const nl = {
   permMedication: 'Kan zien welke medicatie je neemt.',
   permDoses: 'Kan zien of je je medicatie nam.',
   permHealth: 'Kan zien wat je horloge doorgaf.',
-  permFeed: 'Kan zien wat je deelt, en kan reageren.',
+  permFeed: 'Kan zien wat je deelt en kan reageren.',
   permCalendar: 'Kan je agenda zien en iets voorstellen.',
   permPlan: 'Kan lezen wat je doet als het minder gaat.',
 
   // D29 — iets over medicatie aanzetten wordt in woorden bevestigd. Iets
   // uitzetten niet: wie toegang intrekt hoeft niets uit te leggen.
   confirmTitle: 'Wat dit betekent',
-  confirmMedication: 'ziet dan welke medicatie je neemt, en waarvoor.',
+  confirmMedication: 'ziet dan welke medicatie je neemt en waarvoor.',
   confirmDoses: 'ziet dan elke dag of je je medicatie nam.',
   confirmNeverPushed:
     'Er wordt niemand iets gestuurd als je iets neemt of overslaat. Ze kunnen het opzoeken, meer niet.',
@@ -392,7 +392,7 @@ export const nl = {
   // Wat je zelf veranderd hebt aan wie wat ziet. Alleen jij ziet deze lijst.
   permLogTitle: 'Wat je veranderde',
   permLogLink: 'Wat je veranderde',
-  permLogIntro: 'Wat je aan wie gaf, en wanneer. Alleen jij ziet dit.',
+  permLogIntro: 'Wat je aan wie gaf en wanneer. Alleen jij ziet dit.',
   permLogEmpty: 'Je hebt nog niets veranderd.',
   permLogGave: 'Gegeven',
   permLogTook: 'Ingetrokken',
@@ -413,7 +413,7 @@ export const nl = {
   // D30 — leest je medicatie als je dat geeft, schrijft ze nooit voor, en
   // stelt voor in plaats van in te plannen. Net als een naaste.
   circleRoleNurse: 'Verpleegkundige',
-  circleRoleNurseNote: 'Kan geen medicatie voorschrijven, en stelt voor in plaats van in te plannen.',
+  circleRoleNurseNote: 'Kan geen medicatie voorschrijven en stelt voor in plaats van in te plannen.',
   circleRelation: 'Wie is dit voor jou?',
   circleRelationHint: 'Bijvoorbeeld broer, mama, psychiater.',
   circleOpenInvites: 'Uitnodigingen die openstaan',

@@ -32,7 +32,7 @@ export const en: Dictionary = {
 
   todayEmpty: "Nothing today. That's allowed.",
   optionalPractice: 'If you feel like it.',
-  medicationSection: 'What you take today, and what for.',
+  medicationSection: 'What you take today and what for.',
 
   feedEmpty: 'Nothing yet today.',
   kudosSent: 'Sent.',
@@ -319,7 +319,7 @@ export const en: Dictionary = {
   practicesTitle: 'If you feel like it',
   practiceGratitude: 'Write down something that went alright today.',
   practiceBreathing: 'Breathe slowly for a minute.',
-  practiceGrounding: 'Look around for a moment, and count along.',
+  practiceGrounding: 'Look around for a moment and count along.',
   practiceWalk: 'Step outside for a moment.',
 
   // Breathing — short, eyes open, and nothing about it is recorded.
@@ -371,14 +371,14 @@ export const en: Dictionary = {
   permMedication: 'Can see which medication you take.',
   permDoses: 'Can see whether you took your medication.',
   permHealth: 'Can see what your watch reported.',
-  permFeed: 'Can see what you share, and can respond.',
+  permFeed: 'Can see what you share and can respond.',
   permCalendar: 'Can see your calendar and suggest something.',
   permPlan: 'Can read what you do when things get harder.',
 
   // D29 — turning something about medication on is confirmed in words.
   // Turning it off is not: taking access away needs no explanation.
   confirmTitle: 'What this means',
-  confirmMedication: 'will then see which medication you take, and what for.',
+  confirmMedication: 'will then see which medication you take and what for.',
   confirmDoses: 'will then see, every day, whether you took your medication.',
   confirmNeverPushed:
     'Nobody is sent anything when you take something or skip it. They can look it up, and that is all.',
@@ -388,7 +388,7 @@ export const en: Dictionary = {
   // What you changed about who sees what. Only you see this list.
   permLogTitle: 'What you changed',
   permLogLink: 'What you changed',
-  permLogIntro: 'What you gave to whom, and when. Only you see this.',
+  permLogIntro: 'What you gave to whom and when. Only you see this.',
   permLogEmpty: 'You have not changed anything yet.',
   permLogGave: 'Given',
   permLogTook: 'Withdrawn',
@@ -409,7 +409,7 @@ export const en: Dictionary = {
   // D30 — reads your medication if you grant it, never prescribes, and
   // suggests rather than schedules. The same as someone close.
   circleRoleNurse: 'Nurse',
-  circleRoleNurseNote: 'Cannot prescribe medication, and suggests rather than schedules.',
+  circleRoleNurseNote: 'Cannot prescribe medication and suggests rather than schedules.',
   circleRelation: 'Who is this to you?',
   circleRelationHint: 'Brother, mum, psychiatrist — your words.',
   circleOpenInvites: 'Invites still open',
