@@ -50,6 +50,15 @@ export const paths = {
   circleMember: (patientId: string, memberUid: string) =>
     `patients/${patientId}/circle/${memberUid}`,
 
+  /**
+   * D29 — the person's own record of who they gave what to, and when.
+   * Append-only, and nobody but them may read or write it. Not a security
+   * control; see `permissionChangeSchema`.
+   */
+  permissionLog: (patientId: string) => `patients/${patientId}/permissionLog`,
+  permissionLogEntry: (patientId: string, id: string) =>
+    `patients/${patientId}/permissionLog/${id}`,
+
   invites: () => 'invites',
   invite: (code: string) => `invites/${code}`,
 

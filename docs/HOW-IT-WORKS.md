@@ -102,17 +102,37 @@ Nothing is erased. The log may only grow, so every change the departed
 clinician made keeps its vertical line on the chart. Releasing ends the
 relationship going forward; it does not rewrite the past.
 
-### Only the care team sees medication
+### Who sees medication is the person's own decision
 
-Family and friends are **never offered** the medication permission. Not hidden
-behind a condition — absent from the list of things a supporter can be
-granted, and refused by the database even if a permission record somehow says
-otherwise. This was checked by hand: a brother whose card carried medication
-access was still refused both the prescriptions and the doses.
+Anyone the person chooses may be granted it — a partner who fetches the
+prescriptions, a mother who worries. That is a change from how this worked
+until August 2026, when only a clinician could see it at all. The old rule had
+a good argument behind it: what someone is prescribed is the most diagnostic
+thing this app holds, and a permission that cannot be given to the wrong
+person cannot be given to them on a bad day. The better argument is that
+deciding this *for* somebody is not the same as protecting them.
 
-What someone is prescribed is the most diagnostic thing this app holds. A
-permission that cannot be given to the wrong person cannot be given to them on
-a bad day.
+Three things carry the weight that ban used to.
+
+**They are two separate permissions.** *Which medication you take* and
+*whether you took it* are different questions, and somebody may well want a
+partner to see the first and not the second. One toggle could not say that.
+
+**Nothing is ever sent.** Taking a dose, or skipping one, produces no
+notification and no entry in the shared feed. Somebody who was granted this
+can look it up; nobody is told. A message per pill is what would turn taking
+medication into a performance for the family, and that was always the real
+harm — not the looking.
+
+**Turning it on says what it means, and is written down.** The screen names
+the person and the consequence in a sentence before anything changes, and the
+change goes into a list at *Wat je veranderde* that only the person can read.
+Turning it off asks nothing and says nothing.
+
+Checked by hand, as the brother: granted neither, he was refused both; granted
+only the doses, he could see the doses and not the prescriptions; granted only
+the prescriptions, the other way round; revoked, neither again. And he could
+never write either.
 
 **A clinician may only write it if all three are true:**
 
@@ -165,6 +185,12 @@ that already happened.
 - *Before my appointment I print a sheet to take with me.* → Report
 - *I decide that my brother can see my check-ins but not my medication, and I
   change my mind next week.* → Circle
+- *I let my partner see which medication I take, but not whether I took it.
+  The app says what that means before it happens.* → Circle
+- *Months later I check what I actually agreed to, and when.* → Wat je
+  veranderde
+- *When it is too much, I do a minute of breathing or count five things I can
+  see. Nothing about it is recorded.* → Ademen, Even rondkijken
 - *If I skip a day, nothing happens. No guilt message, no gap, no catch-up.*
 
 ### The supporter
@@ -208,6 +234,8 @@ that already happened.
 | Report | A printable A4 sheet for an appointment |
 | Settings | Who sees anything, reminder time, which notifications you want, language, add reminder to Google Calendar |
 | **Circle** | Who has access, what each of them sees, and the way to change or stop it |
+| Wat je veranderde | The person's own history of what they gave to whom, and when. Nobody else sees it |
+| Ademen · Even rondkijken | A minute of guided breathing, and 5-4-3-2-1 grounding. Neither records anything |
 | Invite | Choose what a link will carry, then get the link to send |
 | Join | The other side of that link: what you will see, before you accept |
 | **Calendar** | A day at a time by default, or a week with that day in the middle. Plan something, repeat it on any of seven rules, and optionally say what you expect it to be like |

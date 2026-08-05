@@ -54,8 +54,15 @@ export {
   type WindlineDay,
 } from './windline';
 export {
+  CLINICAL_KEYS,
   DEFAULT_CLINICIAN_PERMISSIONS,
   DEFAULT_PERMISSIONS,
+  PERMISSION_CONFIRM,
+  diffPermissions,
+  isClinicalKey,
+  permissionChangeSchema,
+  widenedClinicalKeys,
+  type PermissionChange,
   INVITE_ALPHABET,
   INVITE_CODE_LENGTH,
   INVITE_PATH,

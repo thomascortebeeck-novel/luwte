@@ -161,7 +161,8 @@ export const nl = {
   inboxLeave:
     'Doe je niets, dan vervalt de vraag na een week. Er wordt niemand iets gezegd.',
   grantCheckins: 'Hoe het gaat, dag per dag',
-  grantMedication: 'Wat er genomen wordt, en of het genomen is',
+  grantMedication: 'Welke medicatie er genomen wordt',
+  grantDoses: 'Of de medicatie genomen is',
   grantHealth: 'Wat het horloge doorgaf',
   grantFeed: 'Wat er gedeeld wordt',
   grantCalendar: 'De agenda',
@@ -349,10 +350,31 @@ export const nl = {
 
   // PRD 6.4 — per persoon, in gewone zinnen. Nooit als labels van schakelaars.
   permCheckins: 'Kan zien hoe je je voelde.',
-  permMedication: 'Kan zien wat je neemt en of je het nam.',
+  // D29 — twee zinnen, want het zijn twee vragen. Iemand mag zien wat je
+  // neemt zonder te zien of je het nam.
+  permMedication: 'Kan zien welke medicatie je neemt.',
+  permDoses: 'Kan zien of je je medicatie nam.',
   permHealth: 'Kan zien wat je horloge doorgaf.',
   permFeed: 'Kan zien wat je deelt, en kan reageren.',
   permCalendar: 'Kan je agenda zien en iets voorstellen.',
+
+  // D29 — iets over medicatie aanzetten wordt in woorden bevestigd. Iets
+  // uitzetten niet: wie toegang intrekt hoeft niets uit te leggen.
+  confirmTitle: 'Wat dit betekent',
+  confirmMedication: 'ziet dan welke medicatie je neemt, en waarvoor.',
+  confirmDoses: 'ziet dan elke dag of je je medicatie nam.',
+  confirmNeverPushed:
+    'Er wordt niemand iets gestuurd als je iets neemt of overslaat. Ze kunnen het opzoeken, meer niet.',
+  confirmYes: 'Ja, dat mag',
+  confirmNo: 'Toch niet',
+
+  // Wat je zelf veranderd hebt aan wie wat ziet. Alleen jij ziet deze lijst.
+  permLogTitle: 'Wat je veranderde',
+  permLogLink: 'Wat je veranderde',
+  permLogIntro: 'Wat je aan wie gaf, en wanneer. Alleen jij ziet dit.',
+  permLogEmpty: 'Je hebt nog niets veranderd.',
+  permLogGave: 'Gegeven',
+  permLogTook: 'Ingetrokken',
 
   // De kring — wie iets ziet, en wat precies
   circleTitle: 'Wie iets ziet',

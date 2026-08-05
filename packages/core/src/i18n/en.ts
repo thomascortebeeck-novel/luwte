@@ -158,7 +158,8 @@ export const en: Dictionary = {
   inboxLeave:
     'Do nothing and the request expires after a week. Nobody is told either way.',
   grantCheckins: 'How things are going, day by day',
-  grantMedication: 'What is being taken, and whether it was taken',
+  grantMedication: 'Which medication is being taken',
+  grantDoses: 'Whether the medication was taken',
   grantHealth: 'What the watch reported',
   grantFeed: 'What gets shared',
   grantCalendar: 'The calendar',
@@ -345,10 +346,31 @@ export const en: Dictionary = {
 
   // PRD 6.4 — per person, in plain sentences. Never as toggle labels.
   permCheckins: 'Can see how you felt.',
-  permMedication: 'Can see what you take and whether you took it.',
+  // D29 — two sentences, because they are two questions. Somebody may see
+  // what you take without seeing whether you took it.
+  permMedication: 'Can see which medication you take.',
+  permDoses: 'Can see whether you took your medication.',
   permHealth: 'Can see what your watch reported.',
   permFeed: 'Can see what you share, and can respond.',
   permCalendar: 'Can see your calendar and suggest something.',
+
+  // D29 — turning something about medication on is confirmed in words.
+  // Turning it off is not: taking access away needs no explanation.
+  confirmTitle: 'What this means',
+  confirmMedication: 'will then see which medication you take, and what for.',
+  confirmDoses: 'will then see, every day, whether you took your medication.',
+  confirmNeverPushed:
+    'Nobody is sent anything when you take something or skip it. They can look it up, and that is all.',
+  confirmYes: 'Yes, that is fine',
+  confirmNo: 'Rather not',
+
+  // What you changed about who sees what. Only you see this list.
+  permLogTitle: 'What you changed',
+  permLogLink: 'What you changed',
+  permLogIntro: 'What you gave to whom, and when. Only you see this.',
+  permLogEmpty: 'You have not changed anything yet.',
+  permLogGave: 'Given',
+  permLogTook: 'Withdrawn',
 
   // The circle — who sees anything, and exactly what
   circleTitle: 'Who sees anything',

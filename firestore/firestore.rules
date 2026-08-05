@@ -49,17 +49,33 @@ service cloud.firestore {
     }
 
     /*
-     * Medication and doses are a clinician's business and nobody else's.
+     * D29 — *what you are prescribed* and *whether you took it* are two
+     * permissions, and either can be granted to anybody the person chooses.
      *
-     * Family and friends are never offered the toggle, and the role is
-     * checked here as well — so a supporter card that somehow carries
-     * `medication: true` still grants nothing. What someone is prescribed is
-     * the most diagnostic thing this database holds, and a permission that
-     * cannot be granted to the wrong person cannot leak to them on a bad day.
+     * This used to require `role == 'clinician'` as well, so a supporter card
+     * carrying `medication: true` granted nothing. The reasoning was sound —
+     * a permission that cannot be granted to the wrong person cannot leak to
+     * them on a bad day — and Thomas decided the other way, because *the
+     * person is in full control* is the deeper principle and a blanket ban is
+     * the app deciding for them.
+     *
+     * **What made the ban work is kept, and it is not this function.** A dose
+     * still never reaches the feed (`shouldPostCompletion` refuses anything
+     * without an activity id), so being allowed to look is not the same as
+     * being told — a notification per pill is what turned adherence into a
+     * performance, and that was always the real harm. The interface confirms
+     * the widening in words and logs it where the person can read it back.
+     *
+     * Unchanged and still absolute: **a dose is the patient's own record in
+     * both directions.** A prescribing clinician reads adherence — that is the
+     * fact they came for — and can never write it. See `doses/` below.
      */
-    function canReadClinical(pid) {
-      return isSelf(pid)
-             || (granted(pid, 'medication') && circleDoc(pid).role == 'clinician');
+    function canReadMedication(pid) {
+      return canRead(pid, 'medication');
+    }
+
+    function canReadDoses(pid) {
+      return canRead(pid, 'doses');
     }
 
     function inviteData(code) {
@@ -299,7 +315,7 @@ service cloud.firestore {
        * nobody writes it for you — not even the person who prescribed it.
        */
       match /medications/{medId} {
-        allow read: if canReadClinical(patientId);
+        allow read: if canReadMedication(patientId);
 
         allow create: if (isSelf(patientId)
                           && request.resource.data.get('prescribedBy', null) == null)
@@ -349,9 +365,18 @@ service cloud.firestore {
        * syncing twice records one dose rather than two.
        */
       match /doses/{doseKey} {
-        // Whether you took it is as clinical as what you take. Family and
-        // friends see neither.
-        allow read: if canReadClinical(patientId);
+        /*
+         * Its own permission since D29, separate from `medication`: a person
+         * may well want a partner to see what they take and not whether they
+         * took it, and one toggle could not say that.
+         *
+         * **Written by the patient and nobody else, forever.** The prescriber
+         * who reads this cannot touch it. That is the line that must never
+         * blur — what you are prescribed is a clinical decision, whether you
+         * took it is your own record — and widening who may *read* it does
+         * not move it an inch.
+         */
+        allow read: if canReadDoses(patientId);
         allow create, update: if isSelf(patientId);
         allow delete: if false;
       }
@@ -474,6 +499,26 @@ service cloud.firestore {
                       && honestMemberUid(memberUid)
                       && clinicianIsVerified(memberUid);
         allow delete: if false;
+      }
+
+      /*
+       * D29 — the person's own record of who they gave what to, and when.
+       *
+       * **This is a record, not a control.** Rules cannot require that
+       * changing a circle document also writes here, so a client that skips
+       * it leaves no trace; the boundary is the circle document itself, which
+       * only the patient may write. What this buys is that "what did I agree
+       * to in March" has an answer that is not memory — which matters most for
+       * exactly the decisions somebody might make on a bad day.
+       *
+       * Append-only, because a history that can be edited answers that
+       * question no better than memory does. Self-only in both directions: it
+       * is a list of everyone, so a member who could read it would learn what
+       * every other member was given.
+       */
+      match /permissionLog/{entryId} {
+        allow read, create: if isSelf(patientId);
+        allow update, delete: if false;
       }
 
       /*

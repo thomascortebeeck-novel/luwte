@@ -88,6 +88,11 @@ const seedClinicianCircle = (
       permissions: {
         checkins: true,
         medication: true,
+        // D29 — its own key now. A clinician gets it by default because
+        // adherence is the fact they came for; they read it and can never
+        // write it. Without this line they would be refused, which is the
+        // split working rather than a bug.
+        doses: true,
         health: false,
         feed: false,
         calendar: false,
@@ -1059,18 +1064,26 @@ describe('who may see and change medication', () => {
     });
 
   /*
-   * The one the requirement turns on: family and friends never see this,
-   * even if a circle document somehow says they may. The role is checked as
-   * well as the permission, so a supporter card carrying `medication: true`
-   * grants nothing.
+   * D29 — these two used to assert the opposite, and the reversal is the
+   * point rather than a test that became inconvenient.
+   *
+   * They asserted that a supporter card carrying `medication: true` granted
+   * nothing, because the role was checked as well. Thomas decided the other
+   * way: the person is in full control, and a blanket ban is the app deciding
+   * for them. What replaces the fence is *the permission the person actually
+   * set* — and the halves that made the ban work are kept elsewhere: a dose
+   * never reaches the feed, the widening is confirmed in words, and it is
+   * logged where the person can read it back.
    */
-  it('REFUSES a supporter reading medication even when the card says they may', async () => {
+  it('lets a supporter the person granted medication read it', async () => {
     await seedMember('supporter', true);
     await seedMedication();
-    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'medications', 'med1')));
+    await assertSucceeds(getDoc(doc(asOther(), 'patients', JONAS, 'medications', 'med1')));
   });
 
-  it('REFUSES a supporter reading doses even when the card says they may', async () => {
+  it('REFUSES a supporter granted medication the doses they were not granted', async () => {
+    // The split is the whole feature: somebody may see what you take without
+    // seeing whether you took it. One toggle could not say that.
     await seedMember('supporter', true);
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'doses', '2026-08-05_med1_0800'), {
@@ -1080,6 +1093,125 @@ describe('who may see and change medication', () => {
     });
     await assertFails(
       getDoc(doc(asOther(), 'patients', JONAS, 'doses', '2026-08-05_med1_0800')),
+    );
+  });
+
+  it('lets a supporter granted doses read them', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'circle', OTHER), {
+        memberUid: OTHER,
+        role: 'supporter',
+        permissions: {
+          checkins: false,
+          medication: false,
+          doses: true,
+          health: false,
+          feed: true,
+          calendar: true,
+        },
+        grantedAt: new Date(),
+        revokedAt: null,
+      });
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'doses', '2026-08-05_med1_0800'), {
+        medId: 'med1',
+        status: 'taken',
+      });
+    });
+    await assertSucceeds(
+      getDoc(doc(asOther(), 'patients', JONAS, 'doses', '2026-08-05_med1_0800')),
+    );
+  });
+
+  it('REFUSES a supporter granted doses the medication they were not granted', async () => {
+    // And the other way round, so the split is a real split rather than one
+    // key quietly implying the other.
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'circle', OTHER), {
+        memberUid: OTHER,
+        role: 'supporter',
+        permissions: {
+          checkins: false,
+          medication: false,
+          doses: true,
+          health: false,
+          feed: true,
+          calendar: true,
+        },
+        grantedAt: new Date(),
+        revokedAt: null,
+      });
+    });
+    await seedMedication();
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'medications', 'med1')));
+  });
+
+  it('REFUSES a supporter granted neither, whatever their role says', async () => {
+    await seedMember('supporter', false);
+    await seedMedication();
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'medications', 'med1')));
+  });
+
+  it('REFUSES a revoked supporter who was granted both', async () => {
+    // Widening who *may* be granted this changes nothing about revocation:
+    // `granted()` is false the moment revokedAt is set.
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'circle', OTHER), {
+        memberUid: OTHER,
+        role: 'supporter',
+        permissions: {
+          checkins: true,
+          medication: true,
+          doses: true,
+          health: true,
+          feed: true,
+          calendar: true,
+        },
+        grantedAt: new Date(),
+        revokedAt: new Date(),
+      });
+    });
+    await seedMedication();
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'medications', 'med1')));
+  });
+
+  it('REFUSES a supporter granted medication writing it', async () => {
+    /*
+     * The line that must never blur, restated now that family can read this.
+     * Being allowed to *see* what somebody is prescribed is not being allowed
+     * to change it, and `medications/` is still writable only by the patient
+     * and a verified prescribing clinician.
+     */
+    await seedMember('supporter', true);
+    await seedMedication();
+    await assertFails(
+      updateDoc(doc(asOther(), 'patients', JONAS, 'medications', 'med1'), { dose: '400 mg' }),
+    );
+  });
+
+  it('REFUSES a supporter granted doses writing one', async () => {
+    // Whether you took it is your own record, in both directions, and D29
+    // widened only who may read it.
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'circle', OTHER), {
+        memberUid: OTHER,
+        role: 'supporter',
+        permissions: {
+          checkins: false,
+          medication: false,
+          doses: true,
+          health: false,
+          feed: true,
+          calendar: true,
+        },
+        grantedAt: new Date(),
+        revokedAt: null,
+      });
+    });
+    await assertFails(
+      setDoc(doc(asOther(), 'patients', JONAS, 'doses', '2026-08-05_med1_0800'), {
+        medId: 'med1',
+        status: 'taken',
+      }),
     );
   });
 
@@ -1750,9 +1882,13 @@ describe('patients/{patientId}/doses', () => {
       );
     });
 
-    it('REFUSES a supporter reading it, medication card or not', async () => {
-      // canReadClinical checks the role as well as the permission, so a
-      // supporter card carrying medication: true still grants nothing.
+    it('REFUSES a supporter granted medication but not doses', async () => {
+      /*
+       * D29 — this used to refuse them outright, on the role. Now it refuses
+       * them on the permission they were actually given, which is the split
+       * doing its job: what somebody said about halving a dose is not
+       * automatically visible to whoever may see the prescription.
+       */
       await testEnv.withSecurityRulesDisabled(async (ctx) => {
         await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'circle', OTHER), {
           memberUid: OTHER,
@@ -1760,6 +1896,7 @@ describe('patients/{patientId}/doses', () => {
           permissions: {
             checkins: true,
             medication: true,
+            doses: false,
             health: true,
             feed: true,
             calendar: true,
@@ -1783,6 +1920,89 @@ describe('patients/{patientId}/doses', () => {
  * PRD 5.3 — the circle document is the access control list, and these are the
  * tests that decide whether that sentence is true.
  */
+/**
+ * D29 — the person's own record of who they gave what to.
+ *
+ * **A record, not a control**, and the tests say so: rules cannot require
+ * that changing a circle document also writes here, so what is asserted is
+ * that nobody else can read it and that nobody at all can rewrite it.
+ */
+describe('the record of what was given', () => {
+  const entry = {
+    memberUid: OTHER,
+    relation: 'broer',
+    granted: ['doses'],
+    withdrawn: [],
+    at: new Date(),
+  };
+
+  const seedEntry = () =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'permissionLog', 'e1'), entry);
+    });
+
+  it('lets the person write their own history', async () => {
+    await assertSucceeds(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'permissionLog', 'e1'), entry),
+    );
+  });
+
+  it('lets the person read it back, which is the whole point', async () => {
+    await seedEntry();
+    await assertSucceeds(getDoc(doc(asJonas(), 'patients', JONAS, 'permissionLog', 'e1')));
+  });
+
+  it('REFUSES rewriting an entry, because an editable history is memory', async () => {
+    await seedEntry();
+    await assertFails(
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'permissionLog', 'e1'), { granted: [] }),
+    );
+  });
+
+  it('REFUSES deleting one, for the same reason', async () => {
+    await seedEntry();
+    await assertFails(deleteDoc(doc(asJonas(), 'patients', JONAS, 'permissionLog', 'e1')));
+  });
+
+  it('REFUSES a member reading it, even one granted everything', async () => {
+    /*
+     * It is a list of *everyone*. A member who could read it would learn what
+     * every other member was given, which is a bigger disclosure than any
+     * single permission on their own card.
+     */
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'circle', OTHER), {
+        memberUid: OTHER,
+        role: 'supporter',
+        permissions: {
+          checkins: true,
+          medication: true,
+          doses: true,
+          health: true,
+          feed: true,
+          calendar: true,
+        },
+        grantedAt: new Date(),
+        revokedAt: null,
+      });
+    });
+    await seedEntry();
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'permissionLog', 'e1')));
+  });
+
+  it('REFUSES a member writing an entry into somebody else’s history', async () => {
+    await seedEntry();
+    await assertFails(
+      setDoc(doc(asOther(), 'patients', JONAS, 'permissionLog', 'e2'), entry),
+    );
+  });
+
+  it('REFUSES a member listing the history', async () => {
+    await seedEntry();
+    await assertFails(getDocs(collection(asOther(), 'patients', JONAS, 'permissionLog')));
+  });
+});
+
 describe('the circle as an access control list', () => {
   const seedCircle = (permissions: Record<string, boolean>, revokedAt: Date | null = null) =>
     testEnv.withSecurityRulesDisabled(async (ctx) => {
@@ -2134,6 +2354,7 @@ describe('an invite addressed to one person', () => {
   const clinical = {
     checkins: true,
     medication: true,
+    doses: true,
     health: false,
     feed: false,
     calendar: false,

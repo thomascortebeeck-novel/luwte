@@ -1,11 +1,13 @@
 import {
   DEFAULT_PERMISSIONS,
+  diffPermissions,
   inviteCode,
   inviteExpiry,
   paths,
   type CircleMember,
   type CircleRole,
   type Invite,
+  type PermissionChange,
   type Permissions,
 } from '@luwte/core';
 import {
@@ -170,12 +172,55 @@ export async function withdrawInvite(code: string): Promise<void> {
   await updateDoc(doc(db, paths.invite(code)), { expiresAt: new Date(0) });
 }
 
+/**
+ * D29 — the change, and the person's own record of it.
+ *
+ * The log is written next to the update rather than inside a transaction on
+ * purpose: if the log write fails, the permission change must still stand.
+ * A person who has decided to stop sharing something should never be told
+ * "that did not work" because a history entry could not be saved.
+ *
+ * That ordering is also why this is honestly a record and not a control —
+ * see `permissionChangeSchema`. The boundary is the circle document, which
+ * only the patient may write.
+ */
 export async function saveMemberPermissions(
   uid: string,
   memberUid: string,
   permissions: Permissions,
+  was?: { permissions: Permissions; relation?: string },
 ): Promise<void> {
   await updateDoc(doc(db, paths.circleMember(uid, memberUid)), { permissions });
+
+  const changed = was ? diffPermissions(was.permissions, permissions) : null;
+  if (!changed) return;
+  void setDoc(doc(collection(db, paths.permissionLog(uid))), {
+    memberUid,
+    relation: was?.relation ?? '',
+    granted: changed.granted,
+    withdrawn: changed.withdrawn,
+    at: serverTimestamp(),
+  });
+}
+
+export type PermissionChangeRecord = PermissionChange & { id: string };
+
+/** The person's own history. Newest first, because that is what is asked. */
+export async function readPermissionLog(uid: string): Promise<PermissionChangeRecord[]> {
+  const snapshot = await getDocs(collection(db, paths.permissionLog(uid)));
+  return snapshot.docs
+    .map((document) => {
+      const data = document.data();
+      return {
+        id: document.id,
+        memberUid: (data.memberUid ?? '') as string,
+        relation: (data.relation ?? '') as string,
+        granted: (data.granted ?? []) as PermissionChange['granted'],
+        withdrawn: (data.withdrawn ?? []) as PermissionChange['withdrawn'],
+        at: toDate(data.at) ?? new Date(0),
+      };
+    })
+    .sort((a, b) => b.at.getTime() - a.at.getTime());
 }
 
 export async function saveMemberRelation(

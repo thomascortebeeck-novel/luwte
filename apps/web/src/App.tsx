@@ -5,6 +5,7 @@ import { Breathing } from './routes/Breathing';
 import { Calendar } from './routes/Calendar';
 import { CheckIn } from './routes/CheckIn';
 import { Grounding } from './routes/Grounding';
+import { PermissionLog } from './routes/PermissionLog';
 import { Circle } from './routes/Circle';
 import { CircleMember } from './routes/CircleMember';
 import { Consent } from './routes/Consent';
@@ -207,6 +208,15 @@ export function App() {
           element={
             <Gate>
               <Invite />
+            </Gate>
+          }
+        />
+        {/* Before the :memberUid route, or "log" would be read as a uid. */}
+        <Route
+          path="/circle/log"
+          element={
+            <Gate>
+              <PermissionLog />
             </Gate>
           }
         />

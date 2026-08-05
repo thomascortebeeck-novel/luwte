@@ -49,21 +49,16 @@ describe('Invite', () => {
   });
 
   /*
-   * Family and friends are never offered medication at all. Absent rather
-   * than unticked: a toggle that is not there cannot be turned on by mistake
-   * on a bad day, and the rules refuse the read besides.
+   * D29 — this used to assert that family are never *offered* medication.
+   * Thomas decided the other way: the person is in full control, and a
+   * blanket ban is the app deciding for them. So the toggles are offered to
+   * everybody, off by default, and confirmed in words on the member screen
+   * before they take effect.
    */
-  it('does not offer medication to family and friends at all', () => {
+  it('offers medication and doses to family and friends, both off', () => {
     renderInvite();
-    expect(
-      screen.queryByRole('checkbox', { name: 'Kan zien wat je neemt en of je het nam.' }),
-    ).not.toBeInTheDocument();
-  });
-
-  it('offers it once the invite is for a clinician', async () => {
-    renderInvite();
-    await userEvent.click(screen.getByRole('radio', { name: 'Zorgverlener' }));
-    expect(checkbox('Kan zien wat je neemt en of je het nam.')).toBeChecked();
+    expect(checkbox('Kan zien welke medicatie je neemt.')).not.toBeChecked();
+    expect(checkbox('Kan zien of je je medicatie nam.')).not.toBeChecked();
   });
 
   it('starts a clinician on the clinical picture and nothing social', async () => {
@@ -71,7 +66,10 @@ describe('Invite', () => {
     await userEvent.click(screen.getByRole('radio', { name: 'Zorgverlener' }));
 
     expect(checkbox('Kan zien hoe je je voelde.')).toBeChecked();
-    expect(checkbox('Kan zien wat je neemt en of je het nam.')).toBeChecked();
+    expect(checkbox('Kan zien welke medicatie je neemt.')).toBeChecked();
+    // Adherence is the fact a clinician came for. They read it and, by the
+    // rules, can never write it.
+    expect(checkbox('Kan zien of je je medicatie nam.')).toBeChecked();
     expect(checkbox('Kan zien wat je deelt, en kan reageren.')).not.toBeChecked();
   });
 
@@ -87,6 +85,7 @@ describe('Invite', () => {
       permissions: {
         checkins: true,
         medication: false,
+        doses: false,
         health: false,
         feed: true,
         calendar: true,

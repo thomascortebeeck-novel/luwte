@@ -64,6 +64,10 @@ export function Circle() {
           <Button variant="quiet" onClick={() => navigate('/dokter')}>
             {t('findTitle')}
           </Button>
+          {/* D29 — control you cannot look back at is memory, not control. */}
+          <Button variant="quiet" onClick={() => navigate('/circle/log')}>
+            {t('permLogLink')}
+          </Button>
           <Button variant="quiet" onClick={() => navigate('/')}>
             {t('navToday')}
           </Button>

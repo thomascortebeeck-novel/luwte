@@ -179,15 +179,18 @@ tasks would be ceremony.
   where the decision is made rather than in every caller. A feed item for every
   pill turns adherence into a performance for the family, and that — not the
   reading — was always the harm.
-- **Family and friends cannot currently see medication or doses**, whatever a
-  circle document says: `canReadClinical` checks the role as well as the
-  permission, and the toggle is never offered to a supporter.
-  **⚠ Thomas has decided to change this** (D29, 2026-08-05) and it is **not
-  built yet**, so the code still refuses. When it lands: `medication` and
-  `doses` split into two permissions, still never in the feed, and widening a
-  clinical permission gets a confirmation naming what it means plus a log the
-  person can read back. Until then, do not quietly relax the rules — and do
-  not "fix" the tests that assert the refusal.
+- **Anyone the person chooses may be granted medication or doses** (D29, built
+  2026-08-05). This reverses the old rule that only a clinician could see
+  either. The old argument was good — a permission that is never offered
+  cannot be granted by mistake on a bad day — and *the person is in full
+  control* is the deeper principle. **Three things carry the weight the ban
+  used to:** they are two permissions, not one (`medication` is what is
+  prescribed, `doses` is whether it was taken); a dose still never reaches the
+  feed; and turning either on shows a confirmation naming the person and what
+  it means, then writes to a log at `/circle/log` that only they can read.
+  Narrowing stays instant and silent — asking somebody whether they are sure
+  they want to stop sharing is the app arguing with them about their own
+  decision.
 - **⚠ A nurse role is decided and not built** (D30, 2026-08-05). A nurse reads
   medication, never prescribes (`isPrescriber` already requires
   `role == 'clinician'`), needs admin verification like a clinician, and
@@ -458,11 +461,20 @@ someone out for good. Hence "weer toelaten" on the member screen (D18).
 
 ### Medication ownership — settled
 
-**Only the care team sees medication.** `canReadClinical` requires both the
-`medication` permission *and* `role == 'clinician'`, so a supporter card
-carrying `medication: true` grants nothing. `permissionsForRole` never offers
-the toggle to a supporter in the first place. Both halves matter: the UI stops
-it being granted by accident, the rules stop it mattering if it was.
+**Whoever the person granted it sees medication** (D29). `canReadMedication`
+and `canReadDoses` are two separate gates and neither checks the role: what
+governs is the permission the person actually set. The reversal is recorded
+above and in the changelog; the tests that asserted the old refusal were
+rewritten rather than deleted, so the diff shows what changed and why.
+
+**The permission log is a record, not a control.** Security rules cannot
+require that changing a circle document also writes a log entry, so a client
+that skipped it would leave no trace — the boundary is the circle document,
+which only the patient may write. What the log buys is that "what did I agree
+to in March" has an answer that is not memory, which matters most for exactly
+the decisions somebody might make on a bad day. It is append-only and
+self-only in both directions: it lists everyone, so a member who could read it
+would learn what every other member was given.
 
 `medications/**` is writable by the patient **and** by a clinician who passes
 all three of: verified by an admin, in this patient's circle with `medication`
@@ -709,6 +721,7 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-05 | **D29 built — family may be granted medication and doses.** The reversal of a rule this file called non-negotiable, decided by Thomas and now in the code. Three things carry the weight the ban used to. They are **two permissions**, because *what you are prescribed* and *whether you took it* are clinically different questions and somebody may well want a partner to see the first and not the second. A dose **still never reaches the feed** — being allowed to look is not the same as being told, and a notification per pill is what turned adherence into a performance. And turning either on **stops to say what it means**, naming the person, then writes to a log at `/circle/log` only they can read; narrowing stays instant and silent. Every test that asserted the old refusal was **rewritten to assert what replaced it**, never deleted, so the diff records the reversal. Walked over the wire as the brother: granted neither 403/403, doses only 403/200, medication only 200/403, both 200/200, revoked 403/403 — and refused writing either. `permissionsSchema` defaults `doses` to false so a card written before D29 parses as never granted. 22 more unit tests (451), 13 more rules tests (201). |
 | 2026-08-05 | **The calendar's two views, and asking how it went less often.** One anchor date with a day view and a week view of it, navigable in either direction, today one tap away. Seven columns was built and then removed after measuring: inside the 640px reading measure they come out at 83px and a title wraps to three lines, so the week stays stacked. The completion question keeps both halves — mastery and pleasure genuinely come apart — and now appears the first time then every fifth, counting completions rather than answers so a skip is not re-asked tomorrow. What somebody *expected* is captured at planning time and shown beside the answer, which is the half of the research that predicts more; a supporter can never write it. **Two live defects found by walking it.** A second "Vandaag" button that did something different from the footer's — unresolvable through a screen reader, now "Terug naar vandaag" and only present once you have left. And `ActivityRating` rendered two scales with the question only in an `aria-label`, so a sighted person saw seven identical dots between "weinig" and "veel", twice, with nothing saying which was which. 30 more unit tests (412), 2 more rules tests (188). |
 | 2026-08-05 | **A live AA failure in the light theme, shipped since Phase 5.** `--on-self` exists because `--diep-l` on `--zeeglas-l` is 4.20:1 — and contrast is symmetric, so `--zeeglas-l` **as text** fails identically. The calendar had been drawing "today" in it the whole time. It survived because `contrast.test.ts` lists "the pairs actually rendered today" and the button was the pairing anybody looked at. Fixed the way that file prescribes for amber — a darker `--self-text` (#3A755D, 4.62:1) rather than a relaxed floor — with a test asserting the old colour still fails, so the reason is recorded rather than erased. |
 | 2026-08-05 | **Real recurrence.** The field was already an rrule string, deliberately, but only three exact values were ever parsed — so a fortnightly appointment or a monthly depot injection could not be written down at all. Now a genuine RFC 5545 subset. `COUNT` is refused on purpose: it cannot be answered from one day. The compatibility property has its own tests — the three previously-storable rules still mean exactly what they meant. One test failed on the first run and **the test was what was wrong**: 2026-12-30 is 21 weeks after the fixture start, which is odd. 26 more unit tests (382). |

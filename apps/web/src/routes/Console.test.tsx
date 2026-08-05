@@ -156,7 +156,9 @@ describe('Console', () => {
       // The clinician's own wording, not the sentences written to the patient
       // — "Kan zien hoe je je voelde" would mean the wrong person here.
       expect(screen.getByText('Hoe het gaat, dag per dag')).toBeInTheDocument();
-      expect(screen.getByText('Wat er genomen wordt, en of het genomen is')).toBeInTheDocument();
+      // Two lines since D29, because they are two permissions.
+      expect(screen.getByText('Welke medicatie er genomen wordt')).toBeInTheDocument();
+      expect(screen.getByText('Of de medicatie genomen is')).toBeInTheDocument();
     });
 
     it('says plainly that doing nothing lets it lapse, and tells nobody', async () => {

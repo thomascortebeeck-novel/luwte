@@ -37,6 +37,19 @@ describe('shouldPostCompletion', () => {
   it('posts nothing at all when the person turned sharing off', () => {
     expect(shouldPostCompletion({ sharingEnabled: false, activityId: 'act1' })).toBe(false);
   });
+
+  it('still never posts a dose now that family may be granted doses', () => {
+    /*
+     * D29 is the reason this test exists twice over.
+     *
+     * Family and friends may now be granted `doses`, and the whole reason
+     * that was safe to do is that **being allowed to look is not the same as
+     * being told.** A feed item per pill is what turns adherence into a
+     * performance for the family, and that — not the reading — was always the
+     * harm. Widening the read must never quietly widen the push.
+     */
+    expect(shouldPostCompletion({ sharingEnabled: true, activityId: null })).toBe(false);
+  });
 });
 
 describe('whoToNotify', () => {

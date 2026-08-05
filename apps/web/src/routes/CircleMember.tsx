@@ -1,4 +1,11 @@
-import { isActive, permissionsForRole, type PermissionKey } from '@luwte/core';
+import {
+  PERMISSION_CONFIRM,
+  isActive,
+  isClinicalKey,
+  permissionsForRole,
+  type PermissionKey,
+  type Permissions,
+} from '@luwte/core';
 import { Button, Choice, Field, Hairline, Screen } from '@luwte/ui';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
@@ -30,8 +37,15 @@ export function CircleMember() {
   const navigate = useNavigate();
   const { memberUid = '' } = useParams();
 
+  type ClinicalKey = keyof typeof PERMISSION_CONFIRM;
+
   const [member, setMember] = useState<CircleMemberRecord | null>(null);
   const [relation, setRelation] = useState('');
+  /** A clinical permission waiting to be confirmed in words. */
+  const [confirming, setConfirming] = useState<{
+    key: ClinicalKey;
+    permissions: Permissions;
+  } | null>(null);
 
   useEffect(() => {
     if (!user || !memberUid) return;
@@ -47,11 +61,28 @@ export function CircleMember() {
 
   const live = isActive(member);
 
-  const toggle = (key: PermissionKey, checked: boolean) => {
+  const apply = (permissions: Permissions) => {
     if (!user) return;
-    const permissions = { ...member.permissions, [key]: checked };
+    const was = { permissions: member.permissions, relation: member.relation ?? '' };
     setMember({ ...member, permissions });
-    void saveMemberPermissions(user.uid, memberUid, permissions);
+    void saveMemberPermissions(user.uid, memberUid, permissions, was);
+  };
+
+  /*
+   * D29 — turning a clinical permission **on** stops to say what it means,
+   * in a sentence naming this person. Turning one off does not: somebody
+   * taking access away from another person should never be asked whether they
+   * are sure.
+   *
+   * This is the honest answer to "full control on a bad day". You cannot both
+   * give somebody real control and protect them from themselves; you can make
+   * sure they were told in words rather than in a toggle label, and that they
+   * can read back later what they agreed to.
+   */
+  const toggle = (key: PermissionKey, checked: boolean) => {
+    const permissions = { ...member.permissions, [key]: checked };
+    if (checked && isClinicalKey(key)) setConfirming({ key: key as ClinicalKey, permissions });
+    else apply(permissions);
   };
 
   const commitRelation = () => {
@@ -68,6 +99,42 @@ export function CircleMember() {
   const title =
     member.relation?.trim() ||
     t(member.role === 'clinician' ? 'circleRoleClinician' : 'circleRoleSupporter');
+
+  /*
+   * A whole screen rather than a dialog. What it says is the thing being
+   * agreed to, and it deserves the space — a line of small text under a
+   * toggle is how somebody agrees to something without reading it.
+   */
+  if (confirming) {
+    return (
+      <Screen
+        title={t('confirmTitle')}
+        action={
+          <>
+            <Button
+              full
+              onClick={() => {
+                apply(confirming.permissions);
+                setConfirming(null);
+              }}
+            >
+              {t('confirmYes')}
+            </Button>
+            <Button variant="quiet" onClick={() => setConfirming(null)}>
+              {t('confirmNo')}
+            </Button>
+          </>
+        }
+      >
+        <p className={styles.sectionTitle}>
+          {title} {t(PERMISSION_CONFIRM[confirming.key])}
+        </p>
+        {/* The half of the old ban that is kept, said where it matters: being
+            allowed to look is not the same as being told. */}
+        <p className={styles.quiet}>{t('confirmNeverPushed')}</p>
+      </Screen>
+    );
+  }
 
   return (
     <Screen

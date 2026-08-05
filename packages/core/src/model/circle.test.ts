@@ -1,20 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CLINICAL_KEYS,
   DEFAULT_CLINICIAN_PERMISSIONS,
   DEFAULT_PERMISSIONS,
   INVITE_ALPHABET,
   INVITE_CODE_LENGTH,
   INVITE_TTL_DAYS,
   canSee,
+  diffPermissions,
   grantedKeys,
   inviteCode,
   inviteExpiry,
   inviteLink,
   isActive,
+  isClinicalKey,
   isInviteUsable,
   isRedeemableBy,
   permissionKeys,
   permissionsForRole,
+  permissionsSchema,
+  widenedClinicalKeys,
 } from './circle';
 import { applyPendingChange, hasPendingChange, isPrescribed, needsApproval } from './medication';
 
@@ -26,7 +31,13 @@ describe('permissions', () => {
   });
 
   it('starts a clinician on the clinical picture and nothing social', () => {
-    expect(grantedKeys(DEFAULT_CLINICIAN_PERMISSIONS)).toEqual(['checkins', 'medication']);
+    // `doses` is on because adherence is the fact they came for. They read it
+    // and, by the rules, can never write it.
+    expect(grantedKeys(DEFAULT_CLINICIAN_PERMISSIONS)).toEqual([
+      'checkins',
+      'medication',
+      'doses',
+    ]);
   });
 
   it('lists what is granted, never what is withheld', () => {
@@ -38,10 +49,23 @@ describe('permissions', () => {
     expect(grantedKeys(all as never)).toEqual([
       'checkins',
       'medication',
+      'doses',
       'health',
       'feed',
       'calendar',
     ]);
+  });
+
+  it('reads a circle document written before doses existed as not granted', () => {
+    /*
+     * Every card written before D29 predates the key. Absent has to mean
+     * "never granted" — the alternative is a schema that refuses to parse a
+     * real document, or worse, one that defaults it on.
+     */
+    const old = { checkins: true, medication: true, health: false, feed: true, calendar: true };
+    const parsed = permissionsSchema.safeParse(old);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.doses).toBe(false);
   });
 });
 
@@ -163,29 +187,88 @@ describe('who owns a medication line', () => {
   });
 });
 
-describe('who may be offered medication', () => {
-  /*
-   * The rule the whole clinical fence rests on: family and friends are never
-   * shown the toggle. Not hidden conditionally somewhere in a screen —
-   * absent from the list a screen can render.
-   */
-  it('never offers medication to a supporter', () => {
-    expect(permissionsForRole('supporter').map((entry) => entry.key)).toEqual([
-      'checkins',
-      'health',
-      'feed',
-      'calendar',
+/*
+ * D29 — this block used to assert the opposite, and the reversal is the point
+ * rather than a test that stopped being convenient.
+ *
+ * It asserted that a supporter is never shown the medication toggle. The
+ * argument was good: a permission that is never offered cannot be granted by
+ * mistake on a bad day. The argument against it was better — *the person is
+ * in full control* is the deeper principle, and a blanket ban is the app
+ * deciding for them. Thomas decided, 2026-08-05.
+ *
+ * What is tested here now is what was kept in its place.
+ */
+describe('who may be offered what', () => {
+  it('offers every sentence to every role', () => {
+    for (const role of ['supporter', 'clinician'] as const) {
+      expect(permissionsForRole(role).map((entry) => entry.key)).toEqual([
+        'checkins',
+        'medication',
+        'doses',
+        'health',
+        'feed',
+        'calendar',
+      ]);
+    }
+  });
+
+  it('keeps what you take and whether you took it as separate questions', () => {
+    // The reason the split exists: somebody may well want a partner to see
+    // what they take and not whether they took it, and one toggle could not
+    // say that.
+    expect(CLINICAL_KEYS).toEqual(['medication', 'doses']);
+    expect(isClinicalKey('medication')).toBe(true);
+    expect(isClinicalKey('doses')).toBe(true);
+    expect(isClinicalKey('feed')).toBe(false);
+  });
+
+  it('stops to confirm turning a clinical permission on', () => {
+    const before = { ...DEFAULT_PERMISSIONS };
+    expect(widenedClinicalKeys(before, { ...before, doses: true })).toEqual(['doses']);
+    expect(widenedClinicalKeys(before, { ...before, medication: true, doses: true })).toEqual([
+      'medication',
+      'doses',
     ]);
   });
 
-  it('offers it to a clinician', () => {
-    expect(permissionsForRole('clinician').map((entry) => entry.key)).toContain('medication');
+  it('never stops to confirm turning one off, or anything social', () => {
+    /*
+     * Narrowing is instant and silent. Somebody taking access away from
+     * another person should never be asked whether they are sure — that is
+     * the app arguing with them about their own decision.
+     */
+    const wide = { ...DEFAULT_PERMISSIONS, medication: true, doses: true };
+    expect(widenedClinicalKeys(wide, { ...wide, medication: false })).toEqual([]);
+    expect(widenedClinicalKeys(wide, wide)).toEqual([]);
+    expect(widenedClinicalKeys(DEFAULT_PERMISSIONS, { ...DEFAULT_PERMISSIONS, health: true })).toEqual(
+      [],
+    );
+  });
+});
+
+describe('the record of what was given', () => {
+  it('names both directions of a change', () => {
+    const before = { ...DEFAULT_PERMISSIONS, medication: true };
+    const after = { ...DEFAULT_PERMISSIONS, medication: false, doses: true };
+    expect(diffPermissions(before, after)).toEqual({
+      granted: ['doses'],
+      withdrawn: ['medication'],
+    });
   });
 
-  it('leaves every other sentence available to both', () => {
-    const supporter = permissionsForRole('supporter').map((e) => e.key);
-    const clinician = permissionsForRole('clinician').map((e) => e.key);
-    expect(clinician.filter((key) => !supporter.includes(key))).toEqual(['medication']);
+  it('says nothing when nothing changed, so the log does not fill with noise', () => {
+    expect(diffPermissions(DEFAULT_PERMISSIONS, { ...DEFAULT_PERMISSIONS })).toBeNull();
+  });
+
+  it('logs what was withdrawn as well as what was given', () => {
+    // A history that only records widening would answer "what did I agree to"
+    // and never "when did I stop".
+    const before = { ...DEFAULT_PERMISSIONS, feed: true };
+    expect(diffPermissions(before, { ...before, feed: false })).toEqual({
+      granted: [],
+      withdrawn: ['feed'],
+    });
   });
 });
 
