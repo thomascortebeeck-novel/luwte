@@ -174,6 +174,10 @@ tasks would be ceremony.
 - **Reactions are warm only** — heart, applause, proud, and nothing else. The
   rules refuse any other type, so it survives the app being bypassed. Adding
   a cold one is not a feature request, it is a change to what this product is.
+  They are **icons with the word as the accessible name**, and "trots" is a
+  sparkle rather than a star or a medal: a star is the rating glyph and a
+  medal is a badge, and an icon can smuggle in gamification where the copy
+  never would.
 - **A dose is never *pushed*.** No post, no notification, no trace in the feed.
   `shouldPostCompletion` refuses anything without an activity id, so this holds
   where the decision is made rather than in every caller. A feed item for every
@@ -219,11 +223,26 @@ tasks would be ceremony.
   3:1 floor for a mark and fails the 4.5:1 floor for text. `contrast.test.ts`
   asserts both halves.
 - **A colour used as text is a different pairing from the same colour used as
-  a fill, and both need a line in `contrast.test.ts`.** `--on-self` was added
-  because light `--diep-l` on `--zeeglas-l` is 4.20:1; contrast is symmetric,
-  so `--zeeglas-l` *as text* fails identically, and the calendar drew "today"
-  that way from Phase 5 until 2026-08-05. Use **`--self-text`** for text and
-  `--self` for fills, borders and strokes.
+  a fill.** `--on-self` was added because light `--diep-l` on `--zeeglas-l` is
+  4.20:1; contrast is symmetric, so `--zeeglas-l` *as text* fails identically,
+  and the calendar drew "today" that way from Phase 5 until 2026-08-05. Use
+  **`--self-text`** for text and `--self` for fills, borders and strokes.
+- **`--line` is decoration; `--edge` is a control.** A hairline between
+  sections may be 1.2:1. The border of a field, the ring of an unticked dose,
+  an unselected dot on a scale and a progress pip may not — WCAG 1.4.11 asks
+  3:1 because each carries information. `--line` for the first, `--edge` for
+  the second, and a test asserts `--line` stays too faint to be mistaken for
+  the second.
+- **`contrast.test.ts` enumerates rather than remembers.** Every token × both
+  surfaces × both themes, plus a guard that reads every stylesheet and fails
+  on any colour token the file does not cover. Both AA failures found so far
+  were the same mistake — a stylesheet started using a colour and nobody added
+  the pairing — so a new token now fails at the moment the CSS is written.
+  Adding one means deciding its floor and putting it in `TEXT_TOKENS` or
+  `MARK_TOKENS`.
+- **No comma before `en` or `of` in Dutch.** Copy-lint refuses it. Every comma
+  the app genuinely needs — `Mis je ze, dan gebeurt er niets`, and every list —
+  is untouched, which is why the rule is that narrow.
 - **Sans for everything the app says; serif only for what a person wrote.**
 - **No exclamation marks. No emoji in system copy. `je`, never `u`.**
 - **On a missed day, say nothing.** No catch-up prompt, no visible gap.
@@ -266,15 +285,45 @@ Every screen, by who it is for:
 deletion, and the family pilot. Phase 10 is the thirteen features Thomas
 asked for; the plan and its priority order are in
 [docs/superpowers/plans/2026-08-05-phase-10-thirteen-features.md](docs/superpowers/plans/2026-08-05-phase-10-thirteen-features.md).
-**Twelve of the thirteen are built.** Only **feature 11, the Garmin
-ingestion**, is not, and it is blocked on two things outside the code:
-Garmin's own approval of an application, and reversing D15 to put Blaze on a
-project — OAuth 2.0 with a client secret and a push callback cannot live in a
-browser. The design is settled in the plan: the patient decides who sees it
-(GDPR Art. 15 makes "the doctor grants access" non-compliance rather than a
-product choice), cardiac numbers are stored and not charted by default, and
-luwte may carry Garmin's own CE-marked conclusion attributed to Garmin while
-never drawing one itself.
+**Twelve of the thirteen are built.** Only **feature 11, the watch data**, is
+not — and it is **not blocked**, which reverses what this file said on
+2026-08-05. See "Watch data comes through the phone, not through Garmin" below.
+
+**Now: Phase 8 — Milestone B.** The plan is
+[docs/superpowers/plans/2026-08-05-phase-8-and-android.md](docs/superpowers/plans/2026-08-05-phase-8-and-android.md),
+which also covers the Android app. Started: the accessibility pass. Still
+open: GDPR export and deletion, the full rules matrix, the error-handling
+sweep, DPIA-lite and retention docs, and the family pilot. **Exit is v1 live,
+and then the PRD's own rule applies — stop, and two months of real use before
+building anything else.**
+
+### Watch data comes through the phone, not through Garmin
+
+This file previously said feature 11 needed Garmin's enterprise approval, a
+server and Blaze. All three are true of **Garmin's cloud Health API**, and
+that is the wrong way in.
+
+**Garmin Connect for Android writes to Health Connect** — steps, resting heart
+rate and aggregated sleep, one-way, which is the direction luwte needs. Health
+Connect is an **on-device** API, so there is no Garmin agreement, no OAuth
+client secret, no webhook, no server and **no Blaze**: the app reads locally
+and writes to Firestore as the patient, through the rules that already exist.
+It also works with any watch that writes there — Fitbit, Samsung, Oura — so
+building against Garmin's API would have bought a Garmin-only feature at the
+price of a backend.
+
+What is genuinely lost: **ECG is not a Health Connect data type**, nor are
+Body Battery or Stress, so the ECG piece would still need Garmin's own API and
+is deliberately deferred. HRV support is ambiguous and must be tested on a
+real device rather than designed around. And the gate moves rather than
+vanishes — Google Play wants a Health apps declaration with a per-data-type
+justification and a public privacy policy.
+
+Everything already decided still holds, because none of it was about the
+transport: the patient decides who sees it (Art. 15), resting heart rate is
+stored and not charted by default, it needs its own consent item, and luwte
+may carry a conclusion somebody else is licensed to draw and may never draw
+one.
 
 Nothing needs a Firebase project. `pnpm emulators` plus `pnpm dev` is the
 whole setup.
@@ -731,6 +780,9 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-05 | **Phase 8 opened with the accessibility pass, and it found a second failure immediately.** `contrast.test.ts` said "these are the pairs actually rendered today" — an instruction followed for the pairs somebody thought about and missed for the ones nobody did, which is how a light-mode failure shipped from Phase 5 to August. It now **enumerates**: every token × both surfaces × both themes, plus a guard that reads every stylesheet and fails on any colour it does not cover. The guard was proved by adding a fake token and watching it fail. The enumeration then caught `--line` at 1.18–1.33:1 doing the job of a control edge — field borders, the unticked dose ring, unselected scale dots, progress pips — where 1.4.11 asks 3:1. New `--edge` token, sixteen declarations moved, and `--line` keeps only the decoration. Same shape as the `--self-text` fix: a new token, never a relaxed floor. |
+| 2026-08-05 | **Reactions became icons** — heart, applause, a sparkle for "trots" — with the word kept as the accessible name. Not a star and not a medal: a star is the rating glyph and a medal is a badge, and an icon can smuggle in gamification where the copy never would. The clap took three attempts, and the first two were only rejected by rendering them at 150px and looking: anatomy does not survive 24px. **And fewer commas** — 25 strings, plus a copy-lint rule refusing `, en` and `, of` in Dutch so it stays fixed. Narrow on purpose: `Mis je ze, dan gebeurt er niets` and every list keep theirs. |
+| 2026-08-05 | **The Garmin block was the wrong architecture, not a closed door.** Garmin's *cloud* API does need approval, a server and Blaze — but Garmin Connect for Android writes steps, resting HR and sleep to **Health Connect**, which is on-device. No agreement, no client secret, no webhook, no backend, and it works with any watch that writes there rather than Garmin alone. ECG is not a Health Connect type and stays deferred; the gate becomes Google Play's health declaration. Recorded with the Phase 8 and Android plan in [docs/superpowers/plans/2026-08-05-phase-8-and-android.md](docs/superpowers/plans/2026-08-05-phase-8-and-android.md), which also settles Capacitor over a rewrite, local notifications over FCM for the daily reminder (free, no server, works offline), App Links for the invite, and no usage analytics on Android either. |
 | 2026-08-05 | **D30 built — a nurse.** Most of it was already true: `isPrescriber` requires `role == 'clinician'`, and the activity `create` branch already refuses anything but a suggestion from a circle member. Two things were not. **A nurse card needs admin verification**, or D23 is bypassed by calling somebody a nurse instead of a doctor. And **verification now records *which*** — `careRole`, derived from the discipline the admin checked — because without it a verified nurse could be named a clinician on a card and inherit prescribing, which is the one thing the decision forbids. `psycholoog` is non-prescribing for the same reason as `verpleegkundige`, and `andere` resolves to the narrower answer. A verification written before `careRole` reads as clinician, since clinician was the only verified role at the time. **"Suggest a week" needed no new concept**: a recurring suggestion is one offer accepted with one tap that lands on every day it names — a batch of fourteen to accept individually was the tedium the decision was about. `circleRoleClinician` renamed "Zorgverlener" → "Arts", because a nurse *is* a zorgverlener and the old word stopped being precise. 27 more unit tests (478), 11 more rules tests (220). |
 | 2026-08-05 | **The early-warning-signs plan** (feature 5). The person's own pairs of *what I notice* and *what I do*, with its own `plan` permission — sharing what you do when it starts going wrong is a different decision from sharing how a Tuesday felt. Deliberately not a clinical key: the point of a relapse-prevention plan is that the people around you know it, so a confirmation would put friction on the thing that works. **luwte never matches anything against it, and the screen says so** — comparing a check-in to somebody's warning signs is clinical monitoring, Class IIa, the line this product does not cross. Delete is allowed here unlike almost everywhere else, because a plan is a current intention rather than a record. |
 | 2026-08-05 | **Breathing, grounding, and a diary question that changes** (feature 5). Short, guided, externally focused and eyes open is the safe subset for somebody with a psychosis history; long silent unguided sitting is where the case reports come from — so a timed breathing guide and 5-4-3-2-1 grounding, and a test asserting those are the only two. No meditation timer, no body scan, no video. **Neither records anything**, because "ignoring it costs nothing" is only true while there is nothing to ignore it against. The diary question rotates by day with the original wording still in the rotation. |
