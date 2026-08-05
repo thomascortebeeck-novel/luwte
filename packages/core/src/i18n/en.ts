@@ -85,6 +85,11 @@ export const en: Dictionary = {
   onboardingNameLabel: 'Your name',
   onboardingHourTitle: 'When does it suit you to look back on your day?',
   onboardingHourExplanation: 'One reminder a day. If you miss it, nothing happens.',
+  onboardingDoctorTitle: 'Is a care provider looking along with you?',
+  onboardingDoctorExplanation:
+    'You can add them now, or later. If there is nobody, you simply manage your medication yourself.',
+  onboardingDoctorNow: 'Add now',
+  onboardingDoctorLater: 'Later',
   onboardingFinish: 'Done',
   // Verification — the clinician's side
   verifyTitle: 'Have it checked that you are a clinician',
@@ -107,8 +112,7 @@ export const en: Dictionary = {
 
   // A patient adding their doctor
   findTitle: 'Add your doctor',
-  findIntro:
-    'Did your doctor give you a code? Type it here. Without a code you cannot add anybody.',
+  findIntro: 'Did your doctor give you a code? Type it here. Or search by name.',
   findCode: 'Your doctor’s code',
   findLook: 'Look it up',
   findUnknown: 'We do not know that code. Check it, or ask for it again.',
@@ -117,8 +121,33 @@ export const en: Dictionary = {
   findRelation: 'What is this person to you?',
   findDone: 'Added. You can always change what this person sees.',
   findWhatTheySee: 'They see your check-ins and your medication. You can change that.',
+  findByName: 'Search by name',
+  findName: 'Your doctor’s name',
+  findNameHint:
+    'You will only find care providers who already use luwte. There is no list of every doctor in Belgium.',
+  findSearch: 'Search',
+  findNobody:
+    'Nobody found with that name. Ask your doctor for a code, or invite them with a link.',
+  findAsk: 'Ask this person',
+  findAskWhatTheySee:
+    'If they say yes, they see your check-ins and your medication. You can always change that.',
+  findAsked:
+    'Asked. Your doctor sees it when they open luwte. Nothing changes until they say yes.',
   myCodeTitle: 'Your code',
   myCodeIntro: 'Give this code to somebody who wants you to follow them.',
+
+  // What has been asked of a clinician, in their own console
+  inboxTitle: 'Asked of you',
+  inboxAsks: 'asks whether you may look along.',
+  inboxSees: 'What you would see:',
+  inboxAccept: 'Accept',
+  inboxLeave:
+    'Do nothing and the request expires after a week. Nobody is told either way.',
+  grantCheckins: 'How things are going, day by day',
+  grantMedication: 'What is being taken, and whether it was taken',
+  grantHealth: 'What the watch reported',
+  grantFeed: 'What gets shared',
+  grantCalendar: 'The calendar',
 
   // Verification — the admin's side
   adminTitle: 'Requests',

@@ -62,7 +62,18 @@ export function Onboarding() {
       .finally(() => setResolving(false));
   }, []);
 
-  const finish = async () => {
+  /**
+   * `then` is where to go once consent is given — never before it. Adding a
+   * doctor is offered inside onboarding because that is where it is asked
+   * for, but naming your psychiatrist before you have agreed to Article 9
+   * processing is the wrong way round, so the intent is carried across the
+   * consent screen rather than acted on here.
+   *
+   * Router state rather than storage: it needs to survive exactly one hop. A
+   * reload on the consent screen loses it and lands on Today, which costs
+   * nothing — the same offer is on the medication screen and in settings.
+   */
+  const finish = async (then?: string) => {
     if (!user || !role) return;
     setBusy(true);
     try {
@@ -74,7 +85,7 @@ export function Onboarding() {
         ...(keepsOwnLogbook(role) ? { checkinHour } : {}),
       });
       await reload();
-      navigate('/consent');
+      navigate('/consent', then ? { state: { then } } : undefined);
     } finally {
       setBusy(false);
     }
@@ -100,7 +111,14 @@ export function Onboarding() {
     );
   }
 
-  type Step = { title?: string; body: ReactNode; canContinue: boolean; label: string };
+  type Step = {
+    title?: string;
+    body: ReactNode;
+    canContinue: boolean;
+    label: string;
+    /** Replaces the single continue button, for a step with two equal ways on. */
+    actions?: ReactNode;
+  };
 
   const statement = (key: Parameters<typeof t>[0]): Step => ({
     body: <p className={styles.statement}>{t(key)}</p>,
@@ -144,7 +162,33 @@ export function Onboarding() {
       </>
     ),
     canContinue: !busy,
+    label: t('onboardingNext'),
+  };
+
+  /*
+   * The one screen where finding a doctor is offered, and it is offered rather
+   * than required — both ways on are the same weight, because a person with no
+   * psychiatrist loses nothing here and must not be made to feel they are
+   * skipping something.
+   *
+   * Only the patient sees it. A supporter has nobody to prescribe for, and a
+   * clinician is the doctor.
+   */
+  const doctorStep: Step = {
+    title: t('onboardingDoctorTitle'),
+    body: <p className={styles.statement}>{t('onboardingDoctorExplanation')}</p>,
+    canContinue: !busy,
     label: t('onboardingFinish'),
+    actions: (
+      <>
+        <Button full disabled={busy} onClick={() => void finish('/dokter')}>
+          {t('onboardingDoctorNow')}
+        </Button>
+        <Button full variant="quiet" disabled={busy} onClick={() => void finish()}>
+          {t('onboardingDoctorLater')}
+        </Button>
+      </>
+    ),
   };
 
   const steps =
@@ -154,6 +198,7 @@ export function Onboarding() {
           statement('onboardingSharing'),
           nameStep,
           hourStep,
+          doctorStep,
         ]
       : role === 'supporter'
         ? [
@@ -174,13 +219,15 @@ export function Onboarding() {
     <Screen
       title={current.title}
       action={
-        <Button
-          full
-          disabled={!current.canContinue}
-          onClick={last ? () => void finish() : () => setStep(step + 1)}
-        >
-          {current.label}
-        </Button>
+        current.actions ?? (
+          <Button
+            full
+            disabled={!current.canContinue}
+            onClick={last ? () => void finish() : () => setStep(step + 1)}
+          >
+            {current.label}
+          </Button>
+        )
       }
     >
       <div className={styles.progress} aria-hidden="true">

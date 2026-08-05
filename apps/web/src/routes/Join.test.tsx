@@ -31,6 +31,9 @@ const invite = (overrides: Partial<InviteRecord> = {}): InviteRecord => ({
   createdAt: new Date('2026-08-04T10:00:00Z'),
   expiresAt: new Date('2099-01-01T00:00:00Z'),
   usedBy: null,
+  // The bearer kind. An invite addressed to one person never reaches /join
+  // by a shared link, because there is no link to share.
+  forUid: null,
   ...overrides,
 });
 

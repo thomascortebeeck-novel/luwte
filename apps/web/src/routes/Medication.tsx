@@ -61,6 +61,15 @@ export function Medication() {
 
   useEffect(load, [user]);
 
+  /*
+   * Whether anybody is already looking after this list. Revoked members do
+   * not count — a psychiatrist who was removed is exactly the person this
+   * screen should offer to replace.
+   */
+  const hasClinician = circle.some(
+    (member) => member.role === 'clinician' && member.revokedAt == null,
+  );
+
   const parsedTimes = times
     .split(',')
     .map((value) => value.trim())
@@ -178,6 +187,15 @@ export function Medication() {
             <Button full onClick={() => setAdding(true)}>
               {t('medicationAdd')}
             </Button>
+            {/* Offered where it becomes relevant rather than up front: this
+                is the screen a person is looking at when the question "is
+                somebody managing these" actually arises. Hidden once there is
+                a clinician, so it never reads as a prompt to collect more. */}
+            {hasClinician ? null : (
+              <Button variant="quiet" onClick={() => navigate('/dokter')}>
+                {t('findTitle')}
+              </Button>
+            )}
             <Button variant="quiet" onClick={() => navigate('/')}>
               {t('navToday')}
             </Button>

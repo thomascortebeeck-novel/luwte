@@ -206,6 +206,24 @@ service cloud.firestore {
                .hasOnly(['prescribedBy', 'pendingChange', 'changeLog']);
     }
 
+    /*
+     * Whether an invite names its recipient, and whether that is this person.
+     *
+     * An invite sent as a link is a bearer token on purpose: holding the code
+     * is the capability, which is what sharing a link means. An invite issued
+     * from the clinician directory is not — **nobody handed it over**. The
+     * person searched, found a name, and asked. So the code alone must not be
+     * enough there, or an invite meant for one psychiatrist would admit
+     * whoever came across it.
+     *
+     * Absent on every invite written before this existed, hence `get` with a
+     * null default: an old link keeps working exactly as it did.
+     */
+    function addressedToMe(code) {
+      return inviteData(code).get('forUid', null) == null
+             || inviteData(code).get('forUid', null) == request.auth.uid;
+    }
+
     /**
      * A proposed circle entry is redeemable only if it matches an invite this
      * patient issued, exactly. Any deviation in role or permissions is a
@@ -218,6 +236,7 @@ service cloud.firestore {
              && inviteData(proposed.inviteCode).expiresAt > request.time
              && (inviteData(proposed.inviteCode).usedBy == null
                  || inviteData(proposed.inviteCode).usedBy == request.auth.uid)
+             && addressedToMe(proposed.inviteCode)
              && proposed.role == inviteData(proposed.inviteCode).role
              && proposed.permissions == inviteData(proposed.inviteCode).permissions;
     }
@@ -542,7 +561,17 @@ service cloud.firestore {
        * invite is refused outright rather than filtered.
        */
       allow get: if signedIn();
-      allow list: if isSelf(resource.data.patientId);
+      /*
+       * The issuer, and the one person an addressed invite was written for.
+       *
+       * Widening `list` to the addressee forces their query to filter on
+       * `forUid`, which is the same forcing that makes the issuer's listing
+       * safe: a sweep that could return somebody else's invite is refused
+       * rather than quietly trimmed. It is what lets a clinician see what has
+       * been asked of them without a server and without an inbox collection.
+       */
+      allow list: if isSelf(resource.data.patientId)
+                  || (signedIn() && resource.data.get('forUid', null) == request.auth.uid);
       allow create: if signedIn()
                     && request.resource.data.patientId == request.auth.uid
                     && request.resource.data.usedBy == null;
@@ -552,11 +581,20 @@ service cloud.firestore {
         (isSelf(resource.data.patientId)
           && request.resource.data.patientId == resource.data.patientId)
         // Or the redeemer claims it, exactly once, changing nothing else.
+        //
+        // `forUid` is pinned along with the rest, and the claim is refused to
+        // anyone it was not written for. Without that second clause a stranger
+        // holding the code could not join — the circle write would still stop
+        // them — but they could burn the invite, and the doctor it was meant
+        // for would find a dead code with nothing to say why.
         || (resource.data.usedBy == null
             && request.resource.data.usedBy == request.auth.uid
+            && (resource.data.get('forUid', null) == null
+                || resource.data.get('forUid', null) == request.auth.uid)
             && request.resource.data.patientId == resource.data.patientId
             && request.resource.data.role == resource.data.role
             && request.resource.data.permissions == resource.data.permissions
+            && request.resource.data.get('forUid', null) == resource.data.get('forUid', null)
             && request.resource.data.expiresAt == resource.data.expiresAt);
 
       allow delete: if isSelf(resource.data.patientId);

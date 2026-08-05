@@ -1,4 +1,5 @@
 import {
+  adoptionChange,
   applyPendingChange,
   diffMedication,
   doseId,
@@ -103,7 +104,21 @@ export async function updateMedication(
   /** Set when a clinician is editing, so the entry becomes theirs. */
   prescribedBy?: string,
 ): Promise<void> {
-  const changes = diffMedication(before, after, by, new Date());
+  const at = new Date();
+  const changes = diffMedication(before, after, by, at);
+
+  /*
+   * Taking over a line the person wrote is logged as its own entry, not left
+   * implicit in the field diff — `diffMedication` deliberately tracks only
+   * what a human reads on a timeline, and ownership is not one of those
+   * fields. Without this the person's list would simply start saying "je
+   * dokter heeft dit ingesteld" one day, with nothing recording when or by
+   * whom (J5).
+   */
+  const adoption =
+    prescribedBy === undefined ? null : adoptionChange(before, prescribedBy, at);
+  if (adoption) changes.push(adoption);
+
   if (changes.length === 0 && prescribedBy === undefined) return;
 
   await updateDoc(doc(db, paths.medication(uid, medId)), {

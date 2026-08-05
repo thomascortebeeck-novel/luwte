@@ -100,6 +100,23 @@ export const PERMISSION_SENTENCE = Object.fromEntries(
   PERMISSION_COPY.map((entry) => [entry.key, entry.sentenceKey]),
 ) as Record<PermissionKey, CopyKey>;
 
+/**
+ * The same permissions, described to the person being *asked* rather than the
+ * person granting.
+ *
+ * `PERMISSION_SENTENCE` is addressed to the patient — "Kan zien hoe je je
+ * voelde" — and turns into nonsense on a clinician's own screen, where "je"
+ * would mean them. These are plain noun phrases instead, which also sidesteps
+ * having to pick a pronoun for somebody the app has never met.
+ */
+export const PERMISSION_GRANT: Record<PermissionKey, CopyKey> = {
+  checkins: 'grantCheckins',
+  medication: 'grantMedication',
+  health: 'grantHealth',
+  feed: 'grantFeed',
+  calendar: 'grantCalendar',
+};
+
 /** Access is live only while the member has not been revoked. */
 export function isActive(member: Pick<CircleMember, 'revokedAt'>): boolean {
   return member.revokedAt === null || member.revokedAt === undefined;
@@ -122,6 +139,17 @@ export const inviteSchema = z.object({
   createdAt: z.date(),
   expiresAt: z.date(),
   usedBy: z.string().nullable().optional(),
+  /**
+   * When set, only this person may redeem it.
+   *
+   * A link invite is a bearer token by design: whoever holds the code joins,
+   * which is exactly what handing someone a link means. An invite issued from
+   * the clinician directory is different in kind — **nobody handed it over**.
+   * The person searched, found a name, and asked. So the code alone must not
+   * be enough, or an invite meant for one psychiatrist would admit whoever
+   * came across it.
+   */
+  forUid: z.string().nullable().default(null),
 });
 
 export type Invite = z.infer<typeof inviteSchema>;
@@ -129,6 +157,17 @@ export type Invite = z.infer<typeof inviteSchema>;
 export function isInviteUsable(invite: Pick<Invite, 'expiresAt' | 'usedBy'>, now: Date): boolean {
   if (invite.usedBy) return false;
   return invite.expiresAt.getTime() > now.getTime();
+}
+
+/**
+ * Whether this person is the one the invite was issued for.
+ *
+ * An unaddressed invite is redeemable by anyone holding the code; an addressed
+ * one only by its recipient. The rules enforce this — nothing here is a
+ * boundary — but the screens ask first so a refusal always means a real bug.
+ */
+export function isRedeemableBy(invite: Pick<Invite, 'forUid'>, uid: string): boolean {
+  return invite.forUid == null || invite.forUid === uid;
 }
 
 export function inviteExpiry(from: Date): Date {

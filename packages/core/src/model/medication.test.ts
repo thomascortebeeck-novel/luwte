@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { dictionaries, type Locale } from '../i18n/index';
 import {
   OPTIONAL_PRACTICES,
+  adoptionChange,
   diffMedication,
   doseId,
   doseTimeSchema,
@@ -140,6 +141,41 @@ describe('a prescription whose clinician has gone', () => {
       to: null,
       by: 'uid-jonas',
     });
+  });
+});
+
+/*
+ * J5 — the journey nobody asked for that happens at every pilot onboarding.
+ *
+ * The person has been keeping their own list; a psychiatrist arrives and takes
+ * a line over. The write is already permitted, and that is the problem: a line
+ * quietly changing from *mine to edit* to *I can only ask* is the loss of
+ * control this product must not do. It needs no second consent — they invited
+ * this clinician and granted medication — but it has to be told, not
+ * discovered.
+ */
+describe('a clinician taking over a line the person wrote', () => {
+  it('logs the adoption, so it is told rather than discovered', () => {
+    expect(adoptionChange({ prescribedBy: null }, 'uid-psychiater', at)).toEqual({
+      at,
+      field: 'prescribedBy',
+      from: null,
+      to: 'uid-psychiater',
+      by: 'uid-psychiater',
+    });
+  });
+
+  it('logs nothing when the line was already theirs', () => {
+    // Editing your own prescription is not an adoption, and a log entry
+    // saying otherwise would draw a vertical rule on the chart for a change
+    // that never happened.
+    expect(adoptionChange({ prescribedBy: 'uid-psychiater' }, 'uid-psychiater', at)).toBeNull();
+  });
+
+  it('logs nothing when one clinician takes over from another', () => {
+    // Still not an adoption from the person's side: the line was never theirs
+    // to lose. The ordinary field diff records what actually changed.
+    expect(adoptionChange({ prescribedBy: 'uid-huisarts' }, 'uid-psychiater', at)).toBeNull();
   });
 });
 

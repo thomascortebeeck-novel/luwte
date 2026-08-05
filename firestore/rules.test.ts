@@ -2010,6 +2010,161 @@ describe('invites and redemption', () => {
   });
 });
 
+/*
+ * An invite addressed to one person.
+ *
+ * The distinction this exists for: a link invite is a bearer token by design —
+ * whoever holds the code joins, which is exactly what sharing a link means. An
+ * invite issued from the clinician directory is not, because **nobody handed it
+ * over**. The patient searched, found a name, and asked. So holding the code
+ * must not be enough, and these are the attacks that says so.
+ */
+describe('an invite addressed to one person', () => {
+  const soon = () => new Date(Date.now() + 7 * 24 * 3600 * 1000);
+  const clinical = {
+    checkins: true,
+    medication: true,
+    health: false,
+    feed: false,
+    calendar: false,
+  };
+
+  const seedAddressed = (overrides: Record<string, unknown> = {}) =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'invites', 'ASKED'), {
+        patientId: JONAS,
+        role: 'clinician',
+        permissions: clinical,
+        createdAt: new Date(),
+        expiresAt: soon(),
+        usedBy: null,
+        forUid: DOCTOR,
+        ...overrides,
+      });
+    });
+
+  const entry = (overrides: Record<string, unknown> = {}) => ({
+    inviteCode: 'ASKED',
+    role: 'clinician',
+    permissions: clinical,
+    grantedAt: new Date(),
+    revokedAt: null,
+    ...overrides,
+  });
+
+  it('lets the doctor it was written for accept it', async () => {
+    await verifyClinician(DOCTOR);
+    await seedAddressed();
+    await assertSucceeds(setDoc(doc(asDoctor(), 'patients', JONAS, 'circle', DOCTOR), entry()));
+  });
+
+  /*
+   * The attack the field exists for. Everything else about this invite is
+   * genuine — the patient issued it, it is unused and unexpired, and the card
+   * copies its role and permissions exactly. Only the person is wrong.
+   */
+  it('REFUSES somebody else who has the code', async () => {
+    await verifyClinician(OTHER);
+    await seedAddressed();
+    await assertFails(setDoc(doc(asOther(), 'patients', JONAS, 'circle', OTHER), entry()));
+  });
+
+  /*
+   * Not an escalation — the circle write would refuse them anyway — but the
+   * doctor it was meant for would find a dead code and nothing saying why.
+   */
+  it('REFUSES a stranger burning it by marking it used', async () => {
+    await seedAddressed();
+    await assertFails(updateDoc(doc(asOther(), 'invites', 'ASKED'), { usedBy: OTHER }));
+  });
+
+  it('lets the addressee claim it', async () => {
+    await seedAddressed();
+    await assertSucceeds(updateDoc(doc(asDoctor(), 'invites', 'ASKED'), { usedBy: DOCTOR }));
+  });
+
+  it('REFUSES the addressee retargeting it to somebody else on the way through', async () => {
+    await seedAddressed();
+    await assertFails(
+      updateDoc(doc(asDoctor(), 'invites', 'ASKED'), { usedBy: DOCTOR, forUid: OTHER }),
+    );
+  });
+
+  it('REFUSES the addressee widening what it grants', async () => {
+    await verifyClinician(DOCTOR);
+    await seedAddressed();
+    await assertFails(
+      setDoc(
+        doc(asDoctor(), 'patients', JONAS, 'circle', DOCTOR),
+        entry({ permissions: { ...clinical, health: true, feed: true } }),
+      ),
+    );
+  });
+
+  /*
+   * Being asked is not being verified. The clamp on the circle write is what
+   * refuses this, and it has to hold on this path too — otherwise a patient
+   * searching would be a way around the thing the admin panel decides.
+   */
+  it('REFUSES an unverified addressee accepting a clinician invite', async () => {
+    await seedAddressed();
+    await assertFails(setDoc(doc(asDoctor(), 'patients', JONAS, 'circle', DOCTOR), entry()));
+  });
+
+  it('lets the addressee list what has been asked of them', async () => {
+    await seedAddressed();
+    await assertSucceeds(
+      getDocs(query(collection(asDoctor(), 'invites'), where('forUid', '==', DOCTOR))),
+    );
+  });
+
+  it('REFUSES a listing of what was asked of somebody else', async () => {
+    await seedAddressed();
+    await assertFails(
+      getDocs(query(collection(asOther(), 'invites'), where('forUid', '==', DOCTOR))),
+    );
+  });
+
+  it('REFUSES the addressee an unfiltered sweep of every invite', async () => {
+    await seedAddressed();
+    await assertFails(getDocs(collection(asDoctor(), 'invites')));
+  });
+
+  /*
+   * The field is absent on every invite issued before it existed, so a shared
+   * link has to keep working exactly as it did — a null default rather than a
+   * missing-field error that would lock out a family mid-pilot.
+   */
+  it('leaves an ordinary link invite bearer, as it was', async () => {
+    await seedAddressed({
+      role: 'supporter',
+      permissions: {
+        checkins: false,
+        medication: false,
+        health: false,
+        feed: true,
+        calendar: true,
+      },
+      forUid: null,
+    });
+    await assertSucceeds(
+      setDoc(
+        doc(asOther(), 'patients', JONAS, 'circle', OTHER),
+        entry({
+          role: 'supporter',
+          permissions: {
+            checkins: false,
+            medication: false,
+            health: false,
+            feed: true,
+            calendar: true,
+          },
+        }),
+      ),
+    );
+  });
+});
+
 describe('everything else', () => {
   it('is denied by default', async () => {
     await assertFails(getDoc(doc(asJonas(), 'checkins', 'anything')));

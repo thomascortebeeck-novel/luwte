@@ -73,7 +73,11 @@ const readInvite = (code: string, data: Record<string, unknown>): InviteRecord =
   createdAt: toDate(data.createdAt) ?? new Date(),
   expiresAt: toDate(data.expiresAt) ?? new Date(0),
   usedBy: (data.usedBy ?? null) as string | null,
+  forUid: (data.forUid ?? null) as string | null,
 });
+
+/** The patient's name, carried on the invite so the recipient sees who asked. */
+export type AddressedInvite = InviteRecord & { patientName: string };
 
 /**
  * The query filters on patientId because the rules require it to. An
@@ -97,7 +101,18 @@ export async function readInviteByCode(code: string): Promise<InviteRecord | nul
 
 export async function createInvite(
   uid: string,
-  values: { role: CircleRole; permissions: Permissions; relation: string; patientName: string },
+  values: {
+    role: CircleRole;
+    permissions: Permissions;
+    relation: string;
+    patientName: string;
+    /**
+     * Set when the person was found in the directory rather than handed a
+     * link. The invite is then theirs alone to accept — see `forUid` on the
+     * schema for why holding the code must not be enough.
+     */
+    forUid?: string | null;
+  },
 ): Promise<InviteRecord> {
   const code = inviteCode(crypto.getRandomValues(new Uint8Array(32)));
   const now = new Date();
@@ -115,10 +130,35 @@ export async function createInvite(
     createdAt: now,
     expiresAt: inviteExpiry(now),
     usedBy: null,
+    forUid: values.forUid ?? null,
   };
 
   await setDoc(doc(db, paths.invite(code)), invite);
   return { ...invite, code };
+}
+
+/**
+ * What has been asked of this person, and by whom.
+ *
+ * The query filters on `forUid` because the rules require it to — the same
+ * forcing that makes the issuer's listing safe. There is no inbox collection
+ * and no server: the invite the patient wrote *is* the request.
+ *
+ * Nothing is chased. An unanswered request simply expires after seven days
+ * (PRD 8), and the person who asked is told nothing either way.
+ */
+export async function readAddressedInvites(uid: string): Promise<AddressedInvite[]> {
+  const snapshot = await getDocs(
+    query(collection(db, paths.invites()), where('forUid', '==', uid)),
+  );
+  const now = Date.now();
+  return snapshot.docs
+    .map((document) => ({
+      ...readInvite(document.id, document.data()),
+      patientName: (document.data().patientName ?? '') as string,
+    }))
+    .filter((invite) => invite.usedBy === null && invite.expiresAt.getTime() > now)
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 }
 
 /**

@@ -60,6 +60,23 @@
   flex-wrap: wrap;
 }
 
+/*
+ * What accepting would let this person see. The app's own voice describing a
+ * grant, so sans and quiet — never --amber, which is reserved for the place
+ * another human actually reached in (the .pending rule it sits inside).
+ */
+.sentences {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+}
+
 /* Matches the reminder-hour picker in onboarding; no new shape introduced. */
 .select {
   width: 100%;

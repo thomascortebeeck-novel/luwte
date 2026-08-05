@@ -88,6 +88,11 @@ export const nl = {
   onboardingHourTitle: 'Wanneer past het om even stil te staan bij je dag?',
   onboardingHourExplanation:
     'Eén herinnering per dag. Mis je ze, dan gebeurt er niets.',
+  onboardingDoctorTitle: 'Kijkt er een zorgverlener met je mee?',
+  onboardingDoctorExplanation:
+    'Je kan die nu toevoegen, of later. Is er niemand, dan beheer je je medicatie gewoon zelf.',
+  onboardingDoctorNow: 'Nu toevoegen',
+  onboardingDoctorLater: 'Later',
   onboardingFinish: 'Klaar',
   // Verification — the clinician's side
   verifyTitle: 'Laten nakijken dat je zorgverlener bent',
@@ -110,8 +115,7 @@ export const nl = {
 
   // A patient adding their doctor
   findTitle: 'Je dokter toevoegen',
-  findIntro:
-    'Kreeg je een code van je dokter? Typ die hier. Zonder code kan je niemand toevoegen.',
+  findIntro: 'Kreeg je een code van je dokter? Typ die hier. Of zoek op naam.',
   findCode: 'De code van je dokter',
   findLook: 'Opzoeken',
   findUnknown: 'Die code kennen we niet. Kijk hem na, of vraag hem opnieuw.',
@@ -120,8 +124,33 @@ export const nl = {
   findRelation: 'Wat is dit voor jou?',
   findDone: 'Toegevoegd. Je kan altijd veranderen wat die persoon ziet.',
   findWhatTheySee: 'Die ziet je check-ins en je medicatie. Jij kan dat aanpassen.',
+  findByName: 'Zoeken op naam',
+  findName: 'De naam van je dokter',
+  findNameHint:
+    'Je vindt hier alleen zorgverleners die luwte al gebruiken. Er bestaat geen lijst van alle dokters in België.',
+  findSearch: 'Zoeken',
+  findNobody:
+    'Niemand gevonden met die naam. Vraag je dokter naar een code, of nodig die uit met een link.',
+  findAsk: 'Dit vragen',
+  findAskWhatTheySee:
+    'Zegt die persoon ja, dan ziet die je check-ins en je medicatie. Jij kan dat altijd aanpassen.',
+  findAsked:
+    'Gevraagd. Je dokter ziet het als die luwte opent. Er verandert niets tot die ja zegt.',
   myCodeTitle: 'Je code',
   myCodeIntro: 'Geef deze code aan iemand die je wil opvolgen.',
+
+  // What has been asked of a clinician, in their own console
+  inboxTitle: 'Vragen aan jou',
+  inboxAsks: 'vraagt of je mee mag kijken.',
+  inboxSees: 'Wat je dan ziet:',
+  inboxAccept: 'Aannemen',
+  inboxLeave:
+    'Doe je niets, dan vervalt de vraag na een week. Er wordt niemand iets gezegd.',
+  grantCheckins: 'Hoe het gaat, dag per dag',
+  grantMedication: 'Wat er genomen wordt, en of het genomen is',
+  grantHealth: 'Wat het horloge doorgaf',
+  grantFeed: 'Wat er gedeeld wordt',
+  grantCalendar: 'De agenda',
 
   // Verification — the admin's side
   adminTitle: 'Aanvragen',

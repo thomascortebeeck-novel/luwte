@@ -12,6 +12,7 @@ import {
   inviteLink,
   isActive,
   isInviteUsable,
+  isRedeemableBy,
   permissionKeys,
   permissionsForRole,
 } from './circle';
@@ -84,6 +85,25 @@ describe('invites', () => {
 
   it('is unusable once claimed, however long it has left', () => {
     expect(isInviteUsable({ expiresAt: inviteExpiry(now), usedBy: 'uid-someone' }, now)).toBe(false);
+  });
+});
+
+/*
+ * The difference between a link and a request.
+ *
+ * A link invite is a bearer token on purpose — whoever holds the code joins,
+ * which is what sharing a link means. An invite issued from the directory is
+ * not: nobody handed it over, the patient searched and asked, so holding the
+ * code must not be enough.
+ */
+describe('an invite addressed to one person', () => {
+  it('is redeemable by the person it names, and nobody else', () => {
+    expect(isRedeemableBy({ forUid: 'uid-doctor' }, 'uid-doctor')).toBe(true);
+    expect(isRedeemableBy({ forUid: 'uid-doctor' }, 'uid-someone-else')).toBe(false);
+  });
+
+  it('stays bearer when it names nobody, so an old link keeps working', () => {
+    expect(isRedeemableBy({ forUid: null }, 'uid-anyone')).toBe(true);
   });
 });
 

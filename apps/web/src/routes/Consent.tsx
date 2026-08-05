@@ -7,7 +7,7 @@ import {
 } from '@luwte/core';
 import { Button, Choice, Screen } from '@luwte/ui';
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { recordConsent } from '../firebase/accounts';
 import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
@@ -28,6 +28,18 @@ export function Consent() {
   const { user } = useAuth();
   const { role, reload } = useAccount();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  /*
+   * Where onboarding asked to go afterwards — today, or straight to adding a
+   * doctor. Carried across this screen rather than acted on before it, because
+   * naming your psychiatrist before agreeing to Article 9 processing is the
+   * wrong way round. Anything but the one route we set is ignored: navigation
+   * state is client-supplied, and an open redirect is not worth the
+   * convenience.
+   */
+  const then = (location.state as { then?: string } | null)?.then;
+  const next = then === '/dokter' ? then : '/';
 
   const [grants, setGrants] = useState<ConsentGrants>(NO_CONSENT);
   const [busy, setBusy] = useState(false);
@@ -49,7 +61,7 @@ export function Consent() {
     try {
       await recordConsent(user.uid, grants, locale);
       await reload();
-      navigate('/');
+      navigate(next);
     } catch {
       setMessage(t('genericError'));
     } finally {

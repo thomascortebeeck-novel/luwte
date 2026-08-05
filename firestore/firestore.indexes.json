@@ -1,5 +1,15 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "//": "Search by name: listed clinicians only, ordered for a prefix range. The listed filter is what the rules require, so it is part of the query rather than applied afterwards.",
+      "collectionGroup": "clinicianDirectory",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "listed", "order": "ASCENDING" },
+        { "fieldPath": "searchName", "order": "ASCENDING" }
+      ]
+    }
+  ],
   "fieldOverrides": [
     {
       "collectionGroup": "circle",

@@ -1,4 +1,6 @@
 import {
+  DEFAULT_TIMEZONE,
+  dateKey,
   paths,
   windowDateKeys,
   type InsightsMarker,
@@ -46,6 +48,14 @@ export async function readInsights(
  * PRD 6.6 — medication changes as vertical rules. Read from every
  * medication's `changeLog`, including ones that have been stopped, because a
  * change that happened inside the window still explains what the lines did.
+ *
+ * **Ownership handovers are logged but never drawn.** `prescribedBy` moving
+ * from nobody to a psychiatrist, or back again when they leave, is provenance
+ * — it belongs in the log, which is why the log records it. It is not a
+ * clinical change, so a vertical rule for it would tell a reader that
+ * something happened to the medication when nothing did. It would also print
+ * a raw uid on the A4 a psychiatrist reads at an appointment, which is
+ * meaningless to everyone in the room.
  */
 export async function readMedicationMarkers(
   uid: string,
@@ -65,7 +75,12 @@ export async function readMedicationMarkers(
     }[]) {
       const at = change.at?.toDate?.();
       if (!at) continue;
-      const date = at.toISOString().slice(0, 10);
+      if (change.field === 'prescribedBy') continue;
+      // The patient's own day, not UTC. A change made at 23:30 in Brussels
+      // belongs on that evening, and `toISOString().slice(0, 10)` would draw
+      // its rule on the following morning — a day out from the check-ins it
+      // is meant to explain.
+      const date = dateKey(at, DEFAULT_TIMEZONE);
       if (!keys.includes(date)) continue;
       markers.push({
         date,

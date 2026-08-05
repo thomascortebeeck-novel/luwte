@@ -2,6 +2,7 @@ import {
   DEFAULT_CLINICIAN_PERMISSIONS,
   inviteCode,
   paths,
+  prefixRange,
   searchKey,
   type ClinicianDirectoryEntry,
   type ClinicianRequest,
@@ -10,11 +11,15 @@ import {
 import {
   collection,
   doc,
+  endAt,
   getDoc,
   getDocs,
+  limit,
+  orderBy,
   query,
   serverTimestamp,
   setDoc,
+  startAt,
   updateDoc,
   where,
 } from 'firebase/firestore';
@@ -82,6 +87,43 @@ export async function readClinicianByCode(code: string): Promise<DirectoryRecord
     return snapshot.exists() ? readEntry(snapshot.id, snapshot.data()) : null;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Searching for a doctor by name.
+ *
+ * **This can only ever find clinicians who already use luwte.** There is no
+ * public register to search — RIZIV publishes a web form for humans, not an
+ * API, and healthdata.be is a research-access platform rather than a directory
+ * — so the copy on the screen says that plainly. A search that quietly returns
+ * nothing reads as a broken app, and a person who concludes that while unwell
+ * does not try again.
+ *
+ * The `listed` filter is not a convenience: the rules evaluate `list` per
+ * returned document, so a sweep that could reach an unlisted clinician is
+ * refused outright rather than trimmed. A doctor who does not want to be
+ * searchable is in nobody's results while their code still works.
+ */
+export async function searchClinicians(term: string): Promise<DirectoryRecord[]> {
+  const prefix = searchKey(term);
+  if (prefix.length === 0) return [];
+
+  const range = prefixRange(prefix);
+  try {
+    const snapshot = await getDocs(
+      query(
+        collection(db, paths.clinicianDirectory()),
+        where('listed', '==', true),
+        orderBy('searchName'),
+        startAt(range.start),
+        endAt(range.end),
+        limit(20),
+      ),
+    );
+    return snapshot.docs.map((document) => readEntry(document.id, document.data()));
+  } catch {
+    return [];
   }
 }
 

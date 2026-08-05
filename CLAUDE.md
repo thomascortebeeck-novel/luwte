@@ -198,13 +198,13 @@ tasks would be ceremony.
 
 ## Current state
 
-**Phases 0 to 7 complete, and most of 9.** A family can be invited and the
+**Phases 0 to 7 complete, and 9.** A family can be invited and the
 permissions changed; the psychiatrist is verified by a person and can open a
 patient and change what is prescribed; the calendar takes suggestions that
 never place themselves; finishing something planned shares it to the circle,
 who can only answer warmly.
 
-**336 unit tests plus 171 security-rules tests.** `pnpm verify` green.
+**347 unit tests plus 182 security-rules tests.** `pnpm verify` green.
 
 The product produces the thing that changes an appointment: a chart with
 medication changes as vertical rules, adherence as a count, and the person's
@@ -226,10 +226,7 @@ Every screen, by who it is for:
 | Nobody, but useful | `/styleguide` |
 
 **Next:** Phase 8 — hardening, the accessibility pass, GDPR export and
-deletion, and the family pilot. Plus the one part of Phase 9 not built:
-**search by name** in the clinician directory. It is the weakest of the three
-ways in — it can only find clinicians already on luwte — and the connection
-code covers the pilot, so it was left rather than half-built.
+deletion, and the family pilot.
 
 Nothing needs a Firebase project. `pnpm emulators` plus `pnpm dev` is the
 whole setup.
@@ -357,7 +354,7 @@ function would additionally guarantee single use under a race, where this
 relies on the client transaction. Revisit if invites become more than a family
 sharing a link.
 
-**Most of the 171 rules tests are written as the attacks someone would
+**Most of the 182 rules tests are written as the attacks someone would
 actually try**, and named that way. **Add to them rather than trimming them.**
 If one starts failing, the question is what broke, not whether the test is
 too strict.
@@ -464,6 +461,20 @@ psychiatrist is distinguished from a doctor in general.
 gives `get`-by-code for free. Admin-written at approval, alongside the
 verification it accompanies.
 
+**There are two ways in, and the difference is who agreed to what.** A code was
+*handed over*, so entering it connects immediately — the handing over is the
+consent. A name found by searching was not, so that path issues an invite
+addressed to that clinician and nothing exists until they accept it in their
+console. Same mechanism, one extra clause: `forUid` on the invite, checked in
+`redeemable()` and again on the claim, so a stranger holding the code can
+neither join nor burn it. Widening `list` to the addressee is what gives the
+console its inbox without a server or a second collection.
+
+**Doing nothing is the decline**, and there is deliberately no button for it.
+The invite lapses after seven days and the person who asked is told nothing —
+the same silence a declined activity and a declined medication request get. A
+button reporting a refusal would turn that silence into a message.
+
 - `get` for any signed-in person; `list` only where `listed == true`, so an
   unfiltered sweep is **refused rather than quietly filtered** (the D17 lesson
   again) and a clinician who does not want to be searchable is in nobody's
@@ -558,6 +569,7 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-05 | **Phase 9 complete** — P9.5 search by name, and P9.4 addressed invites underneath it. The two ways in differ in who agreed to what: a code was *handed over*, so it connects; a name was *found*, so it asks. `forUid` is the whole of it — one clause in `redeemable()`, one on the claim, and `list` widened to the addressee, which gives the console an inbox with no server and no second collection. Doing nothing is the decline and there is no button for it. Walked over the wire as three people: a stranger holding the code can neither join (403) nor burn it (403), an unverified doctor is refused (403) and the same doctor accepted once approved (200). Two defects found in `readMedicationMarkers` while wiring adoption into it: every changeLog entry drew a vertical rule, so a release printed a raw uid onto the A4 a psychiatrist reads — ownership changes are now logged and never drawn; and the marker date used `toISOString().slice(0, 10)`, the UTC antipattern this file warns about, putting a 23:30 Brussels change on the wrong day. 11 more rules tests (182), 11 more unit tests (347). |
 | 2026-08-05 | P9.4 — **a doctor hands over a code and the person is connected.** The research finding that shaped it: there is no public register to search — RIZIV publishes a web form, not an API — so the directory can only ever cover clinicians who already use luwte, and the copy says that rather than implying a national lookup. `clinicianDirectory/{code}` uses the code as the document id, so `get`-by-code is free and a doctor who does not want to be listed still has a working code; `list` is restricted to `listed == true`, so an unfiltered sweep is refused rather than filtered. **It needed no new write path**: the patient always writes their own circle, so the code names the clinician and the patient's write grants — which is also why "the doctor invites the patient" collapses into this same flow. 8 more rules tests (171). Walked as three people: applied, approved, code issued, wrong code refused plainly, right code confirmed and connected. |
 | 2026-08-05 | P9.3 — **verification of a clinician is now a decision a person makes at `/admin`** (Thomas, D27), not a script somebody runs. A clinician applies with their name, discipline and RIZIV number; an admin checks it against the register and approves. That moved the root of trust down one level rather than removing it: `admins/` is written only with the Admin SDK, and an admin cannot even make another admin. Also the clamp Thomas approved: **a circle card naming somebody as a clinician requires that they are one**, on create *and* update, since without the update half a supporter card could be promoted in a second write. Anyone can still be a supporter — verification gates the clinical role only. `scripts/make-admin.mjs` refuses any project id not starting with `demo-`. 18 more rules tests (163), 8 more unit tests (336). Walked it as three people: applied, approved, and confirmed 403 → 200 on naming her as clinician either side of the decision. |
 | 2026-08-05 | P9.2 — onboarding branches on who arrived, so a supporter is no longer told "dit is een schriftje dat onthoudt wat jij vergeet" and asked what hour to remind him to check in. Inferred from a pending invite where possible, asked once otherwise; choosing grants nothing, because verification is an admin write. Walking it caught three things tests did not: the shared consent items still described "het uur van je herinnering" to someone never asked for one; the security rules refused a supporter's consent record outright, because they hardcoded `healthData == true`; and `ensureAccount` seeded a default `checkinHour` at first sign-in, so the nudge would have survived anyway — with `functions/` defaulting an absent hour to 9am, moving the bug rather than fixing it. All three fixed, and the refusal now lives in `isDueForReminder`. 2 more rules tests (145), 1 more unit test (332). |

@@ -65,6 +65,18 @@ The patient keeps their own list until a clinician arrives, which is the only
 way a list can exist before the psychiatrist has an account. When a clinician
 takes a line on, it becomes theirs — and the person keeps the right to ask.
 
+**Taking a line on is recorded, not silent.** This happens at nearly every
+first appointment: the person has been keeping their own list, the psychiatrist
+opens it and adopts a line. It needs no second permission — the person invited
+this clinician and granted them medication — but a line quietly turning from
+*mine to change* into *I can only ask* is exactly the loss of control this app
+must not do. So the handover gets its own entry in the medication's history,
+saying when and by whom.
+
+It does **not** draw a line on the chart. The vertical rules there mark dose
+changes, which is what explains the lines moving; marking a change of ownership
+would say something happened to the medication when nothing did.
+
 ### And when that doctor is no longer their doctor
 
 A prescription outlives the arrangement that produced it. If the psychiatrist
@@ -276,6 +288,36 @@ make an account, then you land back on the invitation. Before accepting, the
 screen lists what you will be able to see, in the same plain sentences the
 patient chose from. Accepting writes one card, carrying **exactly** what the
 patient put in the link and nothing more.
+
+### How a patient and their doctor find each other
+
+A doctor is not invited with a link. They already have an account, and there
+are two ways in — different in who agreed to what.
+
+**The doctor hands over a code.** Verified clinicians get a short code they can
+print on a card or read across a desk. The person types it, sees the name,
+discipline and practice, and confirms. That is the whole flow, and it is the
+one expected to become normal: *the doctor invites the patient* collapses into
+it, because a doctor cannot issue an invite into a record that does not exist
+yet. Handing the code over **is** their agreement, so confirming connects them
+immediately.
+
+**Or the person searches by name.** This finds only clinicians who already use
+luwte, and the screen says so outright. There is no national register to
+search: RIZIV publishes a web form for people to fill in, not something an app
+can query — so a search promising every doctor in Belgium would return nothing
+and read as a broken app. A doctor who would rather not be findable can turn
+listing off and their code still works.
+
+Searching is different in one way that matters: **nobody handed anything over**,
+so it asks rather than connects. The person's request goes to that clinician's
+console, showing who is asking and what they would be able to see. Accepting is
+what creates the connection. Doing nothing is the decline — the request lapses
+after a week and the person who asked is told nothing either way, the same
+silence a declined activity and a declined medication request get.
+
+A request meant for one psychiatrist can only be accepted by them. Somebody
+else who came across the code is refused, and cannot burn it either.
 
 ### The windline
 

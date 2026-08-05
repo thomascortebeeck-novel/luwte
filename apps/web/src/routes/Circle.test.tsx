@@ -103,6 +103,8 @@ describe('Circle', () => {
         createdAt: new Date('2026-08-04T10:00:00Z'),
         expiresAt: new Date('2026-08-11T10:00:00Z'),
         usedBy: null,
+        // A link anyone holding it can use — the ordinary kind.
+        forUid: null,
       },
     ]);
     renderCircle();

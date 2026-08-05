@@ -98,6 +98,12 @@ export function Settings() {
           <Button variant="quiet" onClick={() => navigate('/circle')}>
             {t('circleChange')}
           </Button>
+          {/* Findable at any time, not only during onboarding. A person who
+              had no psychiatrist when they signed up and has one now looks
+              here or on the medication screen, which is why it is in both. */}
+          <Button variant="quiet" onClick={() => navigate('/dokter')}>
+            {t('findTitle')}
+          </Button>
         </div>
       </section>
 

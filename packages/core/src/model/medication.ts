@@ -142,6 +142,28 @@ export function releaseChange(
   return { at, field: 'prescribedBy', from: medication.prescribedBy ?? null, to: null, by };
 }
 
+/**
+ * The log entry for a clinician taking over a line the person wrote themselves.
+ *
+ * The write is permitted already; what this adds is that it leaves a trace. A
+ * line silently changing from *mine to edit* to *I can only ask* is precisely
+ * the quiet loss of control this product must not do — the person invited this
+ * clinician and granted them medication, so it needs no second consent, but it
+ * has to be **told rather than discovered**.
+ *
+ * Returns nothing when the line was already prescribed: editing your own
+ * prescription is not an adoption, and a log entry saying otherwise would draw
+ * a vertical rule on the chart for a change that never happened.
+ */
+export function adoptionChange(
+  before: { prescribedBy?: string | null },
+  by: string,
+  at: Date,
+): MedicationChange | null {
+  if (isPrescribed({ prescribedBy: before.prescribedBy ?? null })) return null;
+  return { at, field: 'prescribedBy', from: null, to: by, by };
+}
+
 /** The values a proposal would produce, for showing what would change. */
 export function applyPendingChange(change: PendingChange): Partial<Medication> {
   return {

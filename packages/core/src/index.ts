@@ -61,6 +61,7 @@ export {
   INVITE_PATH,
   INVITE_TTL_DAYS,
   PERMISSION_COPY,
+  PERMISSION_GRANT,
   PERMISSION_SENTENCE,
   canSee,
   circleMemberSchema,
@@ -72,6 +73,7 @@ export {
   inviteSchema,
   isActive,
   isInviteUsable,
+  isRedeemableBy,
   permissionKeys,
   permissionsForRole,
   permissionsSchema,
@@ -97,6 +99,7 @@ export {
 export {
   CLINICAL_PERMISSION_KEYS,
   OPTIONAL_PRACTICES,
+  adoptionChange,
   applyPendingChange,
   diffMedication,
   doseId,

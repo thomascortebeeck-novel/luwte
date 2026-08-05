@@ -1,8 +1,21 @@
-import { disciplines, isPlausibleRiziv, type CopyKey, type Discipline } from '@luwte/core';
+import {
+  PERMISSION_GRANT,
+  disciplines,
+  grantedKeys,
+  isPlausibleRiziv,
+  type CopyKey,
+  type Discipline,
+} from '@luwte/core';
 import { Button, Field, Hairline, Screen } from '@luwte/ui';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { readMemberships, type Membership } from '../firebase/circle';
+import {
+  readAddressedInvites,
+  readMemberships,
+  redeemInvite,
+  type AddressedInvite,
+  type Membership,
+} from '../firebase/circle';
 import {
   applyForVerification,
   isVerifiedClinician,
@@ -36,6 +49,7 @@ export function Console() {
   const navigate = useNavigate();
 
   const [patients, setPatients] = useState<Membership[] | null>(null);
+  const [asked, setAsked] = useState<AddressedInvite[]>([]);
   const [verified, setVerified] = useState<boolean | null>(null);
   const [request, setRequest] = useState<RequestRecord | null>(null);
   const [entry, setEntry] = useState<DirectoryRecord | null>(null);
@@ -47,15 +61,41 @@ export function Console() {
   });
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
+  const load = () => {
     if (!user) return;
     void readMemberships(user.uid)
       .then((all) => setPatients(all.filter((m) => m.role === 'clinician')))
       .catch(() => setPatients([]));
+    void readAddressedInvites(user.uid)
+      .then(setAsked)
+      .catch(() => setAsked([]));
     void isVerifiedClinician(user.uid).then(setVerified);
     void readMyRequest(user.uid).then(setRequest);
     void readMyDirectoryEntry(user.uid).then(setEntry);
-  }, [user]);
+  };
+
+  useEffect(load, [user]);
+
+  /*
+   * Accepting is the same redemption a shared link uses, and deliberately so:
+   * one mechanism to keep correct rather than two. What makes this one safe is
+   * that the invite names them, so the code alone admits nobody.
+   *
+   * There is no decline. Doing nothing *is* the decline — the invite expires
+   * after a week and the person who asked is told nothing either way, like a
+   * declined activity and a declined medication request. A button that
+   * reported a refusal would make silence into a message.
+   */
+  const accept = async (invite: AddressedInvite) => {
+    if (!user || busy) return;
+    setBusy(true);
+    try {
+      await redeemInvite(invite.code, user.uid);
+      load();
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const canSend =
     form.displayName.trim().length > 0 && isPlausibleRiziv(form.rizivNumber) && !busy;
@@ -160,6 +200,39 @@ export function Console() {
           <p className={styles.empty}>{t('myCodeIntro')}</p>
           <p className={styles.name}>{entry.code}</p>
         </>
+      ) : null}
+
+      {/* What has been asked, before the list of who already said yes. A
+          person waiting on an answer is the only thing here that is not
+          already settled. */}
+      {asked.length > 0 ? (
+        <section>
+          <h2 className={styles.sectionTitle}>{t('inboxTitle')}</h2>
+          <ul className={styles.list}>
+            {asked.map((invite) => (
+              <li key={invite.code} className={styles.item}>
+                {/* Amber, like a pending change: this is the one place in the
+                    console where the patient has reached in. */}
+                <div className={styles.pending}>
+                  <span className={styles.name}>
+                    {invite.patientName || t('consoleNoName')} {t('inboxAsks')}
+                  </span>
+                  <span className={styles.quiet}>{t('inboxSees')}</span>
+                  <ul className={styles.sentences}>
+                    {grantedKeys(invite.permissions).map((key) => (
+                      <li key={key}>{t(PERMISSION_GRANT[key])}</li>
+                    ))}
+                  </ul>
+                  <Button variant="quiet" disabled={busy} onClick={() => void accept(invite)}>
+                    {t('inboxAccept')}
+                  </Button>
+                </div>
+                <Hairline />
+              </li>
+            ))}
+          </ul>
+          <p className={styles.empty}>{t('inboxLeave')}</p>
+        </section>
       ) : null}
 
       {patients.length === 0 ? (
