@@ -58,14 +58,17 @@ TypeScript end to end, pnpm workspaces + Turborepo, Node 20+. **No JVM in the
 build or the runtime.**
 
 ```
-apps/web/         patient + supporter PWA (React 19, Vite, react-router)
-apps/console/     clinician console (from Phase 7)
+apps/web/         the whole app — patient, supporter and clinician
 packages/core/    types, i18n dictionaries, copy-lint — no React, no Firebase
 packages/ui/      design tokens, primitives, windline, chart — no Firebase
-functions/        Cloud Functions gen2 (from Phase 1)
+functions/        Cloud Functions gen2 — written, never deployed
 firestore/        rules, indexes, rules tests
-docs/             PRD, BRAND, QA checklist, per-phase plans
+docs/             PRD, BRAND, QA checklist, plain-language guide, per-phase plans
 ```
+
+**There is no `apps/console`.** PLAN.md called for one; the console is routes
+under `/console` in `apps/web` instead (D19). See "The console lives in
+`apps/web`" below before creating a second app.
 
 Remote: `https://github.com/thomascortebeeck-novel/luwte.git`
 
@@ -158,8 +161,8 @@ mistake there is the most expensive kind in this product.
 
 `lint`, `typecheck` and `test` run once at the root, not per package: one
 ESLint config, one tsconfig, one Vitest config over `{apps,packages}/*/src`.
-Turborepo currently orchestrates `build` and `dev` only, and takes over the
-rest when `functions` and `apps/console` make per-package tasks real.
+Turborepo orchestrates `build` and `dev` only; there is one app, so per-package
+tasks would be ceremony.
 
 ## Non-negotiables that are easy to break by accident
 
@@ -176,7 +179,10 @@ rest when `functions` and `apps/console` make per-package tasks real.
 - **No red, no green-as-good, no traffic-light coding.** There is no bad score.
 - **No bold text.** Weights 400 and 500 only.
 - **`--zeeglas` is the person's own data. `--amber` is where another human has
-  been.** Never mix them. Never use amber for a system message.
+  been.** Never mix them. Never use amber for a system message. **In light
+  mode amber is a border colour, never a text colour** — 3.82:1 clears the
+  3:1 floor for a mark and fails the 4.5:1 floor for text. `contrast.test.ts`
+  asserts both halves.
 - **Sans for everything the app says; serif only for what a person wrote.**
 - **No exclamation marks. No emoji in system copy. `je`, never `u`.**
 - **On a missed day, say nothing.** No catch-up prompt, no visible gap.
@@ -193,25 +199,25 @@ changed; the psychiatrist can open a patient and change what is prescribed;
 the calendar takes suggestions that never place themselves; finishing
 something planned shares it to the circle, who can only answer warmly.
 
-**319 unit tests plus 133 security-rules tests.** `pnpm verify` green.
+**321 unit tests plus 133 security-rules tests.** `pnpm verify` green.
 
 The product produces the thing that changes an appointment: a chart with
 medication changes as vertical rules, adherence as a count, and the person's
 own diary lines, printable to A4.
 
-**Phases are reordered 6 → 7 → 5.** Thomas asked for the psychiatrist to see
-each patient's overview inside the app, which is the console, which needs the
-circle. The calendar is not cut, only later.
+The phases were built **0–4, 6.2, 7, 5, 6.3** rather than in order, because
+Thomas wanted the psychiatrist's in-app overview early and that needs the
+circle. Everything is now built.
 
-What exists and works: the account flow (sign-in, four onboarding screens,
-GDPR Art. 9 consent), the daily check-in with the weekly akathisia screen and
-the hopelessness path to the crisis screen, Today with the windline and
-medication, the Insights chart and diary archive, the printable report,
-settings with notification preferences and Google Calendar export, the circle
-screens (invite, per-person permissions in plain sentences, revoke and
-restore, and the join flow that survives sign-in), the clinician console
-(patient list, per-patient overview, medication editor), the crisis screen,
-and `/styleguide`.
+Every screen, by who it is for:
+
+| For | Screens |
+|---|---|
+| Everyone | sign-in, four onboarding steps, GDPR Art. 9 consent, crisis |
+| The patient | Today (windline, check-in, medication, activities, practices), check-in with the weekly akathisia screen and the hopelessness path, medication with "ask for a change", the calendar and its suggestions tray, Overview and the diary archive, the printable report, the feed, settings, the circle screens |
+| A supporter | `/following` — who shares with them, their feed, their calendar, and a suggest form |
+| A clinician | `/console` — patient list, per-patient overview, medication editor, and the approve/decline of what a patient asked for |
+| Nobody, but useful | `/styleguide` |
 
 **Next:** Phase 8 — hardening, the accessibility pass, GDPR export and
 deletion, and the family pilot.
@@ -247,9 +253,13 @@ device instead — for Article 9 data that is usually the better answer anyway.
 
 ### Cloud Functions, and why Blaze is not needed to build them
 
-`functions/` holds `sendCheckinReminder` (PRD 5.4). It is **written, bundled
-and verified loading in the emulator, but never deployed** — Thomas decided
-on 2026-08-04 not to put Blaze on `luwte-dev`.
+`functions/` holds `sendCheckinReminder` (PRD 5.4) and `onPostCreate`. Both
+are **written, bundled and verified loading in the emulator, but never
+deployed** — Thomas decided on 2026-08-04 not to put Blaze on `luwte-dev`.
+
+**Neither is on the critical path.** The app works with no functions at all:
+the reminder is a nudge and the notification is a courtesy. Nothing a person
+does depends on either firing.
 
 **The Functions emulator does not need billing.** Blaze is only required to
 deploy. So functions are developed and exercised locally as normal; the only
@@ -260,11 +270,15 @@ anyway.
 as a workspace dependency, because pnpm symlinks do not survive the deploy
 upload. `functions/lib/` is generated — never edit it, never commit it.
 
-**The decision of whom to disturb lives in `packages/core/src/reminders.ts`,
-not in the function.** It is a pure function with 17 tests. The Cloud Function
-is plumbing around it. `remindedOn` is what makes "never chase" true rather
-than aspirational: without it an hourly job would fire every hour until
-midnight.
+**The decision of whom to disturb never lives in a function.** It is a pure,
+tested function in core and the Cloud Function is plumbing around it —
+`reminders.ts` for the daily nudge, `whoToNotify` in `feed.ts` for a post.
+Follow that shape for anything new. `remindedOn` is what makes "never chase"
+true rather than aspirational: without it an hourly job would fire every hour
+until midnight.
+
+For a post, **both sides must agree and the patient is asked first**: their
+`feed` grant governs, and the supporter's own preference can only narrow it.
 
 ### Verified against the emulators, 2026-08-04
 
@@ -278,9 +292,14 @@ midnight.
 
 ### The circle is the access control list — read this before touching rules
 
-PRD 5.3. Reads of check-ins, weekly items, medication and doses resolve
-through the reader's entry in `patients/{pid}/circle/{uid}`. Writes stay
-self-only: reading how someone felt is one thing, authoring it is another.
+PRD 5.3. Every read of patient data resolves through the reader's entry in
+`patients/{pid}/circle/{uid}`. Writes stay self-only: reading how someone felt
+is one thing, authoring it is another.
+
+Two exceptions to "self-only", both deliberate and both fenced: a **verified
+clinician** writes medication (below), and a **circle member** may react and
+comment on a post and may create an activity as `suggested`. Those are the
+only places one person authors anything about another.
 
 **The rule that matters most: a circle member can write nothing in `circle/`
 at all.** Not "cannot grant themselves more" — cannot touch the document, so
@@ -299,9 +318,10 @@ function would additionally guarantee single use under a race, where this
 relies on the client transaction. Revisit if invites become more than a family
 sharing a link.
 
-55 of the 88 rules tests are about the circle, invites and prescribing. They are written as
-the attacks someone would actually try. **Add to them rather than trimming
-them.**
+**Most of the 133 rules tests are written as the attacks someone would
+actually try**, and named that way. **Add to them rather than trimming them.**
+If one starts failing, the question is what broke, not whether the test is
+too strict.
 
 **On invites, `get` and `list` are split, and the split is the security.**
 Naming a code is the capability — that is what a shared link is, so any
@@ -357,6 +377,33 @@ Verification is an admin act with the Admin SDK, never a client write — see
 [docs/CLINICIAN-VERIFICATION.md](docs/CLINICIAN-VERIFICATION.md). Plain
 language in [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) §3.
 
+### The calendar and the feed — the two places another person reaches in
+
+**A supporter may offer, never place.** They can create an activity only as
+`status: 'suggested'` and in their own name; accepting, declining and editing
+are the patient's. Suggestions live in their own tray and never touch the
+calendar until the person says so. This is PRD 6.3 and it is the resolution of
+the central tension of the product — Thomas reconfirmed it on 2026-08-05 when
+asking for a family-fillable calendar (D21).
+
+**Declining is silent by rule, not by tact.** A member cannot read a declined
+activity at all, so their listing must filter on status or be refused. Nothing
+to poll, nothing to infer from silence.
+
+The friction that caused — accepting a walk onto a day just to record having
+done it — is solved by **"dit heb ik gedaan"** in the tray, which accepts and
+completes in one tap. The calendar is for planning ahead, not for being fed
+after the fact.
+
+**Finishing something planned auto-posts it** to whoever was granted `feed`.
+`shouldPostCompletion` refuses anything without an activity id, which is what
+makes "a dose never posts" true where the decision is made rather than in
+every caller. On by default, one tap to turn off.
+
+**Reactions are heart, clap and proud, checked in the rules.** Warm-only is
+not a property of the buttons rendered; it survives someone writing straight
+to Firestore. Comments cannot be edited after they are read.
+
 ### The console lives in `apps/web`, not `apps/console`
 
 PLAN.md called for a separate app. It is routes under `/console` in the same
@@ -411,6 +458,7 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-05 | CLAUDE.md audited against the repo. Corrected the two places that said `apps/console` — it does not exist and the console is routes in `apps/web` (D19), which a future session would otherwise have built wrong. Replaced the stale "what exists" paragraph with a table by role, and added the calendar and feed sections, which existed only in the changelog. **Fixed a live AA failure found in the audit:** a chosen reaction drew its label in `--human`, and light-mode amber on the background is 3.82:1. BRAND-QA had predicted exactly this "when the feed lands" and named the fix — the label is `--text` and the amber is the border. `contrast.test.ts` now asserts both floors, so amber text fails the suite rather than shipping. |
 | 2026-08-05 | Medication tightened to the care team, and the patient given a way to ask. Family and friends are never offered the `medication` toggle and are refused the read even when a card carries it — `canReadClinical` checks the role as well as the permission. On a prescribed entry the patient may write `pendingChange` and nothing else; the prescriber approves, which applies exactly what was asked and logs it, or clears it, which says nothing. "If a doctor is assigned they approve" resolves to `prescribedBy`, already on the document, because rules cannot query the circle and a patient-written flag would be worthless. 14 more rules tests (133). Caught in walking it: approving diffed a partial proposal against the whole medication and wrote three phantom log entries per approval — the log draws the chart's vertical rules, so that mattered. |
 | 2026-08-05 | The feed (PRD 6.4). Finishing a planned activity auto-posts it for whoever was granted `feed`; **a dose never posts**, enforced in `shouldPostCompletion` rather than left to each caller. Reactions are heart/clap/proud and the rules refuse anything else, so warm-only survives a client writing straight to Firestore. Comments cannot be edited after they are read. A supporter side (`/following`) shows who shares with them, their feed, and their calendar with a suggest form that says plainly it is an offer. `onPostCreate` written and loading in the emulator, not deployed; whom to notify is a pure tested function in core, and both the patient's grant and the supporter's own preference must agree. Sharing is on by default with a one-tap off switch. 14 more rules tests (119). Thomas confirmed suggest-then-accept stays — the calendar is not directly writable by supporters (D21). |
 | 2026-08-04 | Phase 5 — the calendar. A week with today in the middle, activities with daily/weekly/weekday recurrence expanded on the device, a separate suggestions tray, and the optional two-tap pleasure/mastery question after ticking something off. **A supporter may suggest and nothing else** — not place, not accept their own suggestion, not edit. And **declining is silent by rule, not by tact**: a member cannot read a declined activity at all, so their listing must filter on status or be refused. 17 more rules tests (105). Verified over the wire: suggest 200, place directly 403, accept own suggestion 403, read after decline 403, unfiltered listing 403 — while the patient keeps the full record of what was offered. |

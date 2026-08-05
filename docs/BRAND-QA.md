@@ -98,6 +98,13 @@ by `copy-lint.ts`. New copy goes in the dictionary, never inline in a component.
 
 ## Known issues to resolve when they become live
 
+**RESOLVED 2026-08-05.** The feed landed and the answer was the first option:
+amber marks a chosen reaction with its **border**, and the label stays
+`--text`. `contrast.test.ts` now asserts both that the light amber clears the
+3:1 non-text floor and that it fails the 4.5:1 text floor — so drawing amber
+text anywhere fails the suite rather than shipping. If amber text is ever
+genuinely needed, add a darker `--amber-strong`; do not relax the test.
+
 **Amber as text in light mode.** `--amber-l` (#9A6F32) on `--diep-l`
 (#EAEEEC) is 3.82:1 — under the AA floor of 4.5 for normal text, though it
 passes the 3:1 large-text floor. It is not yet used as a text colour

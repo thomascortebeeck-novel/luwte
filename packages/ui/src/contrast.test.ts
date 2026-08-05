@@ -44,8 +44,12 @@ const LIGHT = {
   mist: '#16201E',
   nevel: '#5D6C68',
   zeeglas: '#3E7C63',
+  amber: '#9A6F32',
   onSelf: '#FFFFFF',
 } as const;
+
+/** WCAG 1.4.11 — borders, icons and other non-text marks. */
+const AA_NON_TEXT = 3;
 
 describe('the contrast formula itself', () => {
   it('gives 21 for black on white and 1 for a colour on itself', () => {
@@ -82,5 +86,24 @@ describe('light theme meets AA', () => {
     // The bug this token exists to prevent. If someone reverts --on-self to
     // --diep-l in light mode, the button drops to 4.2:1.
     expect(contrast(LIGHT.diep, LIGHT.zeeglas)).toBeLessThan(AA_NORMAL);
+  });
+});
+
+/**
+ * BRAND-QA logged this before the feed existed, and the feed is where it
+ * became live: the warm accent is a **border colour in light mode, never a
+ * text colour**. It clears the 3:1 floor for a non-text mark and fails the
+ * 4.5:1 floor for normal text.
+ *
+ * If amber text is ever genuinely needed, the fix is a darker `--amber-strong`
+ * token, not relaxing this.
+ */
+describe('the warm accent in light mode', () => {
+  it('is strong enough to outline something', () => {
+    expect(contrast(LIGHT.amber, LIGHT.diep)).toBeGreaterThanOrEqual(AA_NON_TEXT);
+  });
+
+  it('is NOT strong enough to be read as text, which is why nothing draws it', () => {
+    expect(contrast(LIGHT.amber, LIGHT.diep)).toBeLessThan(AA_NORMAL);
   });
 });

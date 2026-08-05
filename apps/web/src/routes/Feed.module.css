@@ -53,8 +53,16 @@
   cursor: pointer;
 }
 
+/*
+ * Chosen, marked by the amber *border* rather than amber text.
+ *
+ * BRAND-QA logged this before the feed existed: `--amber-l` on `--diep-l` is
+ * 3.82:1, which clears the 3:1 floor for a border and fails the 4.5:1 floor
+ * for text. So the label stays `--text` and the warmth is carried by the
+ * outline, which is what the amber was for anyway.
+ */
 .reaction[aria-pressed='true'] {
-  color: var(--human);
+  color: var(--text);
   border-color: var(--human);
 }
 
