@@ -1,4 +1,4 @@
-import { INVITE_PATH } from '@luwte/core';
+import { INVITE_PATH, keepsOwnLogbook } from '@luwte/core';
 import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router';
 import { peekPendingInvite } from '../pendingInvite';
@@ -15,7 +15,7 @@ import { useAuth } from '../providers/AuthProvider';
  */
 export function Gate({ children }: { children: ReactNode }) {
   const { status: authStatus } = useAuth();
-  const { patient, status: accountStatus } = useAccount();
+  const { patient, role, status: accountStatus } = useAccount();
   const location = useLocation();
 
   if (authStatus === 'loading') return null;
@@ -62,6 +62,22 @@ export function Gate({ children }: { children: ReactNode }) {
   const pending = peekPendingInvite();
   if (pending && location.pathname === '/') {
     return <Navigate to={`${INVITE_PATH}/${pending}`} replace />;
+  }
+
+  /*
+   * Home is not the same place for everyone.
+   *
+   * Today is a logbook — a windline, a check-in, medication to tick off. For
+   * someone who keeps no logbook it is an empty version of somebody else's
+   * screen, and it says "vandaag staat er niets" about a day it knows nothing
+   * about. A supporter's home is the people who share with them; a clinician's
+   * is their patient list.
+   *
+   * Only ever from `/`, so every other route still resolves normally and a
+   * supporter who is also a patient somewhere can navigate wherever they like.
+   */
+  if (location.pathname === '/' && !keepsOwnLogbook(role)) {
+    return <Navigate to={role === 'clinician' ? '/console' : '/following'} replace />;
   }
 
   return <>{children}</>;

@@ -1,5 +1,4 @@
 import {
-  DEFAULT_CHECKIN_HOUR,
   DEFAULT_NOTIFICATION_SETTINGS,
   DEFAULT_TIMEZONE,
   dateKey,
@@ -51,7 +50,9 @@ export const sendCheckinReminder = onSchedule(
       const notifications = { ...DEFAULT_NOTIFICATION_SETTINGS, ...(data.notifications ?? {}) };
       return {
         patientId: docSnapshot.id,
-        checkinHour: data.checkinHour ?? DEFAULT_CHECKIN_HOUR,
+        // Not defaulted. An absent hour means this person was never asked for
+        // one, and `isDueForReminder` refuses them rather than picking a time.
+        checkinHour: data.checkinHour ?? null,
         timezone: data.timezone ?? DEFAULT_TIMEZONE,
         remindersEnabled: notifications.checkinReminder === true,
         lastCheckinDate: data.lastCheckinDate ?? null,

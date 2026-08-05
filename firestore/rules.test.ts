@@ -183,6 +183,39 @@ describe('patients/{patientId}/consents', () => {
     );
   });
 
+  /*
+   * A supporter stores no health data of their own — they are shown somebody
+   * else's — so Article 9 consent would be meaningless from them. What they
+   * agree to is confidentiality, and the record has to be able to say so.
+   */
+  it('accepts confidentiality instead, from somebody who keeps no logbook', async () => {
+    await assertSucceeds(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'consents', 'c1'), {
+        ...validConsent,
+        grants: {
+          essential: true,
+          healthData: false,
+          reminders: false,
+          confidentiality: true,
+        },
+      }),
+    );
+  });
+
+  it('REFUSES a record that agrees to neither, which consents to nothing', async () => {
+    await assertFails(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'consents', 'c1'), {
+        ...validConsent,
+        grants: {
+          essential: true,
+          healthData: false,
+          reminders: true,
+          confidentiality: false,
+        },
+      }),
+    );
+  });
+
   it('refuses a consent record with no version', async () => {
     const { version: _version, ...withoutVersion } = validConsent;
     await assertFails(

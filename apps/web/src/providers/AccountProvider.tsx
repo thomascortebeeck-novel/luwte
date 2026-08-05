@@ -1,6 +1,12 @@
+import type { OnboardingRole } from '@luwte/core';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { ensureAccount, readPatient, type PatientRecord } from '../firebase/accounts';
+import {
+  ensureAccount,
+  readPatient,
+  readRole,
+  type PatientRecord,
+} from '../firebase/accounts';
 import { useAuth } from './AuthProvider';
 import { useLocale } from './LocaleProvider';
 
@@ -8,6 +14,12 @@ export type AccountStatus = 'loading' | 'ready' | 'absent';
 
 type AccountContextValue = {
   patient: PatientRecord | null;
+  /**
+   * Which onboarding this person went through, and therefore which screens and
+   * which consent apply to them. Read from `users/{uid}` rather than inferred,
+   * and defaulted to `patient` only until onboarding has answered it.
+   */
+  role: OnboardingRole;
   status: AccountStatus;
   reload: () => Promise<void>;
 };
@@ -24,13 +36,15 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const { user, status: authStatus } = useAuth();
   const { locale } = useLocale();
   const [patient, setPatient] = useState<PatientRecord | null>(null);
+  const [role, setRole] = useState<OnboardingRole>('patient');
   const [status, setStatus] = useState<AccountStatus>('loading');
 
   const load = useCallback(
     async (uid: string) => {
       await ensureAccount(uid, locale);
-      const record = await readPatient(uid);
+      const [record, storedRole] = await Promise.all([readPatient(uid), readRole(uid)]);
       setPatient(record);
+      setRole(storedRole);
       setStatus(record ? 'ready' : 'absent');
     },
     [locale],
@@ -40,6 +54,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     if (authStatus === 'loading') return;
     if (!user) {
       setPatient(null);
+      setRole('patient');
       setStatus('absent');
       return;
     }
@@ -52,8 +67,8 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   }, [user, load]);
 
   const value = useMemo<AccountContextValue>(
-    () => ({ patient, status, reload }),
-    [patient, status, reload],
+    () => ({ patient, role, status, reload }),
+    [patient, role, status, reload],
   );
 
   return <AccountContext.Provider value={value}>{children}</AccountContext.Provider>;

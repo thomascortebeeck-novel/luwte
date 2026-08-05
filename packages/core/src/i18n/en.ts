@@ -86,6 +86,18 @@ export const en: Dictionary = {
   onboardingHourTitle: 'When does it suit you to look back on your day?',
   onboardingHourExplanation: 'One reminder a day. If you miss it, nothing happens.',
   onboardingFinish: 'Done',
+  onboardingWhoTitle: 'What brings you here?',
+  onboardingWhoPatient: 'I am keeping track of my own days',
+  onboardingWhoSupporter: 'I am following someone who is',
+  onboardingWhoClinician: 'I am part of a care team',
+  onboardingSupporterWhat:
+    'Someone is sharing something with you here. This is their notebook, not yours.',
+  onboardingSupporterSeeing:
+    'You see only what they choose to share. They can change that at any moment, without saying so.',
+  onboardingClinicianWhat:
+    'This is your patient’s notebook. You see what they share, and when their medication changed.',
+  onboardingClinicianVerify:
+    'A person checks that you are a clinician. Until that has happened, you see nobody’s record.',
 
   // Consent
   consentTitle: 'What you are agreeing to',
@@ -97,6 +109,15 @@ export const en: Dictionary = {
   consentHealthLabel: 'Store what you write about how you feel',
   consentHealthExplanation:
     'Mood, energy, sleep, restlessness, medication. This is health data. It is stored in Belgium and nobody sees it unless you choose that.',
+  consentEssentialFollowingExplanation:
+    'Your name and your language. The app does not work without this.',
+  consentRemindersFollowingExplanation:
+    'A notification when someone shares something. You can turn this off later.',
+  consentFollowingIntro:
+    'You are about to see something about someone else’s health. One agreement comes with that.',
+  consentConfidentialityLabel: 'What you read here stays with you',
+  consentConfidentialityExplanation:
+    'You do not pass it on, not even to family. Who else may see it is the person’s own choice.',
   consentRemindersLabel: 'Send you a reminder',
   consentRemindersExplanation:
     'One notification a day, at the hour you chose. You can turn this off later.',

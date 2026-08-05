@@ -49,3 +49,14 @@
 .pip[data-current] {
   background: var(--self);
 }
+
+/*
+ * Three ways to answer one question. Stacked rather than side by side so the
+ * longest label is not the one that sets everyone's width, and spaced so the
+ * screen does not read as a form to get through.
+ */
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}

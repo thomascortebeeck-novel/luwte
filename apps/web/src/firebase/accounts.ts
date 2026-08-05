@@ -8,6 +8,7 @@ import {
   type ConsentGrants,
   type Locale,
   type NotificationSettings,
+  type OnboardingRole,
   type Patient,
   type ShareSettings,
 } from '@luwte/core';
@@ -32,9 +33,15 @@ export async function ensureAccount(uid: string, locale: Locale): Promise<void> 
     createdAt: serverTimestamp(),
   });
 
+  /*
+   * No `checkinHour`. At first sign-in nobody knows yet whether this person
+   * keeps a logbook, and a default written here would survive an onboarding
+   * that deliberately never asked — quietly enrolling a supporter in a daily
+   * nudge to fill in a check-in he does not have. It is written once, by
+   * `saveOnboarding`, for the person who was actually asked.
+   */
   await setDoc(patientRef, {
     displayName: '',
-    checkinHour: DEFAULT_CHECKIN_HOUR,
     timezone: DEFAULT_TIMEZONE,
     onboarded: false,
     createdAt: serverTimestamp(),
@@ -62,16 +69,39 @@ export async function readPatient(uid: string): Promise<PatientRecord | null> {
   };
 }
 
+/**
+ * Which onboarding this person went through. `admin` never reaches a screen,
+ * so anything unexpected reads as `patient` — the narrowest of the three, and
+ * the one that assumes nothing about somebody else's data.
+ */
+export async function readRole(uid: string): Promise<OnboardingRole> {
+  const snapshot = await getDoc(doc(db, paths.user(uid)));
+  const stored = snapshot.data()?.role;
+  return stored === 'supporter' || stored === 'clinician' ? stored : 'patient';
+}
+
 export async function saveShareSettings(uid: string, share: ShareSettings): Promise<void> {
   await updateDoc(doc(db, paths.patient(uid)), { share });
 }
 
+/**
+ * `checkinHour` is absent for anyone who does not keep a logbook of their own.
+ *
+ * Not defaulted, not hidden — never written. A supporter who was never asked
+ * when to be reminded has no hour, and `sendCheckinReminder` has nobody to
+ * disturb. Writing a default would have quietly enrolled the brother in a
+ * daily nudge to fill in a check-in he does not have.
+ */
 export async function saveOnboarding(
   uid: string,
-  values: { displayName: string; checkinHour: number },
+  values: { displayName: string; checkinHour?: number; role: OnboardingRole },
 ): Promise<void> {
-  await updateDoc(doc(db, paths.patient(uid)), values);
-  await updateDoc(doc(db, paths.user(uid)), { displayName: values.displayName });
+  const { role, displayName, checkinHour } = values;
+  await updateDoc(doc(db, paths.patient(uid)), {
+    displayName,
+    ...(checkinHour === undefined ? {} : { checkinHour }),
+  });
+  await updateDoc(doc(db, paths.user(uid)), { displayName, role });
 }
 
 export async function saveNotificationSettings(

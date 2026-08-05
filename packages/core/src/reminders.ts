@@ -21,7 +21,12 @@ import { dateKey } from './dates';
 
 export type ReminderCandidate = {
   patientId: string;
-  checkinHour: number;
+  /**
+   * Absent for anyone who keeps no logbook of their own. A supporter is never
+   * asked what hour suits them, so they have no hour — and defaulting one
+   * would enrol them in a daily nudge to fill in a check-in they do not have.
+   */
+  checkinHour?: number | null;
   timezone: string;
   /** False when the person turned the daily reminder off. */
   remindersEnabled: boolean;
@@ -47,6 +52,11 @@ export function localHour(instant: Date, timeZone: string): number {
 export function isDueForReminder(candidate: ReminderCandidate, now: Date): boolean {
   if (!candidate.remindersEnabled) return false;
   if (!candidate.fcmTokens?.length) return false;
+
+  // Nobody chose an hour, so there is no hour at which to disturb them. This
+  // is what keeps a supporter out of the daily nudge entirely, rather than
+  // relying on every caller to remember they are not a patient.
+  if (typeof candidate.checkinHour !== 'number') return false;
 
   const today = dateKey(now, candidate.timezone);
 

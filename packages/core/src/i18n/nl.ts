@@ -89,6 +89,18 @@ export const nl = {
   onboardingHourExplanation:
     'Eén herinnering per dag. Mis je ze, dan gebeurt er niets.',
   onboardingFinish: 'Klaar',
+  onboardingWhoTitle: 'Wat breng je hier?',
+  onboardingWhoPatient: 'Ik hou zelf iets bij',
+  onboardingWhoSupporter: 'Ik volg iemand die dat doet',
+  onboardingWhoClinician: 'Ik ben zorgverlener',
+  onboardingSupporterWhat:
+    'Iemand deelt hier iets met jou. Dit is hun schriftje, niet het jouwe.',
+  onboardingSupporterSeeing:
+    'Je ziet alleen wat zij kiezen te delen. Zij kunnen dat elk moment veranderen, zonder het te zeggen.',
+  onboardingClinicianWhat:
+    'Dit is het schriftje van je patiënt. Je ziet wat zij delen, en wanneer hun medicatie veranderde.',
+  onboardingClinicianVerify:
+    'Een mens kijkt na of je zorgverlener bent. Tot dat gebeurd is, zie je nog niets van iemand.',
 
   // Consent
   consentTitle: 'Waar je ja tegen zegt',
@@ -100,6 +112,15 @@ export const nl = {
   consentHealthLabel: 'Bewaren wat je invult over hoe je je voelt',
   consentHealthExplanation:
     'Stemming, energie, slaap, onrust, medicatie. Dit zijn gezondheidsgegevens. Ze staan in België en niemand ziet ze tenzij jij dat kiest.',
+  consentEssentialFollowingExplanation:
+    'Je naam en je taal. Zonder dit werkt de app niet.',
+  consentRemindersFollowingExplanation:
+    'Een melding wanneer iemand iets deelt. Je kan dit later uitzetten.',
+  consentFollowingIntro:
+    'Je krijgt iets te zien over de gezondheid van iemand anders. Daar hoort één afspraak bij.',
+  consentConfidentialityLabel: 'Wat je hier leest, blijft bij jou',
+  consentConfidentialityExplanation:
+    'Je deelt het niet verder, ook niet met familie. Wie het nog mag zien, kiest de persoon zelf.',
   consentRemindersLabel: 'Je een herinnering sturen',
   consentRemindersExplanation:
     'Eén melding per dag op het uur dat jij koos. Je kan dit later uitzetten.',

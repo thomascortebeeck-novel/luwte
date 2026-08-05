@@ -446,10 +446,25 @@ service cloud.firestore {
 
       match /consents/{consentId} {
         allow read: if isSelf(patientId);
+        /*
+         * A consent record must carry the substantive agreement that applies
+         * to this person, not merely exist.
+         *
+         * There are two, because there are two kinds of person here. Someone
+         * keeping a logbook consents to their own Article 9 data. A supporter
+         * or clinician stores no health data of their own — they are shown
+         * somebody else's — so what they agree to is confidentiality. Asking
+         * them for Article 9 consent would be meaningless and would hide the
+         * obligation they actually take on.
+         *
+         * One of the two must be true. A record agreeing to neither is not
+         * consent to anything and is refused.
+         */
         allow create: if isSelf(patientId)
                       && request.resource.data.version is string
                       && request.resource.data.grants.essential == true
-                      && request.resource.data.grants.healthData == true;
+                      && (request.resource.data.grants.get('healthData', false) == true
+                          || request.resource.data.grants.get('confidentiality', false) == true);
         allow update: if isSelf(patientId);
         allow delete: if false;
       }

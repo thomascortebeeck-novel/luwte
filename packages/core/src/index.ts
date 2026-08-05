@@ -118,15 +118,27 @@ export {
 
 export {
   CONSENT_ITEMS,
+  CONSENT_ITEMS_FOLLOWING,
   CONSENT_VERSION,
+  NO_CONSENT,
   consentGrantsSchema,
+  consentItemsFor,
   consentRecordSchema,
   hasRequiredConsent,
   type ConsentGrants,
   type ConsentItem,
+  type ConsentItemId,
   type ConsentRecord,
 } from './model/consent';
-export { roleSchema, userSchema, type Role, type User } from './model/user';
+export {
+  keepsOwnLogbook,
+  onboardingRoles,
+  roleSchema,
+  userSchema,
+  type OnboardingRole,
+  type Role,
+  type User,
+} from './model/user';
 export {
   DEFAULT_CHECKIN_HOUR,
   DEFAULT_TIMEZONE,

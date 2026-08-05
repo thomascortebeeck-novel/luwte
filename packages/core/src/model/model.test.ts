@@ -3,6 +3,8 @@ import { dictionaries, type Locale } from '../i18n/index';
 import {
   CONSENT_ITEMS,
   CONSENT_VERSION,
+  NO_CONSENT,
+  consentItemsFor,
   consentRecordSchema,
   hasRequiredConsent,
 } from './consent';
@@ -68,9 +70,37 @@ describe('consent', () => {
   });
 
   it('is not satisfied until every required item is granted', () => {
-    expect(hasRequiredConsent({ essential: true, healthData: true, reminders: false })).toBe(true);
-    expect(hasRequiredConsent({ essential: true, healthData: false, reminders: true })).toBe(false);
-    expect(hasRequiredConsent({ essential: false, healthData: true, reminders: true })).toBe(false);
+    const grants = { ...NO_CONSENT };
+    expect(hasRequiredConsent({ ...grants, essential: true, healthData: true })).toBe(true);
+    expect(hasRequiredConsent({ ...grants, essential: true, reminders: true })).toBe(false);
+    expect(hasRequiredConsent({ ...grants, healthData: true, reminders: true })).toBe(false);
+  });
+
+  /*
+   * A supporter is shown somebody else's health data and stores none of their
+   * own, so consenting to the processing of theirs would be meaningless — and
+   * would hide the obligation they actually take on.
+   */
+  it('asks a supporter for confidentiality rather than for their own health data', () => {
+    const ids = consentItemsFor('supporter').map((i) => i.id);
+    expect(ids).toEqual(['essential', 'confidentiality', 'reminders']);
+    expect(ids).not.toContain('healthData');
+  });
+
+  it('asks a clinician the same, for the same reason', () => {
+    expect(consentItemsFor('clinician')).toEqual(consentItemsFor('supporter'));
+  });
+
+  it('still asks the person keeping the logbook for Article 9 consent', () => {
+    expect(consentItemsFor('patient').map((i) => i.id)).toContain('healthData');
+  });
+
+  it('will not let a supporter through on the patient’s required items', () => {
+    // healthData granted, confidentiality not: complete for one list, not the
+    // other. The screen and the check take the same list so they cannot drift.
+    const grants = { ...NO_CONSENT, essential: true, healthData: true };
+    expect(hasRequiredConsent(grants, consentItemsFor('patient'))).toBe(true);
+    expect(hasRequiredConsent(grants, consentItemsFor('supporter'))).toBe(false);
   });
 
   it('records which wording the person actually read', () => {

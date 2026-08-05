@@ -1,4 +1,10 @@
-import { CONSENT_ITEMS, hasRequiredConsent, type ConsentGrants } from '@luwte/core';
+import {
+  NO_CONSENT,
+  consentItemsFor,
+  hasRequiredConsent,
+  keepsOwnLogbook,
+  type ConsentGrants,
+} from '@luwte/core';
 import { Button, Choice, Screen } from '@luwte/ui';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -20,18 +26,21 @@ import styles from './Consent.module.css';
 export function Consent() {
   const { t, locale } = useLocale();
   const { user } = useAuth();
-  const { reload } = useAccount();
+  const { role, reload } = useAccount();
   const navigate = useNavigate();
 
-  const [grants, setGrants] = useState<ConsentGrants>({
-    essential: false,
-    healthData: false,
-    reminders: false,
-  });
+  const [grants, setGrants] = useState<ConsentGrants>(NO_CONSENT);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  const complete = hasRequiredConsent(grants);
+  /*
+   * A supporter is not consenting to the processing of their own health data —
+   * they have none here. What they take on is an obligation about somebody
+   * else's, and asking them to tick the Article 9 box instead would both mean
+   * nothing and hide the thing that does.
+   */
+  const items = consentItemsFor(role);
+  const complete = hasRequiredConsent(grants, items);
 
   const accept = async () => {
     if (!user || !complete) return;
@@ -61,10 +70,12 @@ export function Consent() {
         </>
       }
     >
-      <p className={styles.intro}>{t('consentIntro')}</p>
+      <p className={styles.intro}>
+        {t(keepsOwnLogbook(role) ? 'consentIntro' : 'consentFollowingIntro')}
+      </p>
 
       <div className={styles.items}>
-        {CONSENT_ITEMS.map((item) => (
+        {items.map((item) => (
           <Choice
             key={item.id}
             label={t(item.labelKey)}

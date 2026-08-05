@@ -32,6 +32,17 @@ describe('localHour', () => {
 });
 
 describe('isDueForReminder', () => {
+  /*
+   * A supporter is never asked what hour suits them, so they have none. The
+   * refusal lives here rather than in the caller: defaulting an hour would
+   * enrol the brother in a daily nudge to fill in a check-in he does not keep.
+   */
+  it('never disturbs somebody who was never asked for an hour', () => {
+    expect(isDueForReminder({ ...base, checkinHour: null }, atTheHour)).toBe(false);
+    const { checkinHour: _omitted, ...withoutHour } = base;
+    expect(isDueForReminder(withoutHour, atTheHour)).toBe(false);
+  });
+
   it('fires at the chosen hour', () => {
     expect(isDueForReminder(base, atTheHour)).toBe(true);
   });

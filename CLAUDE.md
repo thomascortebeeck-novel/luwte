@@ -290,6 +290,36 @@ For a post, **both sides must agree and the patient is asked first**: their
 - Nothing is pre-ticked on the consent screen and the action stays disabled
   until both required items are granted.
 
+### Three people arrive at onboarding, and they need different things said
+
+`users.role` already had the vocabulary — `patient | supporter | clinician` —
+and onboarding now branches on it instead of hardcoding `patient` for everyone.
+Where the answer is knowable it is **inferred, never asked**: a pending invite
+carries the role the patient chose, which is a better answer than anything the
+arriving person could tell us. Only someone with no invite is asked, once.
+
+**Asking is safe because choosing grants nothing.** Verification is an admin
+write to `clinicians/{uid}` that no client may touch (D20), so "I am a
+clinician" changes which screens you see and never what you may read.
+
+Two consequences that are easy to undo by accident:
+
+- **`checkinHour` is written once, by `saveOnboarding`, for the person who was
+  actually asked.** `ensureAccount` no longer seeds a default at first sign-in,
+  because a default written before anyone knows who this is survives an
+  onboarding that deliberately never asked. `isDueForReminder` refuses a
+  candidate with no hour rather than picking one — the refusal lives there so
+  no caller has to remember that a supporter is not a patient.
+- **A supporter's consent is to confidentiality, not to Article 9.** They store
+  no health data of their own; they are shown someone else's. The rules accept
+  `essential` plus *either* `healthData` or `confidentiality`, and refuse a
+  record agreeing to neither. `CONSENT_ITEMS_FOLLOWING` also carries its own
+  wording for the two shared items, because the patient's text describes an
+  hour this person was never asked for.
+
+Home is not the same place for everyone: the Gate sends a supporter to
+`/following` and a clinician to `/console`, and only ever from `/`.
+
 ### The circle is the access control list — read this before touching rules
 
 PRD 5.3. Every read of patient data resolves through the reader's entry in
@@ -471,6 +501,7 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-05 | P9.2 — onboarding branches on who arrived, so a supporter is no longer told "dit is een schriftje dat onthoudt wat jij vergeet" and asked what hour to remind him to check in. Inferred from a pending invite where possible, asked once otherwise; choosing grants nothing, because verification is an admin write. Walking it caught three things tests did not: the shared consent items still described "het uur van je herinnering" to someone never asked for one; the security rules refused a supporter's consent record outright, because they hardcoded `healthData == true`; and `ensureAccount` seeded a default `checkinHour` at first sign-in, so the nudge would have survived anyway — with `functions/` defaulting an absent hour to 9am, moving the bug rather than fixing it. All three fixed, and the refusal now lives in `isDueForReminder`. 2 more rules tests (145), 1 more unit test (332). |
 | 2026-08-05 | Phase 9 planned, and its first defect fixed. **Revoking a prescriber froze their prescriptions permanently** — proven against the emulator before it was believed: the patient was refused an edit and refused a release, and the revoked doctor could not even read the document their patient's `pendingChange` was addressed to. A fourth update branch lets the patient take a line back once the prescriber is gone, and `onlyReleases()` stops that release carrying a dose change. An existing test broke and was right to: it asserted an invariant stronger than the system can deliver, using a state the rules cannot produce. Replaced with the real one — no disowning while the clinician is *still theirs* — plus a test for the two-write path, so the weakening is recorded rather than hidden. 10 more rules tests (143). |
 | 2026-08-05 | CLAUDE.md audited against the repo. Corrected the two places that said `apps/console` — it does not exist and the console is routes in `apps/web` (D19), which a future session would otherwise have built wrong. Replaced the stale "what exists" paragraph with a table by role, and added the calendar and feed sections, which existed only in the changelog. **Fixed a live AA failure found in the audit:** a chosen reaction drew its label in `--human`, and light-mode amber on the background is 3.82:1. BRAND-QA had predicted exactly this "when the feed lands" and named the fix — the label is `--text` and the amber is the border. `contrast.test.ts` now asserts both floors, so amber text fails the suite rather than shipping. |
 | 2026-08-05 | Medication tightened to the care team, and the patient given a way to ask. Family and friends are never offered the `medication` toggle and are refused the read even when a card carries it — `canReadClinical` checks the role as well as the permission. On a prescribed entry the patient may write `pendingChange` and nothing else; the prescriber approves, which applies exactly what was asked and logs it, or clears it, which says nothing. "If a doctor is assigned they approve" resolves to `prescribedBy`, already on the document, because rules cannot query the circle and a patient-written flag would be worthless. 14 more rules tests (133). Caught in walking it: approving diffed a partial proposal against the whole medication and wrote three phantom log entries per approval — the log draws the chart's vertical rules, so that mattered. |
