@@ -152,6 +152,77 @@ also, conveniently, exactly what "a logbook and a nudge, not a doctor" means.
 
 ---
 
+## 11 revisited — Garmin, and who sees the data
+
+**Thomas chose to collect it, via API, starting with Garmin.** That routes
+around the blocker above, and it is worth being precise about why: HealthKit
+and Health Connect are *on-device* APIs, which no browser can reach. Garmin's
+is a **cloud** API. So the PWA is no longer the obstacle. Three other things
+are.
+
+**It needs a server, and therefore Blaze.** Garmin's program uses OAuth 2.0
+with a client secret, and delivers data by pushing to a callback URL. Neither
+can live in a browser: a client secret in a bundle is not a secret, and a
+webhook needs somewhere to arrive. That means Cloud Functions, which means
+billing on — reversing the standing decision (D15) that has kept this project
+free. It is the first feature that genuinely requires it, and that is a real
+cost rather than a technicality: `functions/` is currently written but never
+deployed precisely so nothing on the critical path depends on one.
+
+**It needs Garmin's approval, and it is aimed at businesses.** Their FAQ is
+plain that the program is "for enterprise use", with no licensing or
+maintenance fee for access but a possible fee or minimum device order for some
+metrics. Applying is the first step, not building. (A third-party blog claims
+the program is currently suspended; Garmin's own FAQ invites applications and
+says they review quickly, so treat the claim as unconfirmed.)
+
+**It adds a data processor to an Article 9 system.** Wearable data about
+somebody with a psychosis history is special-category data arriving from a
+third party. That needs a lawful basis, a consent item of its own, and a line
+in the consent record — not a silent extension of the existing health grant.
+
+### Who sees it — the answer
+
+**The patient, always. This is not ours to grant, and not a doctor's either.**
+
+The question was whether the doctor should give the patient access, or the
+patient decide for themselves. The first option is not actually available:
+under GDPR Art. 15 a person has a right of access to their own personal data,
+so a design where a clinician decides whether somebody may see their own heart
+rate is not a product choice, it is non-compliance. The patient decides — for
+themselves and for everyone else. That is also just the product's own rule.
+
+But **"may see" and "is shown a number" are different questions**, and the
+BRAND warning was about the second. So, per datum:
+
+| | The patient | A verified clinician | A supporter |
+|---|---|---|---|
+| **Sleep duration** | shown plainly | under `health` | grantable, off by default |
+| **Resting heart rate, HRV** | **stored, not charted by default** — switchable on in settings | under `health` | grantable, off by default |
+| **ECG, rhythm, any alert** | never collected at all | — | — |
+
+The middle row is the whole of it. A resting rate of 96 shown unprompted to an
+anxious person starts a spiral, and a normal one shown to somebody genuinely
+unwell is false reassurance — both harms come from *displaying an
+uninterpreted number*, not from holding it. So it is off by default and the
+person can turn it on, with copy that says why it was off. Refusing to show
+someone their own data would be paternalism; showing it unasked would be the
+harm BRAND named. Letting them choose is the only position consistent with
+both.
+
+**The access-control side needs almost nothing new.** `health` already exists
+as a permission, already reads *"Kan zien wat je horloge doorgaf"*, and already
+resolves through the circle. What is new is the ingestion tier, not the rules.
+
+**Still refused, and not on taste:** no ECG, and no relapse predictor. Under EU
+MDR it is *intended purpose* that makes software a medical device. "You may be
+relapsing" is clinical monitoring and "this rhythm looks abnormal" is
+diagnosis; either pulls luwte out of the wellness exemption into Class IIa with
+a notified body. Collect the data, show it in context to a clinician, and let
+the clinician be the one who concludes something.
+
+---
+
 ## 4 — The check-in questions, from the research
 
 Today: mood, energy, sleep hours, how rested, restlessness, flatness, plus a
