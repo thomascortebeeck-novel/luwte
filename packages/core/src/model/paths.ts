@@ -61,6 +61,10 @@ export const paths = {
   clinicianRequests: () => 'clinicianRequests',
   clinicianRequest: (uid: string) => `clinicianRequests/${uid}`,
 
+  /** The nameplate, keyed by connection code. Written by an admin only. */
+  clinicianDirectory: () => 'clinicianDirectory',
+  clinicianDirectoryEntry: (code: string) => `clinicianDirectory/${code}`,
+
   /**
    * The root of the whole chain: bootstrapped with the Admin SDK and never
    * writable from a client, which is what keeps "an admin decided" meaningful.

@@ -1445,6 +1445,77 @@ describe('the admin who decides who is a clinician', () => {
 });
 
 /*
+ * How a person finds their doctor. There is no public register to search —
+ * RIZIV publishes a web form, not an API — so this can only ever list
+ * clinicians who already use luwte, and the copy says so.
+ */
+describe('the clinician directory', () => {
+  const asAdmin = () => testEnv.authenticatedContext(ADMIN).firestore();
+
+  const entry = (listed: boolean) => ({
+    uid: DOCTOR,
+    displayName: 'Dr. An Peeters',
+    discipline: 'psychiater',
+    practice: 'UZ Gent',
+    searchName: 'dr. an peeters',
+    listed,
+  });
+
+  const seedEntry = (code: string, listed: boolean) =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'clinicianDirectory', code), entry(listed));
+    });
+
+  it('lets anyone signed in resolve a code they were given', async () => {
+    await seedEntry('abcdefghjkmn', true);
+    await assertSucceeds(getDoc(doc(asJonas(), 'clinicianDirectory', 'abcdefghjkmn')));
+  });
+
+  it('resolves by code even for somebody who is not listed', async () => {
+    // A card handed across a desk has to work for a doctor who does not want
+    // to be in a searchable list at all.
+    await seedEntry('abcdefghjkmn', false);
+    await assertSucceeds(getDoc(doc(asJonas(), 'clinicianDirectory', 'abcdefghjkmn')));
+  });
+
+  it('lets a search by name run, filtered to the people who opted in', async () => {
+    await seedEntry('abcdefghjkmn', true);
+    await assertSucceeds(
+      getDocs(query(collection(asJonas(), 'clinicianDirectory'), where('listed', '==', true))),
+    );
+  });
+
+  it('REFUSES an unfiltered sweep of every clinician', async () => {
+    // The D17 lesson: an unfiltered listing is refused outright rather than
+    // filtered, so an unlisted clinician cannot be swept up by a broad query.
+    await seedEntry('abcdefghjkmn', true);
+    await assertFails(getDocs(collection(asJonas(), 'clinicianDirectory')));
+  });
+
+  it('REFUSES listing the people who did not opt in', async () => {
+    await seedEntry('abcdefghjkmn', false);
+    await assertFails(
+      getDocs(query(collection(asJonas(), 'clinicianDirectory'), where('listed', '==', false))),
+    );
+  });
+
+  it('REFUSES a clinician writing their own entry', async () => {
+    await assertFails(setDoc(doc(asDoctor(), 'clinicianDirectory', 'abcdefghjkmn'), entry(true)));
+  });
+
+  it('REFUSES a patient writing one for somebody', async () => {
+    await assertFails(setDoc(doc(asJonas(), 'clinicianDirectory', 'abcdefghjkmn'), entry(true)));
+  });
+
+  it('lets an admin write it, which is what approving does', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'admins', ADMIN), { createdAt: new Date() });
+    });
+    await assertSucceeds(setDoc(doc(asAdmin(), 'clinicianDirectory', 'abcdefghjkmn'), entry(true)));
+  });
+});
+
+/*
  * D27, the second half: the patient's word decides *whose* clinician somebody
  * is. It cannot decide *that they are one*.
  */

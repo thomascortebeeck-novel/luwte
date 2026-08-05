@@ -610,6 +610,26 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    /*
+     * How a person finds their doctor. The document id is the connection code.
+     *
+     * `get` and `list` are split for the same reason invites are (D17): naming
+     * a code is the capability — that is what a card handed across a desk is —
+     * while listing is a different act. Restricting `list` to `listed == true`
+     * forces the query to filter on it, so an unfiltered sweep is **refused
+     * rather than quietly filtered**, and a clinician who does not want to be
+     * searchable is not in anybody's result set.
+     *
+     * Nothing here is patient data. A name, a discipline, a practice — the
+     * same as a nameplate on a door.
+     */
+    match /clinicianDirectory/{code} {
+      allow get: if signedIn();
+      allow list: if signedIn() && resource.data.listed == true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
     match /clinicians/{uid} {
       allow get: if isSelf(uid) || isAdmin();
       allow list: if isAdmin();

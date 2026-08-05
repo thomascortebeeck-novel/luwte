@@ -7,6 +7,7 @@ import { Circle } from './routes/Circle';
 import { CircleMember } from './routes/CircleMember';
 import { Consent } from './routes/Consent';
 import { Admin } from './routes/Admin';
+import { FindClinician } from './routes/FindClinician';
 import { Console } from './routes/Console';
 import { ConsolePatient } from './routes/ConsolePatient';
 import { Crisis } from './routes/Crisis';
@@ -220,6 +221,17 @@ export function App() {
             route is open to anyone signed in and shows nothing to anyone who
             is not an admin; `admins/{uid}` is written only with the Admin SDK
             and the rules refuse every write here to everybody else. */}
+        {/* The patient adding their doctor from a code. No new access path:
+            the patient writes their own circle, and the rules refuse the card
+            unless an admin verified the person the code names. */}
+        <Route
+          path="/dokter"
+          element={
+            <Gate>
+              <FindClinician />
+            </Gate>
+          }
+        />
         <Route
           path="/admin"
           element={

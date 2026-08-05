@@ -57,6 +57,13 @@ export function Circle() {
           <Button full onClick={() => navigate('/circle/invite')}>
             {t('circleAdd')}
           </Button>
+          {/* A doctor is added by their code rather than invited by link:
+              they already have an account, and the code is what they hand
+              over. Offered here so it is findable at any time, not only
+              during onboarding. */}
+          <Button variant="quiet" onClick={() => navigate('/dokter')}>
+            {t('findTitle')}
+          </Button>
           <Button variant="quiet" onClick={() => navigate('/')}>
             {t('navToday')}
           </Button>

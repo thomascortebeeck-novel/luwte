@@ -439,6 +439,35 @@ supporter: verification gates the clinical role and nothing else.
 See [docs/CLINICIAN-VERIFICATION.md](docs/CLINICIAN-VERIFICATION.md). Plain
 language in [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) §3.
 
+### How a patient and their doctor find each other
+
+**There is no public register to search.** RIZIV/INAMI publishes a web form for
+humans; there is no open dataset and no API, and healthdata.be is a
+research-access platform rather than a directory. So *"search for your doctor"*
+can only ever mean searching clinicians who already use luwte, and the copy
+says so instead of implying a national lookup and returning nothing.
+
+What the RIZIV number is actually for: it is what the **admin** checks at
+`/admin`, and the last three digits are the competency code — which is how a
+psychiatrist is distinguished from a doctor in general.
+
+`clinicianDirectory/{code}` — **the document id is the connection code**, which
+gives `get`-by-code for free. Admin-written at approval, alongside the
+verification it accompanies.
+
+- `get` for any signed-in person; `list` only where `listed == true`, so an
+  unfiltered sweep is **refused rather than quietly filtered** (the D17 lesson
+  again) and a clinician who does not want to be searchable is in nobody's
+  results while their code still works.
+- Kept separate from `clinicians/{uid}`, which is verification state. This one
+  is a nameplate — name, discipline, practice. No contact details, no patient
+  data. Widening `list` here can never widen anything else.
+
+**The connection code needed no new write path at all.** The patient always
+writes their own circle, so the code merely *names* the clinician and the
+patient's write is what grants — which is also why "the doctor invites the
+patient" collapses into the same flow rather than needing an inverted invite.
+
 ### The calendar and the feed — the two places another person reaches in
 
 **A supporter may offer, never place.** They can create an activity only as
@@ -520,6 +549,7 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-05 | P9.4 — **a doctor hands over a code and the person is connected.** The research finding that shaped it: there is no public register to search — RIZIV publishes a web form, not an API — so the directory can only ever cover clinicians who already use luwte, and the copy says that rather than implying a national lookup. `clinicianDirectory/{code}` uses the code as the document id, so `get`-by-code is free and a doctor who does not want to be listed still has a working code; `list` is restricted to `listed == true`, so an unfiltered sweep is refused rather than filtered. **It needed no new write path**: the patient always writes their own circle, so the code names the clinician and the patient's write grants — which is also why "the doctor invites the patient" collapses into this same flow. 8 more rules tests (171). Walked as three people: applied, approved, code issued, wrong code refused plainly, right code confirmed and connected. |
 | 2026-08-05 | P9.3 — **verification of a clinician is now a decision a person makes at `/admin`** (Thomas, D27), not a script somebody runs. A clinician applies with their name, discipline and RIZIV number; an admin checks it against the register and approves. That moved the root of trust down one level rather than removing it: `admins/` is written only with the Admin SDK, and an admin cannot even make another admin. Also the clamp Thomas approved: **a circle card naming somebody as a clinician requires that they are one**, on create *and* update, since without the update half a supporter card could be promoted in a second write. Anyone can still be a supporter — verification gates the clinical role only. `scripts/make-admin.mjs` refuses any project id not starting with `demo-`. 18 more rules tests (163), 8 more unit tests (336). Walked it as three people: applied, approved, and confirmed 403 → 200 on naming her as clinician either side of the decision. |
 | 2026-08-05 | P9.2 — onboarding branches on who arrived, so a supporter is no longer told "dit is een schriftje dat onthoudt wat jij vergeet" and asked what hour to remind him to check in. Inferred from a pending invite where possible, asked once otherwise; choosing grants nothing, because verification is an admin write. Walking it caught three things tests did not: the shared consent items still described "het uur van je herinnering" to someone never asked for one; the security rules refused a supporter's consent record outright, because they hardcoded `healthData == true`; and `ensureAccount` seeded a default `checkinHour` at first sign-in, so the nudge would have survived anyway — with `functions/` defaulting an absent hour to 9am, moving the bug rather than fixing it. All three fixed, and the refusal now lives in `isDueForReminder`. 2 more rules tests (145), 1 more unit test (332). |
 | 2026-08-05 | Phase 9 planned, and its first defect fixed. **Revoking a prescriber froze their prescriptions permanently** — proven against the emulator before it was believed: the patient was refused an edit and refused a release, and the revoked doctor could not even read the document their patient's `pendingChange` was addressed to. A fourth update branch lets the patient take a line back once the prescriber is gone, and `onlyReleases()` stops that release carrying a dose change. An existing test broke and was right to: it asserted an invariant stronger than the system can deliver, using a state the rules cannot produce. Replaced with the real one — no disowning while the clinician is *still theirs* — plus a test for the two-write path, so the weakening is recorded rather than hidden. 10 more rules tests (143). |

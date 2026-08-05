@@ -6,7 +6,9 @@ import { readMemberships, type Membership } from '../firebase/circle';
 import {
   applyForVerification,
   isVerifiedClinician,
+  readMyDirectoryEntry,
   readMyRequest,
+  type DirectoryRecord,
   type RequestRecord,
 } from '../firebase/clinician';
 import { useAuth } from '../providers/AuthProvider';
@@ -36,6 +38,7 @@ export function Console() {
   const [patients, setPatients] = useState<Membership[] | null>(null);
   const [verified, setVerified] = useState<boolean | null>(null);
   const [request, setRequest] = useState<RequestRecord | null>(null);
+  const [entry, setEntry] = useState<DirectoryRecord | null>(null);
   const [form, setForm] = useState({
     displayName: '',
     discipline: 'psychiater' as Discipline,
@@ -51,6 +54,7 @@ export function Console() {
       .catch(() => setPatients([]));
     void isVerifiedClinician(user.uid).then(setVerified);
     void readMyRequest(user.uid).then(setRequest);
+    void readMyDirectoryEntry(user.uid).then(setEntry);
   }, [user]);
 
   const canSend =
@@ -148,6 +152,16 @@ export function Console() {
         </Button>
       }
     >
+      {/* The code they hand to a patient. Shown here rather than buried in
+          settings, because handing it over is the thing they came to do the
+          first time they open this screen with nobody on it. */}
+      {entry ? (
+        <>
+          <p className={styles.empty}>{t('myCodeIntro')}</p>
+          <p className={styles.name}>{entry.code}</p>
+        </>
+      ) : null}
+
       {patients.length === 0 ? (
         <p className={styles.empty}>{t('consoleEmpty')}</p>
       ) : (

@@ -105,6 +105,21 @@ export const en: Dictionary = {
   disciplineVerpleegkundige: 'Nurse',
   disciplineAndere: 'Something else',
 
+  // A patient adding their doctor
+  findTitle: 'Add your doctor',
+  findIntro:
+    'Did your doctor give you a code? Type it here. Without a code you cannot add anybody.',
+  findCode: 'Your doctor’s code',
+  findLook: 'Look it up',
+  findUnknown: 'We do not know that code. Check it, or ask for it again.',
+  findConfirm: 'Is that right?',
+  findAdd: 'Yes, this is my doctor',
+  findRelation: 'What is this person to you?',
+  findDone: 'Added. You can always change what this person sees.',
+  findWhatTheySee: 'They see your check-ins and your medication. You can change that.',
+  myCodeTitle: 'Your code',
+  myCodeIntro: 'Give this code to somebody who wants you to follow them.',
+
   // Verification — the admin's side
   adminTitle: 'Requests',
   adminEmpty: 'Nobody is waiting.',

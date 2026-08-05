@@ -15,9 +15,12 @@ vi.mock('../firebase/circle', () => ({
   readMemberships: () => readMemberships(),
 }));
 
+const readMyDirectoryEntry = vi.fn<() => Promise<unknown>>();
+
 vi.mock('../firebase/clinician', () => ({
   isVerifiedClinician: () => isVerifiedClinician(),
   readMyRequest: () => readMyRequest(),
+  readMyDirectoryEntry: () => readMyDirectoryEntry(),
   applyForVerification: () => applyForVerification(),
 }));
 
@@ -46,6 +49,7 @@ beforeEach(() => {
   readMemberships.mockResolvedValue([]);
   isVerifiedClinician.mockResolvedValue(true);
   readMyRequest.mockResolvedValue(null);
+  readMyDirectoryEntry.mockResolvedValue(null);
 });
 
 describe('Console', () => {

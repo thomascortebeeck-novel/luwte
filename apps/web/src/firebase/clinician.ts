@@ -1,14 +1,32 @@
-import { paths, type ClinicianRequest, type Discipline } from '@luwte/core';
+import {
+  DEFAULT_CLINICIAN_PERMISSIONS,
+  inviteCode,
+  paths,
+  searchKey,
+  type ClinicianDirectoryEntry,
+  type ClinicianRequest,
+  type Discipline,
+} from '@luwte/core';
 import {
   collection,
   doc,
   getDoc,
   getDocs,
+  query,
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
 } from 'firebase/firestore';
 import { db } from './client';
+
+/**
+ * The same generator the circle invites use — one tested, unbiased function,
+ * and an alphabet already chosen for being read aloud across a kitchen table.
+ */
+function newConnectionCode(): string {
+  return inviteCode(crypto.getRandomValues(new Uint8Array(64)));
+}
 
 /**
  * PRD 6.7 — whether somebody is a clinician is decided by a person.
@@ -45,6 +63,67 @@ export async function isAdmin(uid: string): Promise<boolean> {
 }
 
 export type RequestRecord = ClinicianRequest & { uid: string };
+export type DirectoryRecord = ClinicianDirectoryEntry & { code: string };
+
+const readEntry = (code: string, data: Record<string, unknown>): DirectoryRecord => ({
+  code,
+  uid: (data.uid ?? '') as string,
+  displayName: (data.displayName ?? '') as string,
+  discipline: (data.discipline ?? 'andere') as Discipline,
+  practice: (data.practice ?? '') as string,
+  searchName: (data.searchName ?? '') as string,
+  listed: data.listed === true,
+});
+
+/** Resolving a code somebody handed over. Naming it is the whole capability. */
+export async function readClinicianByCode(code: string): Promise<DirectoryRecord | null> {
+  try {
+    const snapshot = await getDoc(doc(db, paths.clinicianDirectoryEntry(code.trim())));
+    return snapshot.exists() ? readEntry(snapshot.id, snapshot.data()) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The clinician's own code, so they can hand it out. */
+export async function readMyDirectoryEntry(uid: string): Promise<DirectoryRecord | null> {
+  try {
+    const snapshot = await getDocs(
+      query(
+        collection(db, paths.clinicianDirectory()),
+        where('listed', '==', true),
+        where('uid', '==', uid),
+      ),
+    );
+    const first = snapshot.docs[0];
+    return first ? readEntry(first.id, first.data()) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The patient adding their doctor.
+ *
+ * Written by the patient, into their own circle — which is why this needs no
+ * new access path at all. The code names the clinician; the patient's write is
+ * what grants. The rules refuse the card unless an admin verified them, so a
+ * code alone can never make somebody a clinician.
+ */
+export async function connectClinician(
+  patientUid: string,
+  entry: DirectoryRecord,
+  relation: string,
+): Promise<void> {
+  await setDoc(doc(db, paths.circleMember(patientUid, entry.uid)), {
+    memberUid: entry.uid,
+    role: 'clinician',
+    relation,
+    permissions: { ...DEFAULT_CLINICIAN_PERMISSIONS },
+    grantedAt: serverTimestamp(),
+    revokedAt: null,
+  });
+}
 
 const toDate = (value: unknown): Date | null =>
   typeof (value as { toDate?: () => Date })?.toDate === 'function'
@@ -115,6 +194,24 @@ export async function decideRequest(
       verifiedBy: adminUid,
       discipline: request.discipline,
       rizivNumber: request.rizivNumber,
+    });
+
+    /*
+     * The nameplate, and with it the connection code the clinician hands to a
+     * patient. Issued here because approving is the moment they become
+     * findable at all, and because the directory is admin-written like the
+     * verification it accompanies.
+     *
+     * `listed: true` by default and changeable later — a doctor who does not
+     * want to be searchable still has a code that works.
+     */
+    await setDoc(doc(db, paths.clinicianDirectoryEntry(newConnectionCode())), {
+      uid: request.uid,
+      displayName: request.displayName,
+      discipline: request.discipline,
+      practice: request.practice,
+      searchName: searchKey(request.displayName),
+      listed: true,
     });
   }
 

@@ -132,12 +132,16 @@ export {
 } from './model/consent';
 export {
   DECISION_KEYS,
+  clinicianDirectorySchema,
   clinicianRequestSchema,
   competencyCode,
   disciplines,
   isDecided,
   isPlausibleRiziv,
   normaliseRiziv,
+  prefixRange,
+  searchKey,
+  type ClinicianDirectoryEntry,
   type ClinicianRequest,
   type Discipline,
 } from './model/clinician';

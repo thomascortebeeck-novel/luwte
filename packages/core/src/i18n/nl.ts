@@ -108,6 +108,21 @@ export const nl = {
   disciplineVerpleegkundige: 'Verpleegkundige',
   disciplineAndere: 'Iets anders',
 
+  // A patient adding their doctor
+  findTitle: 'Je dokter toevoegen',
+  findIntro:
+    'Kreeg je een code van je dokter? Typ die hier. Zonder code kan je niemand toevoegen.',
+  findCode: 'De code van je dokter',
+  findLook: 'Opzoeken',
+  findUnknown: 'Die code kennen we niet. Kijk hem na, of vraag hem opnieuw.',
+  findConfirm: 'Klopt dat?',
+  findAdd: 'Ja, dit is mijn dokter',
+  findRelation: 'Wat is dit voor jou?',
+  findDone: 'Toegevoegd. Je kan altijd veranderen wat die persoon ziet.',
+  findWhatTheySee: 'Die ziet je check-ins en je medicatie. Jij kan dat aanpassen.',
+  myCodeTitle: 'Je code',
+  myCodeIntro: 'Geef deze code aan iemand die je wil opvolgen.',
+
   // Verification — the admin's side
   adminTitle: 'Aanvragen',
   adminEmpty: 'Er wacht niemand.',
