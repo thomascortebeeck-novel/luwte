@@ -11,7 +11,31 @@
     <title>luwte</title>
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      Inside #root on purpose: React replaces this the moment it mounts, so it
+      is visible only when the app failed to start at all.
+
+      Without it a misconfigured build is a **blank white screen** — which for
+      this app is the worst failure there is. Somebody opens luwte to write
+      down how their day went and gets nothing, with no way to tell whether it
+      is them, their phone, or the app. A build with no Firebase config throws
+      while its modules are still evaluating, before any React error boundary
+      exists to catch it, so the fallback has to be plain markup that was
+      already on the page.
+
+      No inline script, deliberately: the Content-Security-Policy in
+      firebase.json is `script-src 'self'` and would block one.
+    -->
+    <div id="root">
+      <main style="
+        max-width: 34rem; margin: 0 auto; padding: 3rem 1.5rem;
+        font-family: system-ui, sans-serif; color: #E7EDEA; line-height: 1.6;
+      ">
+        <p>luwte kan nu niet opstarten. Probeer het later opnieuw.</p>
+        <p style="color: #9AAAA5">luwte cannot start right now. Please try again later.</p>
+        <p><a href="/crisis" style="color: #7FB3A0">Hulp nu · Help now</a></p>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

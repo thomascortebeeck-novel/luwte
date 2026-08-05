@@ -17,6 +17,32 @@ const config = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+/*
+ * A build with no configuration is a blank white screen, and the person
+ * looking at it has no way to tell whether it is them, their phone, or us.
+ *
+ * `pnpm build` reads `.env.production`, which is deliberately not in the
+ * repository — the values differ per project and the production one is
+ * supplied by CI. Miss that step and Vite substitutes `undefined` for every
+ * variable, `initializeApp` fails somewhere deep inside the SDK, and the
+ * failure surfaces as nothing at all.
+ *
+ * So say which variables are missing, by name, while the message can still
+ * reach whoever built it. The fallback markup in index.html is what the
+ * person sees; this is what the log says.
+ */
+const missing = Object.entries(config)
+  .filter(([, value]) => typeof value !== 'string' || value.length === 0)
+  .map(([key]) => key);
+
+if (missing.length > 0) {
+  throw new Error(
+    `Firebase is not configured: ${missing.join(', ')} missing. ` +
+      'A production build needs apps/web/.env.production (see .env.example); ' +
+      'local development uses .env.development and needs no real project.',
+  );
+}
+
 export const app: FirebaseApp = initializeApp(config);
 
 /**

@@ -1,0 +1,129 @@
+name: deploy
+
+# Two deployments, and they are deliberately not the same shape.
+#
+# **dev deploys itself when something reaches main.** The merge is the human
+# decision; this only follows it. Nothing on `luwte-dev` is a real person's
+# record, so an automatic deploy there costs nothing if it is wrong.
+#
+# **prod is only ever started by a person, in the GitHub UI.** No trigger on
+# push, no schedule, no way for an agent or a merge to reach it. That is a
+# standing rule of this project rather than a preference: `luwte-prod` holds
+# one family's health records, and a deploy nobody chose is not acceptable
+# there. `environment: production` means GitHub can additionally require a
+# named reviewer to approve the run.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Which project to deploy
+        required: true
+        default: dev
+        type: choice
+        options: [dev, prod]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # A push to main can only ever mean dev. Choosing prod requires the manual
+    # trigger, which is what makes "a person decided" true.
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.target == 'prod' && 'production' || 'development' }}
+
+    env:
+      PROJECT: ${{ github.event_name == 'workflow_dispatch' && inputs.target || 'dev' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Vite bakes these into the bundle at build time, so they have to exist
+      # *before* `pnpm verify` runs its build — not at deploy time.
+      #
+      # Getting this wrong does not fail the build. It produces a bundle where
+      # every variable is `undefined`, Firebase throws while its modules are
+      # still evaluating, and the deployed app is a **blank white screen**.
+      # `client.ts` now names the missing variables and index.html carries a
+      # fallback, but the real fix is that this step exists at all.
+      #
+      # None of these are secret in the usual sense — a Firebase web config
+      # ships to every browser. They are secrets here only so the two projects
+      # cannot be confused with each other.
+      - name: Write the Firebase web config
+        run: |
+          cat > apps/web/.env.production <<'ENV'
+          VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID=${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET=${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_USE_EMULATORS=false
+          ENV
+          grep -q 'VITE_FIREBASE_PROJECT_ID=.\+' apps/web/.env.production \
+            || { echo "The Firebase web config secrets are not set for this environment."; exit 1; }
+
+      # The full gate before anything ships, rather than trusting that the PR
+      # run was on the same tree. `test:rules` needs Java and an emulator and
+      # is covered by verify.yml on the PR; this is the deployable-artifact
+      # check.
+      - name: Verify
+        run: pnpm verify
+
+      # A build that starts is not the same as a build that runs. This catches
+      # the failure the step above exists to prevent, before anybody deploys
+      # it: if the config is missing, the bundle still contains the fallback
+      # text and never contains a real project id.
+      - name: Confirm the build is actually configured
+        run: |
+          grep -rq "$(grep VITE_FIREBASE_PROJECT_ID apps/web/.env.production | cut -d= -f2)" apps/web/dist/assets/*.js \
+            || { echo "The built bundle carries no Firebase project id — it would render blank."; exit 1; }
+
+      - name: Install Firebase CLI
+        run: npm install --global firebase-tools@13
+
+      # Written to a file rather than passed inline, because the CLI wants a
+      # path and because a key on a command line ends up in process listings.
+      # Removed again in the last step, whatever happens.
+      - name: Write the service account key
+        run: |
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > sa.json
+          test -s sa.json || { echo "FIREBASE_SERVICE_ACCOUNT is not set"; exit 1; }
+
+      # Rules and indexes ship **with** the app, never after it. A build that
+      # reads a field the deployed rules refuse is a broken app, and a query
+      # needing an index that does not exist yet fails at the person's screen.
+      #
+      # Note firestore rules deploy before hosting: it is safer for the
+      # database to be stricter than the app for a moment than looser.
+      - name: Deploy rules, indexes and hosting
+        run: |
+          firebase deploy \
+            --project "$PROJECT" \
+            --only firestore:rules,firestore:indexes,hosting:app \
+            --non-interactive \
+            --message "${{ github.sha }}"
+        env:
+          # A service account with Firebase Hosting Admin and Cloud Datastore
+          # Index Admin. Functions are deliberately not deployed by this
+          # workflow — they need Blaze, and nothing in the app depends on one.
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/sa.json
+
+      - name: Clean up credentials
+        if: always()
+        run: rm -f sa.json
