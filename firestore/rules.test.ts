@@ -447,9 +447,40 @@ describe('medication ownership', () => {
     );
   });
 
-  it('REFUSES the patient taking ownership of their own entry away from a clinician', async () => {
+  /*
+   * The patient may not disown a prescription **while that clinician is still
+   * their clinician**. That is the invariant, and it is narrower than it first
+   * looks: a patient controls their own circle, so they can always revoke and
+   * then take the line back. Any rule promising more than this would be
+   * decoration — the revoke is one tap away and nothing can stop it.
+   *
+   * What actually protects provenance is `logOnlyGrows`. Releasing a line ends
+   * the relationship going forward; it cannot erase what was prescribed, so
+   * the chart keeps its vertical rules either way.
+   */
+  it('REFUSES the patient disowning a prescription while the clinician is still theirs', async () => {
+    await verifyClinician(DOCTOR);
+    await seedClinicianCircle(DOCTOR);
     await seedMedication({ prescribedBy: DOCTOR });
     await assertFails(
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1'), { prescribedBy: null }),
+    );
+  });
+
+  it('and cannot get there by revoking in the same breath — it takes two writes', async () => {
+    // Revoking is a write to `circle/`, releasing is a write to the
+    // medication. There is no single request that does both, so the circle
+    // screen shows the revocation before anything is disowned.
+    await verifyClinician(DOCTOR);
+    await seedClinicianCircle(DOCTOR);
+    await seedMedication({ prescribedBy: DOCTOR });
+    await assertFails(
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1'), { prescribedBy: null }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'circle', DOCTOR), { revokedAt: new Date() }),
+    );
+    await assertSucceeds(
       updateDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1'), { prescribedBy: null }),
     );
   });
@@ -1113,6 +1144,105 @@ describe('who may see and change medication', () => {
         pendingChange: null,
       }),
     );
+  });
+
+  /*
+   * What happens to a prescription when the person who wrote it is gone.
+   *
+   * Without this, revoking a psychiatrist froze every line they prescribed
+   * forever: the patient fails the self-edit branch because `prescribedBy` is
+   * set, and the prescriber branch fails because `granted()` is false for a
+   * revoked member. `pendingChange` was the only move left, and it wrote to
+   * someone who could no longer read the document it lived on.
+   *
+   * So the patient may take the line back — and only the line, never the dose
+   * in the same write, or a release would be a place to hide an edit.
+   */
+  describe('when the prescriber is gone', () => {
+    const releasing = (extra: Record<string, unknown> = {}) =>
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1'), {
+        prescribedBy: null,
+        ...extra,
+      });
+
+    it('lets the patient take back a line whose prescriber was revoked', async () => {
+      await seedClinicianCircle(DOCTOR, { revokedAt: new Date() });
+      await seedMedication({ prescribedBy: DOCTOR });
+      await assertSucceeds(releasing());
+    });
+
+    it('lets the patient take back a line whose prescriber left the circle', async () => {
+      // No circle document at all — the other half of "gone".
+      await seedMedication({ prescribedBy: DOCTOR });
+      await assertSucceeds(releasing());
+    });
+
+    it('REFUSES taking a line back while the prescriber is still active', async () => {
+      await verifyClinician(DOCTOR);
+      await seedClinicianCircle(DOCTOR);
+      await seedMedication({ prescribedBy: DOCTOR });
+      await assertFails(releasing());
+    });
+
+    it('REFUSES a release that changes the dose in the same write', async () => {
+      // The whole point: releasing must not be a way to smuggle an edit past
+      // the prescriber. Take it back, then change it, and the log shows both.
+      await seedClinicianCircle(DOCTOR, { revokedAt: new Date() });
+      await seedMedication({ prescribedBy: DOCTOR });
+      await assertFails(releasing({ dose: '100 mg' }));
+    });
+
+    it('REFUSES a release that shortens the change log', async () => {
+      await seedClinicianCircle(DOCTOR, { revokedAt: new Date() });
+      await seedMedication({
+        prescribedBy: DOCTOR,
+        changeLog: [{ at: new Date(), field: 'dose', from: '100 mg', to: '200 mg', by: DOCTOR }],
+      });
+      await assertFails(releasing({ changeLog: [] }));
+    });
+
+    it('REFUSES anyone but the patient taking the line back', async () => {
+      await seedClinicianCircle(DOCTOR, { revokedAt: new Date() });
+      await seedMember('supporter', true);
+      await seedMedication({ prescribedBy: DOCTOR });
+      await assertFails(
+        updateDoc(doc(asOther(), 'patients', JONAS, 'medications', 'med1'), {
+          prescribedBy: null,
+        }),
+      );
+    });
+
+    it('REFUSES handing the line to somebody else instead of taking it back', async () => {
+      await seedClinicianCircle(DOCTOR, { revokedAt: new Date() });
+      await seedMedication({ prescribedBy: DOCTOR });
+      await assertFails(
+        updateDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1'), {
+          prescribedBy: OTHER,
+        }),
+      );
+    });
+
+    it('lets the patient edit it normally once it is theirs again', async () => {
+      await seedClinicianCircle(DOCTOR, { revokedAt: new Date() });
+      await seedMedication({ prescribedBy: DOCTOR });
+      await assertSucceeds(releasing());
+      await assertSucceeds(
+        updateDoc(doc(asJonas(), 'patients', JONAS, 'medications', 'med1'), { dose: '100 mg' }),
+      );
+    });
+
+    it('still lets a new clinician take over instead', async () => {
+      // Releasing is for when nobody is left, not the only way out.
+      await seedClinicianCircle(DOCTOR, { revokedAt: new Date() });
+      await verifyClinician(OTHER);
+      await seedMember('clinician', true);
+      await seedMedication({ prescribedBy: DOCTOR });
+      await assertSucceeds(
+        updateDoc(doc(asOther(), 'patients', JONAS, 'medications', 'med1'), {
+          prescribedBy: OTHER,
+        }),
+      );
+    });
   });
 });
 

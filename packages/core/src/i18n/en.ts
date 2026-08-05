@@ -172,6 +172,9 @@ export const en: Dictionary = {
   medicationStopping: 'I would like to stop taking this',
   medicationProposeSend: 'Send',
   medicationProposePending: 'You asked for a change. Your care team is looking at it.',
+  medicationPrescriberGone:
+    'Whoever set this one no longer follows you here. You can look after this line yourself again.',
+  medicationRelease: 'Look after it myself',
   medicationOnlyClinician: 'Only your care team sees your medication.',
 
   consolePendingTitle: 'Changes asked for',

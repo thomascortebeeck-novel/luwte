@@ -176,6 +176,9 @@ export const nl = {
   medicationStopping: 'Ik zou hiermee willen stoppen',
   medicationProposeSend: 'Versturen',
   medicationProposePending: 'Je vroeg een wijziging. Je zorgverlener kijkt ernaar.',
+  medicationPrescriberGone:
+    'Wie dit klaarzette, volgt je hier niet meer op. Je kan deze lijn weer zelf beheren.',
+  medicationRelease: 'Weer zelf beheren',
   medicationOnlyClinician: 'Alleen je zorgverlener ziet je medicatie.',
 
   consolePendingTitle: 'Gevraagde wijzigingen',

@@ -6,6 +6,8 @@ import {
   doseId,
   doseTimeSchema,
   medicationSchema,
+  prescriberGone,
+  releaseChange,
   type Medication,
 } from './medication';
 
@@ -98,6 +100,46 @@ describe('diffMedication', () => {
   it('records who made the change, so a clinician edit is distinguishable', () => {
     const changes = diffMedication(valid, { ...valid, dose: '300 mg' }, 'uid-psychiater', at);
     expect(changes[0]!.by).toBe('uid-psychiater');
+  });
+});
+
+describe('a prescription whose clinician has gone', () => {
+  const prescribed = { prescribedBy: 'uid-psychiater' };
+  const active = [{ uid: 'uid-psychiater', revokedAt: null }];
+
+  it('is not gone while they are still in the circle', () => {
+    expect(prescriberGone(prescribed, active)).toBe(false);
+  });
+
+  it('is gone once they are revoked', () => {
+    expect(prescriberGone(prescribed, [{ uid: 'uid-psychiater', revokedAt: at }])).toBe(true);
+  });
+
+  it('is gone when they are not in the circle at all', () => {
+    expect(prescriberGone(prescribed, [])).toBe(true);
+  });
+
+  it('is never gone for a line nobody prescribed — there is nothing to take back', () => {
+    expect(prescriberGone({ prescribedBy: null }, [])).toBe(false);
+  });
+
+  it('ignores other members, revoked or not', () => {
+    expect(prescriberGone(prescribed, [{ uid: 'uid-broer', revokedAt: at }, ...active])).toBe(
+      false,
+    );
+  });
+
+  it('logs the release as ending the relationship, never as erasing it', () => {
+    // `from` names who prescribed it. The log may only grow, so the chart
+    // keeps every vertical rule their changes drew.
+    const change = releaseChange(prescribed, 'uid-jonas', at);
+    expect(change).toEqual({
+      at,
+      field: 'prescribedBy',
+      from: 'uid-psychiater',
+      to: null,
+      by: 'uid-jonas',
+    });
   });
 });
 

@@ -1,11 +1,18 @@
-import { doseTimeSchema, isPrescribed, type Medication as MedicationModel } from '@luwte/core';
+import {
+  doseTimeSchema,
+  isPrescribed,
+  prescriberGone,
+  type Medication as MedicationModel,
+} from '@luwte/core';
 import { Button, Choice, Field, Hairline, Screen } from '@luwte/ui';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { readCircle, type CircleMemberRecord } from '../firebase/circle';
 import {
   createMedication,
   proposeMedicationChange,
   readActiveMedications,
+  releasePrescription,
   type MedicationRecord,
 } from '../firebase/medication';
 import { useAuth } from '../providers/AuthProvider';
@@ -26,6 +33,13 @@ export function Medication() {
   const navigate = useNavigate();
 
   const [medications, setMedications] = useState<MedicationRecord[]>([]);
+  /*
+   * Read so the screen can tell whether the clinician who owns a line is still
+   * there. A prescription outlives the circle entry that authorised it, and a
+   * line whose prescriber is gone would otherwise offer "ask for a change" to
+   * somebody who can no longer read the request.
+   */
+  const [circle, setCircle] = useState<CircleMemberRecord[]>([]);
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
   const [dose, setDose] = useState('');
@@ -40,6 +54,9 @@ export function Medication() {
     void readActiveMedications(user.uid)
       .then(setMedications)
       .catch(() => setMedications([]));
+    void readCircle(user.uid)
+      .then(setCircle)
+      .catch(() => setCircle([]));
   };
 
   useEffect(load, [user]);
@@ -69,6 +86,22 @@ export function Medication() {
       setTimes('08:00');
       setPurpose('');
       setAdding(false);
+      load();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /*
+   * Taking a line back. Nothing about the medication itself changes here — the
+   * rules refuse a release that also edits, so this hands ownership over and
+   * the person changes what they want afterwards, with both steps in the log.
+   */
+  const release = async (medication: MedicationRecord) => {
+    if (!user || busy) return;
+    setBusy(true);
+    try {
+      await releasePrescription(user.uid, medication);
       load();
     } finally {
       setBusy(false);
@@ -193,21 +226,37 @@ export function Medication() {
               {/* Since the console landed, this list can hold lines the person
                   cannot change. Saying who set them is the difference between
                   a rule that reads as care and one that reads as being
-                  locked out of your own record. */}
-              {isPrescribed(medication) ? (
-                <span className={styles.purpose}>{t('medicationByClinician')}</span>
-              ) : null}
+                  locked out of your own record.
 
-              {/* A clinician owns this one, so the person can ask but not
-                  change it. Asking is always available — being unable to
-                  edit is not the same as having no say. */}
+                  And when that clinician is gone, saying so matters more: the
+                  line would otherwise sit there owned by nobody, offering to
+                  send a request that nobody can read. */}
               {isPrescribed(medication) ? (
-                medication.pendingChange ? (
-                  <span className={styles.purpose}>{t('medicationProposePending')}</span>
+                prescriberGone(medication, circle) ? (
+                  <>
+                    <span className={styles.purpose}>{t('medicationPrescriberGone')}</span>
+                    <Button
+                      variant="quiet"
+                      disabled={busy}
+                      onClick={() => void release(medication)}
+                    >
+                      {t('medicationRelease')}
+                    </Button>
+                  </>
                 ) : (
-                  <Button variant="quiet" onClick={() => setProposing(medication)}>
-                    {t('medicationPropose')}
-                  </Button>
+                  <>
+                    <span className={styles.purpose}>{t('medicationByClinician')}</span>
+                    {/* A clinician owns this one, so the person can ask but not
+                        change it. Asking is always available — being unable to
+                        edit is not the same as having no say. */}
+                    {medication.pendingChange ? (
+                      <span className={styles.purpose}>{t('medicationProposePending')}</span>
+                    ) : (
+                      <Button variant="quiet" onClick={() => setProposing(medication)}>
+                        {t('medicationPropose')}
+                      </Button>
+                    )}
+                  </>
                 )
               ) : null}
               <Hairline />

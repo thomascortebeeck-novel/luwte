@@ -366,6 +366,19 @@ circle for "is there a clinician somewhere", and a flag on the patient
 document saying so would be written by the patient and therefore worth
 nothing.
 
+**A prescription outlives the circle entry that authorised it**, so there is a
+fourth branch: when the prescriber is gone — no circle entry, or a revoked one
+— the patient may clear `prescribedBy` and take the line back. Without it a
+single revocation froze a line permanently, and the person locked out was its
+owner. `onlyReleases()` keeps a release from carrying a dose change, so it
+cannot become a way to edit a prescription nobody will ever see.
+
+The invariant this leaves is narrower than it first reads, and worth stating
+honestly: **the patient cannot disown a prescription while that clinician is
+still theirs.** They can always revoke and then release — two writes, both
+visible. Any stronger promise would be decoration, because the circle is theirs
+to change. What actually protects provenance is `logOnlyGrows`.
+
 **The line that must never blur:** *what you are prescribed* is a clinical
 decision; *whether you took it* (`doses/**`) is always the patient's own
 record. A prescribing clinician can read adherence and cannot write it.
@@ -458,6 +471,7 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-05 | Phase 9 planned, and its first defect fixed. **Revoking a prescriber froze their prescriptions permanently** — proven against the emulator before it was believed: the patient was refused an edit and refused a release, and the revoked doctor could not even read the document their patient's `pendingChange` was addressed to. A fourth update branch lets the patient take a line back once the prescriber is gone, and `onlyReleases()` stops that release carrying a dose change. An existing test broke and was right to: it asserted an invariant stronger than the system can deliver, using a state the rules cannot produce. Replaced with the real one — no disowning while the clinician is *still theirs* — plus a test for the two-write path, so the weakening is recorded rather than hidden. 10 more rules tests (143). |
 | 2026-08-05 | CLAUDE.md audited against the repo. Corrected the two places that said `apps/console` — it does not exist and the console is routes in `apps/web` (D19), which a future session would otherwise have built wrong. Replaced the stale "what exists" paragraph with a table by role, and added the calendar and feed sections, which existed only in the changelog. **Fixed a live AA failure found in the audit:** a chosen reaction drew its label in `--human`, and light-mode amber on the background is 3.82:1. BRAND-QA had predicted exactly this "when the feed lands" and named the fix — the label is `--text` and the amber is the border. `contrast.test.ts` now asserts both floors, so amber text fails the suite rather than shipping. |
 | 2026-08-05 | Medication tightened to the care team, and the patient given a way to ask. Family and friends are never offered the `medication` toggle and are refused the read even when a card carries it — `canReadClinical` checks the role as well as the permission. On a prescribed entry the patient may write `pendingChange` and nothing else; the prescriber approves, which applies exactly what was asked and logs it, or clears it, which says nothing. "If a doctor is assigned they approve" resolves to `prescribedBy`, already on the document, because rules cannot query the circle and a patient-written flag would be worthless. 14 more rules tests (133). Caught in walking it: approving diffed a partial proposal against the whole medication and wrote three phantom log entries per approval — the log draws the chart's vertical rules, so that mattered. |
 | 2026-08-05 | The feed (PRD 6.4). Finishing a planned activity auto-posts it for whoever was granted `feed`; **a dose never posts**, enforced in `shouldPostCompletion` rather than left to each caller. Reactions are heart/clap/proud and the rules refuse anything else, so warm-only survives a client writing straight to Firestore. Comments cannot be edited after they are read. A supporter side (`/following`) shows who shares with them, their feed, and their calendar with a suggest form that says plainly it is an offer. `onPostCreate` written and loading in the emulator, not deployed; whom to notify is a pure tested function in core, and both the patient's grant and the supporter's own preference must agree. Sharing is on by default with a one-tap off switch. 14 more rules tests (119). Thomas confirmed suggest-then-accept stays — the calendar is not directly writable by supporters (D21). |

@@ -3,6 +3,7 @@ import {
   diffMedication,
   doseId,
   paths,
+  releaseChange,
   type DoseStatus,
   type Medication,
   type PendingChange,
@@ -213,6 +214,25 @@ export async function resolvePendingChange(
     prescribedBy: by,
     pendingChange: null,
     changeLog: arrayUnion(...changes),
+  });
+}
+
+/**
+ * Taking a line back when the clinician who owned it is gone.
+ *
+ * Only `prescribedBy`, the log, and any stale request are written. The rules
+ * refuse a release that also changes the dose, and that refusal is the point:
+ * releasing must not become a way to edit a prescription no prescriber will
+ * ever see. Change it afterwards instead, and the log records both steps.
+ */
+export async function releasePrescription(
+  uid: string,
+  medication: MedicationRecord,
+): Promise<void> {
+  await updateDoc(doc(db, paths.medication(uid, medication.id)), {
+    prescribedBy: null,
+    pendingChange: null,
+    changeLog: arrayUnion(releaseChange(medication, uid, new Date())),
   });
 }
 

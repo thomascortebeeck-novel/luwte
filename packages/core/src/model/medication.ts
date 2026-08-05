@@ -105,6 +105,43 @@ export function needsApproval(medication: Pick<Medication, 'prescribedBy'>): boo
   return isPrescribed(medication);
 }
 
+/**
+ * Whether the clinician who owns this line is still there to change it.
+ *
+ * A prescription outlives the circle entry that authorised it. Revoke a
+ * psychiatrist and every line they wrote becomes uneditable by anyone: the
+ * person fails the self-edit branch because `prescribedBy` is set, and the
+ * clinician fails it because a revoked member is granted nothing. Asking is no
+ * help either — the request is addressed to someone who can no longer read the
+ * document it lives on.
+ *
+ * So the screen has to know, and this is what tells it. Nobody is left, and
+ * the line goes back to the person it belongs to.
+ */
+export function prescriberGone(
+  medication: Pick<Medication, 'prescribedBy'>,
+  circle: readonly { uid: string; revokedAt?: Date | null }[],
+): boolean {
+  if (!isPrescribed(medication)) return false;
+  const entry = circle.find((member) => member.uid === medication.prescribedBy);
+  return entry === undefined || entry.revokedAt != null;
+}
+
+/**
+ * The log entry for taking a line back.
+ *
+ * Releasing ends the relationship going forward; it never erases what was
+ * prescribed. `changeLog` may only grow, so the chart keeps every vertical
+ * rule the departed clinician's changes drew.
+ */
+export function releaseChange(
+  medication: Pick<Medication, 'prescribedBy'>,
+  by: string,
+  at: Date,
+): MedicationChange {
+  return { at, field: 'prescribedBy', from: medication.prescribedBy ?? null, to: null, by };
+}
+
 /** The values a proposal would produce, for showing what would change. */
 export function applyPendingChange(change: PendingChange): Partial<Medication> {
   return {

@@ -65,6 +65,31 @@ The patient keeps their own list until a clinician arrives, which is the only
 way a list can exist before the psychiatrist has an account. When a clinician
 takes a line on, it becomes theirs — and the person keeps the right to ask.
 
+### And when that doctor is no longer their doctor
+
+A prescription outlives the arrangement that produced it. If the psychiatrist
+who wrote a line is removed from the circle — they retire, the person moves
+practice, the relationship ends — that line would otherwise be **stuck
+forever**: the person cannot change it because a clinician owns it, and the
+clinician cannot change it because they are no longer in the circle. Asking is
+no help either, because the request is addressed to somebody who can no longer
+read it.
+
+So when nobody is left to approve, the line goes back to the person it belongs
+to. The screen says so plainly and offers *weer zelf beheren*.
+
+Two things make this safe rather than a way around the doctor:
+
+- **It only works once that clinician is actually gone.** While they are still
+  in the circle, the answer is still no.
+- **Taking a line back cannot change it in the same breath.** The database
+  refuses a release that also edits the dose. Take it back, then change it, and
+  the log shows both steps.
+
+Nothing is erased. The log may only grow, so every change the departed
+clinician made keeps its vertical line on the chart. Releasing ends the
+relationship going forward; it does not rewrite the past.
+
 ### Only the care team sees medication
 
 Family and friends are **never offered** the medication permission. Not hidden

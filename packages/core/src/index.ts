@@ -105,6 +105,8 @@ export {
   isPrescribed,
   needsApproval,
   pendingChangeSchema,
+  prescriberGone,
+  releaseChange,
   type PendingChange,
   doseTimeSchema,
   medicationChangeSchema,
