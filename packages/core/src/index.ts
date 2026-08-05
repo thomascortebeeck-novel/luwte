@@ -15,8 +15,25 @@ export {
   type CalendarEvent,
 } from './calendar';
 export {
+  REACTIONS,
+  commentSchema,
+  postSchema,
+  reactionSchema,
+  reactionTypeSchema,
+  shouldPostCompletion,
+  whoToNotify,
+  type Comment,
+  type NotifiableMember,
+  type Post,
+  type Reaction,
+  type ReactionType,
+} from './model/feed';
+export {
   DEFAULT_NOTIFICATION_SETTINGS,
+  DEFAULT_SHARE_SETTINGS,
   MAX_PATIENT_CATEGORIES,
+  shareSettingsSchema,
+  type ShareSettings,
   NOTIFICATION_CATEGORIES,
   categoriesFor,
   notificationSettingsSchema,

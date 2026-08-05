@@ -282,4 +282,33 @@ export const en: Dictionary = {
   ratingSkip: 'Never mind',
   ratingSave: 'Save',
   activityDone: 'Done',
+  activityMarkDone: 'I did this',
+
+  // The feed — what you shared, and what your circle sends back
+  feedTitle: 'Shared',
+  feedShared: 'Done',
+  feedWrite: 'Share something',
+  feedPlaceholder: 'Whatever you like',
+  feedPost: 'Share',
+  feedComment: 'Say something back',
+  feedCommentPlaceholder: 'Whatever you like',
+  feedCommentSend: 'Send',
+  reactionHeart: 'Heart',
+  reactionClap: 'Applause',
+  reactionProud: 'Proud',
+
+  settingsSharing: 'What you share',
+  shareCompletionsLabel: 'Share what you finished',
+  shareCompletionsExplanation:
+    'Whoever you let see the feed sees what you planned and did. Your medication is never part of it.',
+
+  // The side of someone who supports another person
+  followingTitle: 'Who you follow',
+  followingEmpty: 'Nobody shares anything with you yet.',
+  followingOpen: 'Open',
+  followingSuggest: 'Suggest something',
+  followingSuggestIntro:
+    'What you suggest sits on its own, not straight into the calendar. That person decides.',
+  followingSuggestSent: 'Suggested. That person decides.',
+  followingCalendar: 'What is planned',
 };

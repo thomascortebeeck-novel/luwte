@@ -112,10 +112,12 @@ that already happened.
 
 - *I open the link he sent me, and before I accept, I see exactly what I will
   be able to look at.* → Join
-- *I get one notification when my brother finishes something he planned.*
-  *(Preference exists; the trigger is not built yet)*
-- *I can see what he chose to share and nothing else.* *(The permission is
-  enforced; the screens that show it arrive with the feed)*
+- *I get one notification when my brother finishes something he planned* —
+  and only if he gave me the feed and I did not turn it off. Both of us have
+  to agree, and his decision is asked first.
+- *I can see what he chose to share and nothing else.* → Who you follow
+- *I can send him something warm. There is no way for me to send anything
+  cold, which is deliberate.*
 - *I can suggest an activity. It goes into a quiet tray — it does not appear
   on his calendar unless he accepts it. If he declines, I am not told.* →
   Calendar
@@ -151,10 +153,32 @@ that already happened.
 | Join | The other side of that link: what you will see, before you accept |
 | **Calendar** | Your week, today in the middle. Plan something, or repeat it daily, weekly or on weekdays |
 | Suggestions | What someone else offered, waiting for you to decide |
+| **Shared** | What you finished or wrote, and what your circle said back |
+| Who you follow | For a supporter: the people who share with them, their feed, and their calendar |
 | **Console** | For a clinician: the people who gave them access, then one person's chart, diary, adherence and medication |
 | Crisis | Three Belgian phone numbers, tappable, works with no internet |
 
-**Not built yet:** the feed.
+Everything is built. What remains is hardening and the pilot.
+
+### What gets shared, and what never does
+
+Finishing something you planned **posts it to your feed automatically**, for
+whoever you gave feed access to. They can react — heart, applause, proud — and
+say something back.
+
+**Ticking off medication shares nothing.** Not a post, not a notification, not
+a trace. What a person takes is between them and their clinician, and a feed
+item for every pill would turn taking your medication into a performance for
+your family. This is enforced where the sharing decision is made, not left to
+each screen to remember.
+
+Auto-sharing can be switched off in one tap. With it off the app works exactly
+as before, and nothing asks about it again.
+
+**Reactions are warm only.** There is no thumbs-down, no sad face, nothing
+that can read as disapproval — and the database refuses one even if the app is
+bypassed. Not because disapproval never happens, but because reading a
+thumbs-down from your mother at 2am is a harm this product will not create.
 
 ### Suggesting, not placing
 
@@ -391,7 +415,7 @@ These are not guidelines. Something fails to build if one is broken.
 | Circle screens — invite, permissions, revoke | Working |
 | Clinician console, with the medication editor | Working |
 | Calendar, suggestions, and the after-the-fact questions | Working |
-| Feed and reactions | **Next** |
+| Feed, auto-shared completions, warm reactions | Working |
 | Watch and phone data | After the Android app |
 
 The daily reminder is written and tested but not switched on, because turning

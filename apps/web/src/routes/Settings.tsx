@@ -4,12 +4,19 @@ import {
   NOTIFICATION_CATEGORIES,
   checkinReminderCalendarLink,
   dateKey,
+  DEFAULT_SHARE_SETTINGS,
   type NotificationSettings,
+  type ShareSettings,
 } from '@luwte/core';
 import { Button, Choice, Hairline, Screen } from '@luwte/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { saveNotificationSettings, saveReminderHour } from '../firebase/accounts';
+import {
+  saveNotificationSettings,
+  saveReminderHour,
+  saveShareSettings,
+} from '../firebase/accounts';
+import { readMemberships } from '../firebase/circle';
 import { isVerifiedClinician } from '../firebase/clinician';
 import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
@@ -38,16 +45,23 @@ export function Settings() {
     typeof Notification === 'undefined' ? 'unsupported' : Notification.permission,
   );
   const [isClinician, setIsClinician] = useState(false);
+  const [share, setShare] = useState<ShareSettings>(patient?.share ?? DEFAULT_SHARE_SETTINGS);
+
+  const [supports, setSupports] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     void isVerifiedClinician(user.uid).then(setIsClinician);
+    void readMemberships(user.uid)
+      .then((all) => setSupports(all.some((m) => m.role === 'supporter')))
+      .catch(() => setSupports(false));
   }, [user]);
 
   useEffect(() => {
     if (patient?.notifications) setSettings(patient.notifications);
     if (patient?.checkinHour !== undefined) setHour(patient.checkinHour);
-  }, [patient?.notifications, patient?.checkinHour]);
+    if (patient?.share) setShare(patient.share);
+  }, [patient?.notifications, patient?.checkinHour, patient?.share]);
 
   const calendarUrl = useMemo(
     () =>
@@ -86,6 +100,22 @@ export function Settings() {
           </Button>
         </div>
       </section>
+
+      {/* Only for someone who actually supports another person, which most
+          people using this app do not. */}
+      {supports ? (
+        <>
+          <Hairline />
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>{t('followingTitle')}</h2>
+            <div className={styles.row}>
+              <Button variant="quiet" onClick={() => navigate('/following')}>
+                {t('followingOpen')}
+              </Button>
+            </div>
+          </section>
+        </>
+      ) : null}
 
       {/* PRD 6.7 — only offered to someone the admin verified. Not a security
           boundary: the rules are. This is about not showing a psychiatrist's
@@ -127,6 +157,27 @@ export function Settings() {
           {t('calendarAddReminder')}
         </a>
         <p className={styles.note}>{t('calendarExplanation')}</p>
+      </section>
+
+      <Hairline />
+
+      {/* Not a notification setting, but it answers the question the person
+          is already asking on this screen: what leaves this app and reaches
+          another human. Doses are never shared whatever this says. */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>{t('settingsSharing')}</h2>
+        <div className={styles.items}>
+          <Choice
+            label={t('shareCompletionsLabel')}
+            explanation={t('shareCompletionsExplanation')}
+            checked={share.shareCompletions}
+            onChange={(checked) => {
+              const next = { shareCompletions: checked };
+              setShare(next);
+              if (user) void saveShareSettings(user.uid, next).then(reload);
+            }}
+          />
+        </div>
       </section>
 
       <Hairline />

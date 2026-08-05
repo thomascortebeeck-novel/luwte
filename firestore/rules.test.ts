@@ -741,6 +741,187 @@ describe('patients/{patientId}/completions', () => {
   });
 });
 
+/*
+ * PRD 6.4 — the feed is the one place a circle member authors anything, and
+ * the only warmth this product carries. What they may write is fenced tightly
+ * even so.
+ */
+describe('patients/{patientId}/posts', () => {
+  const post = {
+    activityId: 'act1',
+    title: 'Samen wandelen',
+    text: '',
+    createdAt: new Date(),
+  };
+
+  const grantFeed = (feed = true) =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'circle', OTHER), {
+        memberUid: OTHER,
+        role: 'supporter',
+        permissions: {
+          checkins: false,
+          medication: false,
+          health: false,
+          feed,
+          calendar: true,
+        },
+        grantedAt: new Date(),
+        revokedAt: null,
+      });
+    });
+
+  const seedPost = () =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'posts', 'post1'), post);
+    });
+
+  it('lets the patient share something', async () => {
+    await assertSucceeds(setDoc(doc(asJonas(), 'patients', JONAS, 'posts', 'post1'), post));
+  });
+
+  it('REFUSES anyone else posting as the patient', async () => {
+    await grantFeed();
+    await assertFails(setDoc(doc(asOther(), 'patients', JONAS, 'posts', 'post2'), post));
+  });
+
+  it('lets a member granted the feed read it', async () => {
+    await grantFeed();
+    await seedPost();
+    await assertSucceeds(getDoc(doc(asOther(), 'patients', JONAS, 'posts', 'post1')));
+  });
+
+  it('REFUSES a member who was not granted the feed', async () => {
+    await grantFeed(false);
+    await seedPost();
+    await assertFails(getDoc(doc(asOther(), 'patients', JONAS, 'posts', 'post1')));
+  });
+
+  it('refuses deletion, so a shared moment does not vanish from under a reply', async () => {
+    await seedPost();
+    await assertFails(deleteDoc(doc(asJonas(), 'patients', JONAS, 'posts', 'post1')));
+  });
+
+  describe('reactions', () => {
+    it('lets a member react warmly', async () => {
+      await grantFeed();
+      await seedPost();
+      await assertSucceeds(
+        setDoc(doc(asOther(), 'patients', JONAS, 'posts', 'post1', 'reactions', OTHER), {
+          type: 'heart',
+          at: new Date(),
+        }),
+      );
+    });
+
+    /*
+     * PRD 6.4 — warm only, checked in the database as well as the client. A
+     * person recovering from psychosis reading a thumbs-down from their
+     * mother at 2am is a harm this product will not create, and that must
+     * survive somebody writing straight to Firestore.
+     */
+    it('REFUSES a reaction that is not one of the three warm ones', async () => {
+      await grantFeed();
+      await seedPost();
+      for (const type of ['thumbsdown', 'sad', 'angry', 'worried']) {
+        await assertFails(
+          setDoc(doc(asOther(), 'patients', JONAS, 'posts', 'post1', 'reactions', OTHER), {
+            type,
+            at: new Date(),
+          }),
+        );
+      }
+    });
+
+    it('REFUSES reacting in somebody else’s name', async () => {
+      await grantFeed();
+      await seedPost();
+      await assertFails(
+        setDoc(doc(asOther(), 'patients', JONAS, 'posts', 'post1', 'reactions', JONAS), {
+          type: 'heart',
+          at: new Date(),
+        }),
+      );
+    });
+
+    it('REFUSES a reaction from someone without the feed', async () => {
+      await grantFeed(false);
+      await seedPost();
+      await assertFails(
+        setDoc(doc(asOther(), 'patients', JONAS, 'posts', 'post1', 'reactions', OTHER), {
+          type: 'heart',
+          at: new Date(),
+        }),
+      );
+    });
+
+    it('lets a person take their own reaction back', async () => {
+      await grantFeed();
+      await seedPost();
+      await setDoc(doc(asOther(), 'patients', JONAS, 'posts', 'post1', 'reactions', OTHER), {
+        type: 'clap',
+        at: new Date(),
+      });
+      await assertSucceeds(
+        deleteDoc(doc(asOther(), 'patients', JONAS, 'posts', 'post1', 'reactions', OTHER)),
+      );
+    });
+  });
+
+  describe('comments', () => {
+    const comment = { authorUid: OTHER, text: 'Fijn dat het lukte.', at: new Date() };
+
+    it('lets a member say something back', async () => {
+      await grantFeed();
+      await seedPost();
+      await assertSucceeds(
+        setDoc(doc(asOther(), 'patients', JONAS, 'posts', 'post1', 'comments', 'c1'), comment),
+      );
+    });
+
+    it('REFUSES a comment signed with somebody else’s name', async () => {
+      await grantFeed();
+      await seedPost();
+      await assertFails(
+        setDoc(doc(asOther(), 'patients', JONAS, 'posts', 'post1', 'comments', 'c1'), {
+          ...comment,
+          authorUid: JONAS,
+        }),
+      );
+    });
+
+    it('REFUSES editing a comment after it was read', async () => {
+      await grantFeed();
+      await seedPost();
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), 'patients', JONAS, 'posts', 'post1', 'comments', 'c1'),
+          comment,
+        );
+      });
+      await assertFails(
+        updateDoc(doc(asOther(), 'patients', JONAS, 'posts', 'post1', 'comments', 'c1'), {
+          text: 'Iets anders',
+        }),
+      );
+    });
+
+    it('lets the patient remove a comment from their own feed', async () => {
+      await grantFeed();
+      await seedPost();
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), 'patients', JONAS, 'posts', 'post1', 'comments', 'c1'),
+          comment,
+        );
+      });
+      await assertSucceeds(
+        deleteDoc(doc(asJonas(), 'patients', JONAS, 'posts', 'post1', 'comments', 'c1')),
+      );
+    });
+  });
+});
+
 describe('clinicians/{uid}', () => {
   it('lets a clinician see that they were verified', async () => {
     await verifyClinician(DOCTOR);

@@ -65,6 +65,26 @@ export const notificationSettingsSchema = z.object({
   supportedActivity: z.boolean(),
 });
 
+/**
+ * Not a notification setting — a sharing one, but it lives beside them
+ * because it answers the same question the person is already asking on that
+ * screen: what leaves this app and reaches another human.
+ *
+ * Finishing something planned posts it to the feed for whoever was granted
+ * `feed`. On by default, because a circle exists to be told things. Off in
+ * one tap, and with it off the app works exactly as before — nothing nags
+ * about it being off and nothing asks again.
+ *
+ * Doses are never posted whatever this says. See `shouldPostCompletion`.
+ */
+export const shareSettingsSchema = z.object({
+  shareCompletions: z.boolean(),
+});
+
+export type ShareSettings = z.infer<typeof shareSettingsSchema>;
+
+export const DEFAULT_SHARE_SETTINGS: ShareSettings = { shareCompletions: true };
+
 export type NotificationSettings = z.infer<typeof notificationSettingsSchema>;
 
 /**

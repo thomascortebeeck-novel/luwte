@@ -2,12 +2,14 @@ import {
   CONSENT_VERSION,
   DEFAULT_CHECKIN_HOUR,
   DEFAULT_NOTIFICATION_SETTINGS,
+  DEFAULT_SHARE_SETTINGS,
   DEFAULT_TIMEZONE,
   paths,
   type ConsentGrants,
   type Locale,
   type NotificationSettings,
   type Patient,
+  type ShareSettings,
 } from '@luwte/core';
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from './client';
@@ -42,6 +44,7 @@ export async function ensureAccount(uid: string, locale: Locale): Promise<void> 
 export type PatientRecord = Omit<Patient, 'createdAt'> & {
   createdAt: Date | null;
   notifications: NotificationSettings;
+  share: ShareSettings;
 };
 
 export async function readPatient(uid: string): Promise<PatientRecord | null> {
@@ -55,7 +58,12 @@ export async function readPatient(uid: string): Promise<PatientRecord | null> {
     onboarded: data.onboarded === true,
     createdAt: data.createdAt?.toDate?.() ?? null,
     notifications: { ...DEFAULT_NOTIFICATION_SETTINGS, ...(data.notifications ?? {}) },
+    share: { ...DEFAULT_SHARE_SETTINGS, ...(data.share ?? {}) },
   };
+}
+
+export async function saveShareSettings(uid: string, share: ShareSettings): Promise<void> {
+  await updateDoc(doc(db, paths.patient(uid)), { share });
 }
 
 export async function saveOnboarding(

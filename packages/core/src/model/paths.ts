@@ -34,6 +34,18 @@ export const paths = {
   /** completionKey is `activityId_yyyy-MM-dd`. */
   completion: (patientId: string, key: string) => `patients/${patientId}/completions/${key}`,
 
+  posts: (patientId: string) => `patients/${patientId}/posts`,
+  post: (patientId: string, postId: string) => `patients/${patientId}/posts/${postId}`,
+  /** Keyed by uid, so reacting twice changes your mind rather than stacking. */
+  reaction: (patientId: string, postId: string, memberUid: string) =>
+    `patients/${patientId}/posts/${postId}/reactions/${memberUid}`,
+  reactions: (patientId: string, postId: string) =>
+    `patients/${patientId}/posts/${postId}/reactions`,
+  comments: (patientId: string, postId: string) =>
+    `patients/${patientId}/posts/${postId}/comments`,
+  comment: (patientId: string, postId: string, commentId: string) =>
+    `patients/${patientId}/posts/${postId}/comments/${commentId}`,
+
   circle: (patientId: string) => `patients/${patientId}/circle`,
   circleMember: (patientId: string, memberUid: string) =>
     `patients/${patientId}/circle/${memberUid}`,

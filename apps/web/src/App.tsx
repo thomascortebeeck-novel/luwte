@@ -9,6 +9,8 @@ import { Consent } from './routes/Consent';
 import { Console } from './routes/Console';
 import { ConsolePatient } from './routes/ConsolePatient';
 import { Crisis } from './routes/Crisis';
+import { Feed } from './routes/Feed';
+import { Following, FollowingCalendar } from './routes/Following';
 import { Gate } from './routes/Gate';
 import { Insights } from './routes/Insights';
 import { Invite } from './routes/Invite';
@@ -108,6 +110,40 @@ export function App() {
           element={
             <Gate>
               <Suggestions />
+            </Gate>
+          }
+        />
+        <Route
+          path="/feed"
+          element={
+            <Gate>
+              <Feed />
+            </Gate>
+          }
+        />
+        {/* Someone else's feed, reachable only if they granted it — the rules
+            refuse the read otherwise, so this is navigation, not access. */}
+        <Route
+          path="/feed/:patientId"
+          element={
+            <Gate>
+              <Feed />
+            </Gate>
+          }
+        />
+        <Route
+          path="/following"
+          element={
+            <Gate>
+              <Following />
+            </Gate>
+          }
+        />
+        <Route
+          path="/following/:patientId"
+          element={
+            <Gate>
+              <FollowingCalendar />
             </Gate>
           }
         />

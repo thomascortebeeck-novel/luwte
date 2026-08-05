@@ -164,6 +164,12 @@ rest when `functions` and `apps/console` make per-package tasks real.
 ## Non-negotiables that are easy to break by accident
 
 - **No streaks, points, badges, milestones, or achievements. Ever.**
+- **Reactions are warm only** — heart, applause, proud, and nothing else. The
+  rules refuse any other type, so it survives the app being bypassed. Adding
+  a cold one is not a feature request, it is a change to what this product is.
+- **Doses are never shared.** No post, no notification, no trace. `medications`
+  and `doses` stay between the person and their clinician; a feed item for
+  every pill turns adherence into a performance for the family.
 - **No red, no green-as-good, no traffic-light coding.** There is no bad score.
 - **No bold text.** Weights 400 and 500 only.
 - **`--zeeglas` is the person's own data. `--amber` is where another human has
@@ -179,12 +185,12 @@ rest when `functions` and `apps/console` make per-package tasks real.
 
 ## Current state
 
-**Phases 0 to 7 complete, except the feed (6.3).** The circle screens exist,
-so a family can be invited and the permissions changed; the clinician console
-exists, so the psychiatrist can open a patient and change what is prescribed;
-the calendar exists, with suggestions that never place themselves.
+**Phases 0 to 7 complete.** A family can be invited and the permissions
+changed; the psychiatrist can open a patient and change what is prescribed;
+the calendar takes suggestions that never place themselves; finishing
+something planned shares it to the circle, who can only answer warmly.
 
-**298 unit tests plus 105 security-rules tests.** `pnpm verify` green.
+**309 unit tests plus 119 security-rules tests.** `pnpm verify` green.
 
 The product produces the thing that changes an appointment: a chart with
 medication changes as vertical rules, adherence as a count, and the person's
@@ -204,8 +210,8 @@ restore, and the join flow that survives sign-in), the clinician console
 (patient list, per-patient overview, medication editor), the crisis screen,
 and `/styleguide`.
 
-**Next:** the feed and kudos (PRD 6.4, the rest of Phase 6), then Phase 8
-hardening and the pilot.
+**Next:** Phase 8 — hardening, the accessibility pass, GDPR export and
+deletion, and the family pilot.
 
 Nothing needs a Firebase project. `pnpm emulators` plus `pnpm dev` is the
 whole setup.
@@ -385,6 +391,7 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-05 | The feed (PRD 6.4). Finishing a planned activity auto-posts it for whoever was granted `feed`; **a dose never posts**, enforced in `shouldPostCompletion` rather than left to each caller. Reactions are heart/clap/proud and the rules refuse anything else, so warm-only survives a client writing straight to Firestore. Comments cannot be edited after they are read. A supporter side (`/following`) shows who shares with them, their feed, and their calendar with a suggest form that says plainly it is an offer. `onPostCreate` written and loading in the emulator, not deployed; whom to notify is a pure tested function in core, and both the patient's grant and the supporter's own preference must agree. Sharing is on by default with a one-tap off switch. 14 more rules tests (119). Thomas confirmed suggest-then-accept stays — the calendar is not directly writable by supporters (D21). |
 | 2026-08-04 | Phase 5 — the calendar. A week with today in the middle, activities with daily/weekly/weekday recurrence expanded on the device, a separate suggestions tray, and the optional two-tap pleasure/mastery question after ticking something off. **A supporter may suggest and nothing else** — not place, not accept their own suggestion, not edit. And **declining is silent by rule, not by tact**: a member cannot read a declined activity at all, so their listing must filter on status or be refused. 17 more rules tests (105). Verified over the wire: suggest 200, place directly 403, accept own suggestion 403, read after decline 403, unfiltered listing 403 — while the patient keeps the full record of what was offered. |
 | 2026-08-04 | Phase 7 — the clinician console, as routes in `apps/web` rather than a separate app (D19). Patient list from a collection group query, per-patient overview reusing the same `PatientOverview` component the patient sees, and the medication editor. Medication ownership settled: `prescribedBy`, a verified-clinician document nobody can write from a client (D20, [docs/CLINICIAN-VERIFICATION.md](docs/CLINICIAN-VERIFICATION.md)), and a `changeLog` that may only grow. 24 more rules tests (88). Walked end to end: a verified psychiatrist prescribed, changed a dose, and the change appeared as a vertical rule on the patient's own chart. Confirmed over the wire that the patient cannot edit or disown a prescription, that a clinician cannot erase the log or tick a dose, and that self-verification is refused. |
 | 2026-08-04 | Phase 6.2 — the circle screens. Invite with the permissions chosen up front, per-person permissions as the sentences themselves, revoke and restore, and a join flow that holds the code across sign-in and onboarding so a link works for someone without an account. **Found and fixed a real hole while building it:** `allow read` on invites permitted listing the collection, so any signed-in stranger could enumerate every open invite and redeem one belonging to someone else. Split into `get` (anyone who can name the code) and `list` (the issuer only). Five more rules tests. Walked end to end against the emulators as two people, and confirmed over the wire that a redeemer cannot widen their own card, read what they were not granted, enumerate invites, or un-revoke themselves — all four refused with 403. `.firebaserc` gained the `demo-luwte` hosting target, without which `pnpm emulators` did not start at all. |

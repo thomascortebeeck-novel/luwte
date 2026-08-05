@@ -4,11 +4,14 @@ import {
   DEFAULT_TIMEZONE,
   dateKey,
   selectDue,
+  whoToNotify,
+  type NotifiableMember,
   type ReminderCandidate,
 } from '@luwte/core';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
+import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions';
 
@@ -82,5 +85,74 @@ export const sendCheckinReminder = onSchedule(
     }
 
     logger.info('reminders sent', { count: due.length });
+  },
+);
+
+/**
+ * PRD 5.4 — `onPostCreate`. When a patient shares something, tell the people
+ * they gave the feed to.
+ *
+ * Both sides have to agree and they are asked in that order: the patient's
+ * grant governs, and the supporter's own preference can only narrow it
+ * further. That decision lives in `@luwte/core/feed` as a pure function with
+ * its own tests; what is left here is plumbing.
+ *
+ * One notification per post and no retry. A repeated "your brother went for a
+ * walk" is worse than a missed one, and PRD 8 caps what may reach anyone.
+ */
+export const onPostCreate = onDocumentCreated(
+  // `retry: false` for the same reason the reminder uses retryCount 0: a
+  // retried notification is a second notification.
+  { document: 'patients/{patientId}/posts/{postId}', region: REGION, retry: false },
+  async (event) => {
+    const patientId = event.params.patientId;
+    const db = getFirestore();
+
+    const circle = await db.collection(`patients/${patientId}/circle`).get();
+
+    const members: NotifiableMember[] = await Promise.all(
+      circle.docs.map(async (member) => {
+        const data = member.data();
+        const theirSettings = await db.doc(`patients/${member.id}`).get();
+        const notifications = {
+          ...DEFAULT_NOTIFICATION_SETTINGS,
+          ...(theirSettings.data()?.notifications ?? {}),
+        };
+        return {
+          uid: member.id,
+          canSeeFeed: data.permissions?.feed === true,
+          revoked: data.revokedAt != null,
+          wantsSupportedActivity: notifications.supportedActivity === true,
+        };
+      }),
+    );
+
+    const uids = whoToNotify(members);
+    if (uids.length === 0) return;
+
+    const tokens = (
+      await Promise.all(
+        uids.map(async (uid) => {
+          const supporter = await db.doc(`patients/${uid}`).get();
+          return (supporter.data()?.fcmTokens ?? []) as string[];
+        }),
+      )
+    ).flat();
+
+    if (tokens.length === 0) return;
+
+    try {
+      await getMessaging().sendEachForMulticast({
+        tokens,
+        // Names nothing. A lock screen is read by whoever is holding it, and
+        // "Jonas finished his walk" on a train is health data in public.
+        notification: { title: 'luwte' },
+        data: { route: `/feed/${patientId}` },
+      });
+    } catch (error) {
+      logger.warn('post notification failed', { patientId, error });
+    }
+
+    logger.info('post notified', { patientId, recipients: uids.length });
   },
 );

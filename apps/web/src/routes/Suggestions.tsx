@@ -1,11 +1,15 @@
+import { DEFAULT_TIMEZONE, dateKey } from '@luwte/core';
 import { Button, Hairline, Screen } from '@luwte/ui';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
+  completeActivity,
   readActivities,
   setActivityStatus,
   type ActivityRecord,
 } from '../firebase/activities';
+import { postCompletion } from '../firebase/feed';
+import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
 import { useLocale } from '../providers/LocaleProvider';
 import styles from './Calendar.module.css';
@@ -25,8 +29,10 @@ import styles from './Calendar.module.css';
 export function Suggestions() {
   const { t } = useLocale();
   const { user } = useAuth();
+  const { patient } = useAccount();
   const navigate = useNavigate();
 
+  const timezone = patient?.timezone ?? DEFAULT_TIMEZONE;
   const [suggestions, setSuggestions] = useState<ActivityRecord[]>([]);
 
   const load = () => {
@@ -41,6 +47,27 @@ export function Suggestions() {
   const decide = async (activityId: string, accepted: boolean) => {
     if (!user) return;
     await setActivityStatus(user.uid, activityId, accepted ? 'accepted' : 'declined');
+    load();
+  };
+
+  /*
+   * Somebody suggests a walk and the person goes for a walk. Making them
+   * accept it onto a day and then tick it off is two steps of bookkeeping for
+   * something already done — so this is one tap: accepted and finished at
+   * once, shared like any other completion.
+   *
+   * The calendar is for planning ahead. It should not have to be fed after
+   * the fact just to record that something happened.
+   */
+  const markDone = async (activity: ActivityRecord) => {
+    if (!user) return;
+    await setActivityStatus(user.uid, activity.id, 'accepted');
+    completeActivity(user.uid, activity.id, dateKey(new Date(), timezone));
+    postCompletion(user.uid, {
+      sharingEnabled: patient?.share.shareCompletions !== false,
+      activityId: activity.id,
+      title: activity.title,
+    });
     load();
   };
 
@@ -70,6 +97,9 @@ export function Suggestions() {
               <div className={styles.decide}>
                 <Button variant="quiet" onClick={() => void decide(activity.id, true)}>
                   {t('suggestionsAccept')}
+                </Button>
+                <Button variant="quiet" onClick={() => void markDone(activity)}>
+                  {t('activityMarkDone')}
                 </Button>
                 <Button variant="quiet" onClick={() => void decide(activity.id, false)}>
                   {t('suggestionsDecline')}

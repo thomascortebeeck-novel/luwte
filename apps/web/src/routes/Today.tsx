@@ -21,6 +21,7 @@ import {
   type ActivityRecord,
 } from '../firebase/activities';
 import { onDay } from '@luwte/core';
+import { postCompletion } from '../firebase/feed';
 import type { DoseStatus } from '@luwte/core';
 import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
@@ -104,6 +105,13 @@ export function Today() {
 
     if (done) {
       const key = completeActivity(user.uid, activity.id, today);
+      // Auto-shared, because a circle exists to be told things. Doses never
+      // reach here — `postCompletion` refuses anything without an activity.
+      postCompletion(user.uid, {
+        sharingEnabled: patient?.share.shareCompletions !== false,
+        activityId: activity.id,
+        title: activity.title,
+      });
       setRating({ activity, key });
     } else {
       uncompleteActivity(user.uid, activity.id, today);
@@ -126,6 +134,9 @@ export function Today() {
           </Button>
           <Button variant="quiet" onClick={() => navigate('/calendar')}>
             {t('calendarTitle')}
+          </Button>
+          <Button variant="quiet" onClick={() => navigate('/feed')}>
+            {t('feedTitle')}
           </Button>
           <Button variant="quiet" onClick={() => navigate('/insights')}>
             {t('insightsTitle')}

@@ -286,4 +286,33 @@ export const nl = {
   ratingSkip: 'Laat maar',
   ratingSave: 'Bewaren',
   activityDone: 'Gedaan',
+  activityMarkDone: 'Dit heb ik gedaan',
+
+  // De feed — wat je deelde, en wat je kring terugstuurt
+  feedTitle: 'Gedeeld',
+  feedShared: 'Gedaan',
+  feedWrite: 'Iets delen',
+  feedPlaceholder: 'Wat je maar wil',
+  feedPost: 'Delen',
+  feedComment: 'Iets terugzeggen',
+  feedCommentPlaceholder: 'Wat je maar wil',
+  feedCommentSend: 'Versturen',
+  reactionHeart: 'Hart',
+  reactionClap: 'Applaus',
+  reactionProud: 'Trots',
+
+  settingsSharing: 'Wat je deelt',
+  shareCompletionsLabel: 'Deel wat je afrondde',
+  shareCompletionsExplanation:
+    'Wie je de feed liet zien, ziet wat je gepland had en deed. Je medicatie staat er nooit bij.',
+
+  // De kant van wie iemand steunt
+  followingTitle: 'Wie je volgt',
+  followingEmpty: 'Nog niemand deelt iets met je.',
+  followingOpen: 'Bekijken',
+  followingSuggest: 'Iets voorstellen',
+  followingSuggestIntro:
+    'Wat je voorstelt komt apart te staan, niet meteen in de agenda. Die persoon beslist zelf.',
+  followingSuggestSent: 'Voorgesteld. Die persoon beslist zelf.',
+  followingCalendar: 'Wat gepland staat',
 } as const satisfies Record<string, string>;

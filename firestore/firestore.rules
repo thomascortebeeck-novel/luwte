@@ -313,6 +313,49 @@ service cloud.firestore {
         allow delete: if false;
       }
 
+      /*
+       * PRD 6.4 — the feed. Scoped to this patient and their circle, and not
+       * a network: there is nothing here to discover and nothing to follow
+       * without being let in.
+       *
+       * Only the patient posts. A circle member granted `feed` may read, and
+       * may react and comment — the two things a member is allowed to author
+       * anywhere in this database, because warmth arriving from another human
+       * is the point of the feature.
+       */
+      match /posts/{postId} {
+        allow read: if canRead(patientId, 'feed');
+        allow create, update: if isSelf(patientId);
+        allow delete: if false;
+
+        /*
+         * One reaction per person per post, keyed by uid, so reacting twice
+         * changes your mind rather than stacking. You may only write your
+         * own: nobody applauds on somebody else's behalf.
+         *
+         * PRD 6.4 — warm only. The type is checked here as well as in the
+         * client, because "no negative reaction exists" has to survive
+         * someone posting straight to the database.
+         */
+        match /reactions/{memberUid} {
+          allow read: if canRead(patientId, 'feed');
+          allow create, update: if isSelf(memberUid)
+                                && canRead(patientId, 'feed')
+                                && request.resource.data.type in ['heart', 'clap', 'proud'];
+          allow delete: if isSelf(memberUid);
+        }
+
+        match /comments/{commentId} {
+          allow read: if canRead(patientId, 'feed');
+          allow create: if canRead(patientId, 'feed')
+                        && request.resource.data.authorUid == request.auth.uid;
+          // A comment that can be edited after someone read it is not a
+          // record of what was said. Removing your own is allowed.
+          allow update: if false;
+          allow delete: if isSelf(resource.data.authorUid) || isSelf(patientId);
+        }
+      }
+
       match /consents/{consentId} {
         allow read: if isSelf(patientId);
         allow create: if isSelf(patientId)
