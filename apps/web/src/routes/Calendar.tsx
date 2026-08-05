@@ -5,6 +5,7 @@ import {
   dateKey,
   onDay,
   type Activity,
+  type CopyKey,
   type RecurrenceId,
 } from '@luwte/core';
 import { Button, Field, Hairline, Screen } from '@luwte/ui';
@@ -16,11 +17,20 @@ import { useAuth } from '../providers/AuthProvider';
 import { useLocale } from '../providers/LocaleProvider';
 import styles from './Calendar.module.css';
 
-const REPEAT_OPTIONS: { id: RecurrenceId | 'never'; labelKey: 'calendarRepeatNever' | 'calendarRepeatDaily' | 'calendarRepeatWeekly' | 'calendarRepeatWeekdays' }[] = [
+/*
+ * The presets offered, in the order somebody is likely to want them: the
+ * everyday ones first, the calendar-appointment ones after. A fortnightly or
+ * monthly rule is what a depot injection and a standing appointment need, and
+ * before this they could not be written down at all.
+ */
+const REPEAT_OPTIONS: { id: RecurrenceId | 'never'; labelKey: CopyKey }[] = [
   { id: 'never', labelKey: 'calendarRepeatNever' },
   { id: 'daily', labelKey: 'calendarRepeatDaily' },
-  { id: 'weekly', labelKey: 'calendarRepeatWeekly' },
   { id: 'weekdays', labelKey: 'calendarRepeatWeekdays' },
+  { id: 'weekly', labelKey: 'calendarRepeatWeekly' },
+  { id: 'fortnightly', labelKey: 'calendarRepeatFortnightly' },
+  { id: 'monthly', labelKey: 'calendarRepeatMonthly' },
+  { id: 'yearly', labelKey: 'calendarRepeatYearly' },
 ];
 
 const WEEKDAY_LABELS = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];

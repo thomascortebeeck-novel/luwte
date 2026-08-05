@@ -385,6 +385,9 @@ export const en: Dictionary = {
   calendarRepeatDaily: 'Every day',
   calendarRepeatWeekly: 'Every week',
   calendarRepeatWeekdays: 'On weekdays',
+  calendarRepeatFortnightly: 'Every two weeks',
+  calendarRepeatMonthly: 'Every month',
+  calendarRepeatYearly: 'Every year',
   calendarSave: 'Save',
   calendarToday: 'Today',
 

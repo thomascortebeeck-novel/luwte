@@ -180,6 +180,15 @@ export {
   type Weekly,
 } from './model/checkin';
 export {
+  RECURRENCE_PRESETS,
+  formatRecurrence,
+  matchesRecurrence,
+  parseRecurrence,
+  type Frequency,
+  type Recurrence,
+  type RecurrencePresetId,
+} from './model/recurrence';
+export {
   RECURRENCES,
   WEEK_RADIUS,
   activitySchema,

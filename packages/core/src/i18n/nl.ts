@@ -389,6 +389,9 @@ export const nl = {
   calendarRepeatDaily: 'Elke dag',
   calendarRepeatWeekly: 'Elke week',
   calendarRepeatWeekdays: 'Op weekdagen',
+  calendarRepeatFortnightly: 'Om de twee weken',
+  calendarRepeatMonthly: 'Elke maand',
+  calendarRepeatYearly: 'Elk jaar',
   calendarSave: 'Bewaren',
   calendarToday: 'Vandaag',
 

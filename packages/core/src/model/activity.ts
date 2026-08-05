@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { nextDateKey, previousDateKey, weekdayOf, type DateKey } from '../dates';
+import { nextDateKey, previousDateKey, type DateKey } from '../dates';
+import {
+  RECURRENCE_PRESETS,
+  matchesRecurrence,
+  parseRecurrence,
+  type RecurrencePresetId,
+} from './recurrence';
 
 /**
  * PRD 6.3 — the calendar, and the rule the whole phase exists for:
@@ -17,26 +23,28 @@ export const activityStatusSchema = z.enum(['suggested', 'accepted', 'declined']
 export type ActivityStatus = z.infer<typeof activityStatusSchema>;
 
 /**
- * PRD 6.3 — "simple recurrence (daily / weekly / weekday) via rrule".
+ * PRD 6.3 — "simple recurrence via rrule".
  *
- * Stored as an rrule string so the field does not have to change if real
- * rrule support ever arrives, but only these three are ever parsed. Anything
- * else is treated as no recurrence rather than guessed at: an activity that
- * silently appears on the wrong days is worse than one that appears once.
+ * Real rrule support has arrived, which is what the string storage was always
+ * for: see `recurrence.ts` for the supported subset. These presets are what a
+ * screen offers, and the three that existed before mean exactly what they
+ * meant — `FREQ=WEEKLY` still inherits the weekday it started on, and the
+ * weekdays rule is still Monday to Friday.
  */
-export const RECURRENCES = {
-  daily: 'FREQ=DAILY',
-  weekly: 'FREQ=WEEKLY',
-  weekdays: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR',
-} as const;
+export const RECURRENCES = RECURRENCE_PRESETS;
 
-export type RecurrenceId = keyof typeof RECURRENCES;
+export type RecurrenceId = RecurrencePresetId;
 
-export const recurrenceSchema = z.enum([
-  RECURRENCES.daily,
-  RECURRENCES.weekly,
-  RECURRENCES.weekdays,
-]);
+/**
+ * Any rule the parser understands, rather than a fixed list — otherwise the
+ * schema and the parser could disagree, and the schema would win by refusing
+ * to store something the app can read perfectly well.
+ */
+export const recurrenceSchema = z
+  .string()
+  .refine((value) => parseRecurrence(value) !== null, {
+    message: 'not a supported recurrence rule',
+  });
 
 export const activitySchema = z.object({
   title: z.string().min(1).max(120),
@@ -74,14 +82,12 @@ export function completionId(activityId: string, date: DateKey): string {
   return `${activityId}_${date}`;
 }
 
-/** Monday to Friday, as ISO weekdays. */
-const WEEKDAYS = [1, 2, 3, 4, 5];
-
 /**
  * Whether an activity lands on a given day.
  *
  * A recurring activity never runs backwards from where it started, and an
- * unrecognised rule means "just the one day" — see RECURRENCES.
+ * unrecognised rule means "just the one day" — see `recurrence.ts` for why
+ * that failure mode is the safe one.
  */
 export function occursOn(
   activity: Pick<Activity, 'date' | 'recurrence'>,
@@ -90,16 +96,8 @@ export function occursOn(
   if (day === activity.date) return true;
   if (!activity.recurrence || day < activity.date) return false;
 
-  switch (activity.recurrence) {
-    case RECURRENCES.daily:
-      return true;
-    case RECURRENCES.weekly:
-      return weekdayOf(day) === weekdayOf(activity.date);
-    case RECURRENCES.weekdays:
-      return WEEKDAYS.includes(weekdayOf(day));
-    default:
-      return false;
-  }
+  const rule = parseRecurrence(activity.recurrence);
+  return rule === null ? false : matchesRecurrence(rule, activity.date, day);
 }
 
 /** How many days either side of today the week view shows. */
