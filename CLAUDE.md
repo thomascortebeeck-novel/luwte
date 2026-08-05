@@ -174,12 +174,33 @@ tasks would be ceremony.
 - **Reactions are warm only** — heart, applause, proud, and nothing else. The
   rules refuse any other type, so it survives the app being bypassed. Adding
   a cold one is not a feature request, it is a change to what this product is.
-- **Doses are never shared.** No post, no notification, no trace. `medications`
-  and `doses` stay between the person and their clinician; a feed item for
-  every pill turns adherence into a performance for the family.
-- **Family and friends never see medication or doses**, whatever a circle
-  document says. The role is checked as well as the permission, and the
-  toggle is never offered to a supporter.
+- **A dose is never *pushed*.** No post, no notification, no trace in the feed.
+  `shouldPostCompletion` refuses anything without an activity id, so this holds
+  where the decision is made rather than in every caller. A feed item for every
+  pill turns adherence into a performance for the family, and that — not the
+  reading — was always the harm.
+- **Family and friends cannot currently see medication or doses**, whatever a
+  circle document says: `canReadClinical` checks the role as well as the
+  permission, and the toggle is never offered to a supporter.
+  **⚠ Thomas has decided to change this** (D29, 2026-08-05) and it is **not
+  built yet**, so the code still refuses. When it lands: `medication` and
+  `doses` split into two permissions, still never in the feed, and widening a
+  clinical permission gets a confirmation naming what it means plus a log the
+  person can read back. Until then, do not quietly relax the rules — and do
+  not "fix" the tests that assert the refusal.
+- **⚠ A nurse role is decided and not built** (D30, 2026-08-05). A nurse reads
+  medication, never prescribes (`isPrescriber` already requires
+  `role == 'clinician'`), needs admin verification like a clinician, and
+  **still suggests rather than places** — "a supporter may offer, never place"
+  is the resolution of the central tension of this product and does not bend
+  for a job title. They get "suggest a week" instead.
+- **luwte may carry a conclusion somebody else is licensed to draw, and may
+  never draw one.** Under EU MDR it is *intended purpose* that makes software a
+  medical device. Relaying a CE-marked device's own result, attributed to it,
+  is a conduit (MDCG 2019-11: storage and communication without modifying the
+  data). Generating an alert, or saying "you may be relapsing", is clinical
+  monitoring — Class IIa, notified body, not survivable here. No predictor, no
+  interpretation in luwte's own voice, ever.
 - **No red, no green-as-good, no traffic-light coding.** There is no bad score.
 - **No bold text.** Weights 400 and 500 only.
 - **`--zeeglas` is the person's own data. `--amber` is where another human has
@@ -204,7 +225,7 @@ patient and change what is prescribed; the calendar takes suggestions that
 never place themselves; finishing something planned shares it to the circle,
 who can only answer warmly.
 
-**347 unit tests plus 182 security-rules tests.** `pnpm verify` green.
+**382 unit tests plus 186 security-rules tests.** `pnpm verify` green.
 
 The product produces the thing that changes an appointment: a chart with
 medication changes as vertical rules, adherence as a count, and the person's
@@ -218,18 +239,67 @@ Every screen, by who it is for:
 
 | For | Screens |
 |---|---|
-| Everyone | sign-in, onboarding (**three branches — see below**), consent (Art. 9 *or* confidentiality), crisis |
-| The patient | Today (windline, check-in, medication, activities, practices), check-in with the weekly akathisia screen and the hopelessness path, medication with "ask for a change" and "weer zelf beheren", the calendar and its suggestions tray, Overview and the diary archive, the printable report, the feed, settings, the circle screens, `/dokter` to add a doctor by code |
+| Everyone | sign-in (email link, password, **or Google**), onboarding (**three branches — see below**), consent (Art. 9 *or* confidentiality), crisis |
+| The patient | Today (windline, check-in, medication with "iets anders genomen?", activities, practices), check-in with the weekly akathisia screen and the hopelessness path, medication with "ask for a change" and "weer zelf beheren", the calendar and its suggestions tray, Overview and the diary archive, the printable report, the feed, settings (**including the light/dark switch**), the circle screens, `/dokter` to add a doctor by code **or by name** |
 | A supporter | `/following` — who shares with them, their feed, their calendar, and a suggest form |
 | A clinician | `/console` — the verification application when unverified, otherwise their connection code, patient list, per-patient overview, medication editor, and the approve/decline of what a patient asked for |
 | An admin | `/admin` — the clinician verification queue. The **only** screen that writes `clinicians/` |
 | Nobody, but useful | `/styleguide` |
 
 **Next:** Phase 8 — hardening, the accessibility pass, GDPR export and
-deletion, and the family pilot.
+deletion, and the family pilot. Phase 10 is the thirteen features Thomas
+asked for; the plan and its priority order are in
+[docs/superpowers/plans/2026-08-05-phase-10-thirteen-features.md](docs/superpowers/plans/2026-08-05-phase-10-thirteen-features.md).
+Built so far: the theme switch, Google sign-in, the actual dose taken,
+hosting, the check-in redesign and real recurrence. **Still open:** the
+calendar's day/week views, asking pleasure and mastery less often, the diary
+prompts and breathing exercises, and the two decided-but-unbuilt items above
+(D29 dose sharing, D30 the nurse role).
 
 Nothing needs a Firebase project. `pnpm emulators` plus `pnpm dev` is the
 whole setup.
+
+### A build with no `.env.production` is a blank white screen
+
+`pnpm build` reads `apps/web/.env.production`, which is **not in the
+repository** — the values differ per project and CI supplies them. Miss it and
+Vite substitutes `undefined` for every `VITE_FIREBASE_*`, **the build still
+succeeds**, and Firebase throws while its modules are evaluating — before any
+React error boundary exists to catch it. The deployed result is nothing at all.
+
+For this app that is the worst failure there is: somebody opens luwte to write
+down how their day went and gets a white page, with no way to tell whether it
+is them, their phone, or us. Three things now stand between that and a person:
+
+- `client.ts` names the missing variables rather than letting the SDK fail
+  somewhere deep.
+- `index.html` carries fallback markup **inside `#root`**, which React replaces
+  the instant it mounts and which stays put when it never does — in both
+  languages, with the crisis link still working. It is plain markup and not a
+  script, because the CSP is `script-src 'self'` and would block one.
+- The deploy workflow greps the built bundle for the project id, so a
+  misconfigured deploy fails in CI instead of on somebody's phone.
+
+`.env.development` exists and is used by `pnpm dev`, which is why this never
+shows up locally.
+
+### Deploying
+
+`.github/workflows/deploy.yml`. **dev deploys itself when something reaches
+`main`** — the merge was the human decision and this only follows it. **prod is
+`workflow_dispatch` only**, with a GitHub environment that can require a
+reviewer: `luwte-prod` holds one family's health records and a deploy nobody
+chose is not acceptable there. That is the standing rule, not a preference.
+
+Rules and indexes ship **with** the app and before it — better for the database
+to be stricter than the app for a moment than looser. Hosting is free on Spark,
+so `luwte-dev` still needs no billing.
+
+**The hosting emulator applies no custom headers at all**, so the CSP cannot be
+tested through `pnpm emulators`. It was verified by serving the real build with
+the real header from a static server; `connect-src` still needs confirming
+against a real deploy, because a local build talks to emulators where a
+deployed one talks to googleapis.com.
 
 ### Local development touches no Firebase project at all
 
@@ -288,8 +358,13 @@ For a post, **both sides must agree and the patient is asked first**: their
 
 ### Verified against the emulators, 2026-08-04
 
-- Auth holds `email` and auth machinery only — no `displayName`, no
-  `photoUrl`, no custom claims. PRD 5.5 option 1 holds in practice.
+- Auth holds `email` and auth machinery only — no custom claims, and nothing
+  clinical. PRD 5.5 option 1 holds in practice. **One qualification since
+  Google sign-in landed:** a Google account's profile *does* arrive with
+  `displayName` and `photoURL` attached to the Firebase user, and luwte
+  **never reads either**. The name the app uses is the one typed in
+  onboarding, and there are no photographs anywhere in this product. Do not
+  start reading them because they happen to be there.
 - The consent record stores version, grants, locale, `grantedAt` and a null
   `withdrawnAt`, keyed by version so re-consenting to the same version
   cannot silently duplicate.
@@ -354,7 +429,7 @@ function would additionally guarantee single use under a race, where this
 relies on the client transaction. Revisit if invites become more than a family
 sharing a link.
 
-**Most of the 182 rules tests are written as the attacks someone would
+**Most of the 186 rules tests are written as the attacks someone would
 actually try**, and named that way. **Add to them rather than trimming them.**
 If one starts failing, the question is what broke, not whether the test is
 too strict.
@@ -571,6 +646,19 @@ segments after `{path=**}` are not.
 - **`arousal` is bipolar and no other scale is**, so `CHECKIN_STEPS` carries
   `lowKey`/`highKey` per question. "weinig / veel" would ask somebody to rate
   feeling slowed down as a small amount of restlessness.
+- **Recurrence is a real RFC 5545 subset** (`packages/core/src/model/recurrence.ts`):
+  `FREQ` daily/weekly/monthly/yearly, `INTERVAL`, `BYDAY`, `UNTIL`. **`COUNT`
+  is deliberately absent** — "ten times" cannot be answered by looking at one
+  day, so it would make the predicate either expensive or wrong, and a
+  recurrence that quietly shows an eleventh time is worse than one that cannot
+  be expressed. **Anything unparseable means a single day**, never a guess. A
+  month with no 31st is skipped rather than rolled forward, and week parity
+  counts from the start's ISO week so a fortnightly rule survives the new year.
+- **What was actually taken lives on `doses/`**, which is the person's own
+  record in both directions: a prescribing clinician reads it — that is the
+  fact they came for — and can never write it. Free text, because "de helft"
+  and "150 mg" are both real answers. Offered only on a dose already ticked,
+  so taking medication stays one tap.
 - **The windline is not a score.** Unrest is not badness — a person can be
   unsettled and having a good week. It follows arousal **modulated by how
   unpleasant the day was**, not arousal alone: elation and agitation are both
@@ -585,6 +673,8 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-05 | **Real recurrence.** The field was already an rrule string, deliberately, but only three exact values were ever parsed — so a fortnightly appointment or a monthly depot injection could not be written down at all. Now a genuine RFC 5545 subset. `COUNT` is refused on purpose: it cannot be answered from one day. The compatibility property has its own tests — the three previously-storable rules still mean exactly what they meant. One test failed on the first run and **the test was what was wrong**: 2026-12-30 is 21 weeks after the fixture start, which is odd. 26 more unit tests (382). |
+| 2026-08-05 | **Two decisions recorded that this file previously stated as absolute** (D29, D30). Thomas decided family may be granted medication and dose access, split into two permissions and never in the feed; and that a nurse role reads medication, never prescribes, needs verification, and still *suggests* rather than places. **Neither is built** — the code still refuses — so the non-negotiables above now say "cannot currently" with the decision beside them, rather than "never". Also recorded the MDR line for wearable data: luwte may carry a conclusion somebody else is licensed to draw, and may never draw one. |
 | 2026-08-05 | **The daily check-in goes from six items to four**, before the pilot writes data in the old shape — afterwards it is a migration of real health records rather than an edit. The circumplex model says valence and arousal span momentary affect: `energy` and `anxiety` were both arousal differing only in valence, which is why answering all three felt like the same question three ways, and `sleepRested` is largely absorbed by the pair. `flatness` stays separate on purpose — it is the absence of a response, not a point on the circumplex, and it is what antipsychotics blunt. Fixing the windline came with it: it followed the single anxiety item, so a day spent busy and *delighted* drew the same restless line as one spent agitated. It now follows arousal modulated by unpleasantness, which is the actual high-arousal/unpleasant corner. `arousal` needed per-question scale ends, since "weinig / veel" would ask somebody to rate feeling slowed down as a small amount of restlessness. |
 | 2026-08-05 | The pilot's small things: the **light-theme switch** (the palette, persistence and contrast floors had existed since Phase 0 — only the switch in Settings was missing), **Google sign-in** beside email with the disclosure stated on the screen, and **what was actually taken** on a dose. That last is the question a tick cannot answer, and it reaches the printable A4 as the days something different was taken. Setting up **Firebase Hosting** found that `pnpm build` with no `.env.production` ships a **blank white screen** — the build succeeds and Firebase throws while its modules evaluate, before any error boundary exists. Fixed with fallback markup inside `#root` (plain markup, because the new CSP is `script-src 'self'`), named variables in the failure, and a CI step that greps the built bundle for the project id. |
 | 2026-08-05 | **Phase 9 complete** — P9.5 search by name, and P9.4 addressed invites underneath it. The two ways in differ in who agreed to what: a code was *handed over*, so it connects; a name was *found*, so it asks. `forUid` is the whole of it — one clause in `redeemable()`, one on the claim, and `list` widened to the addressee, which gives the console an inbox with no server and no second collection. Doing nothing is the decline and there is no button for it. Walked over the wire as three people: a stranger holding the code can neither join (403) nor burn it (403), an unverified doctor is refused (403) and the same doctor accepted once approved (200). Two defects found in `readMedicationMarkers` while wiring adoption into it: every changeLog entry drew a vertical rule, so a release printed a raw uid onto the A4 a psychiatrist reads — ownership changes are now logged and never drawn; and the marker date used `toISOString().slice(0, 10)`, the UTC antipattern this file warns about, putting a 23:30 Brussels change on the wrong day. 11 more rules tests (182), 11 more unit tests (347). |
