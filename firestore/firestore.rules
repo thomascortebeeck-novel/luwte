@@ -82,6 +82,44 @@ service cloud.firestore {
              && exists(/databases/$(database)/documents/clinicians/$(request.auth.uid));
     }
 
+    /*
+     * The one thing no client may write, and therefore the root of everything
+     * above it.
+     *
+     * Verification moved from a shell script into an admin panel (D27), which
+     * moved the root of trust rather than removing it: `clinicians/` is now
+     * written by an admin from the app, and `admins/` is written only with the
+     * Admin SDK. The invariants are unchanged — nobody verifies themselves,
+     * and no patient can anoint a clinician.
+     */
+    function isAdmin() {
+      return signedIn()
+             && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    /*
+     * A circle card naming somebody as a clinician requires that they actually
+     * are one.
+     *
+     * The patient's word decides *whose* clinician they are; it cannot decide
+     * *that they are one*. Without this, a patient could hand anyone a
+     * clinician card and that person would read their medication — and being
+     * persuaded to name someone "my doctor" is a thing that happens during an
+     * episode. Same reasoning as D23: a permission that cannot be granted to
+     * the wrong person cannot leak to them on a bad day.
+     */
+    function clinicianIsVerified(memberUid) {
+      return request.resource.data.role != 'clinician'
+             || exists(/databases/$(database)/documents/clinicians/$(memberUid));
+    }
+
+    /** An admin's decision may move these fields and nothing else. */
+    function onlyDecides() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['decidedAt', 'decidedBy', 'outcome'])
+             && request.resource.data.decidedBy == request.auth.uid;
+    }
+
     /**
      * Allowed to write what this patient is prescribed. Three conditions, and
      * removing any one of them opens a hole:
@@ -392,12 +430,20 @@ service cloud.firestore {
          * ever more than a family handing each other a link.
          */
         allow create: if honestMemberUid(memberUid)
+                      && clinicianIsVerified(memberUid)
                       && (isSelf(patientId)
                           || (isSelf(memberUid)
                               && request.resource.data.revokedAt == null
                               && redeemable(patientId, request.resource.data)));
 
-        allow update: if isSelf(patientId) && honestMemberUid(memberUid);
+        /*
+         * The clamp applies to updates too. Without it a patient could write a
+         * supporter card for someone and then edit it into a clinician one,
+         * which is the same escalation by two writes.
+         */
+        allow update: if isSelf(patientId)
+                      && honestMemberUid(memberUid)
+                      && clinicianIsVerified(memberUid);
         allow delete: if false;
       }
 
@@ -523,9 +569,62 @@ service cloud.firestore {
      * you are on. Writable by nobody: verification is granted out of band,
      * with the admin SDK, and that is the whole point of it.
      */
-    match /clinicians/{uid} {
-      allow read: if isSelf(uid);
+    /*
+     * Who is an admin. Bootstrapped with the Admin SDK and never in-band —
+     * this is the single document class that keeps the whole chain honest.
+     *
+     * `get` is self-only so the app can tell whether to offer the panel;
+     * `list` is refused, because who the admins are is nobody's business.
+     */
+    match /admins/{uid} {
+      allow get: if isSelf(uid);
+      allow list: if false;
       allow write: if false;
+    }
+
+    /*
+     * A clinician asking to be verified. They write their own application —
+     * name, discipline, RIZIV number — and an admin decides.
+     *
+     * Applying grants nothing whatsoever. It is a request to be looked at by a
+     * person, and until that person acts it has no effect anywhere.
+     */
+    match /clinicianRequests/{uid} {
+      allow get: if isSelf(uid) || isAdmin();
+      allow list: if isAdmin();
+
+      // Applying for yourself, undecided. Nobody applies on another's behalf,
+      // and nobody arrives pre-approved.
+      allow create: if isSelf(uid)
+                    && request.resource.data.outcome == null
+                    && request.resource.data.decidedBy == null;
+
+      allow update: if (isSelf(uid)
+                        && resource.data.outcome == null
+                        && request.resource.data.outcome == null
+                        && request.resource.data.decidedBy == null)
+                    || (isAdmin() && onlyDecides());
+
+      // A decided request is kept. Who asked to be trusted with somebody
+      // else's clinical record is not a thing this project erases.
+      allow delete: if false;
+    }
+
+    match /clinicians/{uid} {
+      allow get: if isSelf(uid) || isAdmin();
+      allow list: if isAdmin();
+
+      /*
+       * Written by an admin, from the panel, and signed with their own uid.
+       * A clinician still cannot verify themselves — unless they are also an
+       * admin, which is a thing only the Admin SDK can make true.
+       */
+      allow create, update: if isAdmin()
+                            && request.resource.data.verifiedBy == request.auth.uid;
+
+      // Withdrawing verification is an admin act like granting it. The circle
+      // reads resolve through `exists()`, so this takes effect immediately.
+      allow delete: if isAdmin();
     }
 
     /*

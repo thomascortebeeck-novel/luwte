@@ -59,3 +59,16 @@
   gap: var(--space-1);
   flex-wrap: wrap;
 }
+
+/* Matches the reminder-hour picker in onboarding; no new shape introduced. */
+.select {
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-2);
+  font: inherit;
+  font-family: var(--font-ui);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+}

@@ -89,6 +89,33 @@ export const nl = {
   onboardingHourExplanation:
     'Eén herinnering per dag. Mis je ze, dan gebeurt er niets.',
   onboardingFinish: 'Klaar',
+  // Verification — the clinician's side
+  verifyTitle: 'Laten nakijken dat je zorgverlener bent',
+  verifyIntro:
+    'Een mens kijkt dit na voor je iemand kan opvolgen. Zolang dat niet gebeurd is, zie je niemand.',
+  verifyName: 'Je naam, zoals patiënten die kennen',
+  verifyDiscipline: 'Wat je doet',
+  verifyRiziv: 'Je RIZIV-nummer',
+  verifyRizivHint: 'Elf cijfers. We kijken het na in het RIZIV-register.',
+  verifyPractice: 'Waar je werkt',
+  verifySend: 'Versturen',
+  verifyPending: 'Je aanvraag is verstuurd. Iemand kijkt ernaar.',
+  verifyDeclined: 'Je aanvraag is niet goedgekeurd. Neem contact op als je denkt dat dat fout is.',
+  verifyNotYet: 'Je bent nog niet nagekeken, dus je ziet nog niemand.',
+  disciplinePsychiater: 'Psychiater',
+  disciplineHuisarts: 'Huisarts',
+  disciplinePsycholoog: 'Psycholoog',
+  disciplineVerpleegkundige: 'Verpleegkundige',
+  disciplineAndere: 'Iets anders',
+
+  // Verification — the admin's side
+  adminTitle: 'Aanvragen',
+  adminEmpty: 'Er wacht niemand.',
+  adminApprove: 'Goedkeuren',
+  adminDecline: 'Niet goedkeuren',
+  adminDecided: 'Beslist',
+  adminCheckFirst: 'Kijk het nummer na in het RIZIV-register voor je beslist.',
+
   onboardingWhoTitle: 'Wat breng je hier?',
   onboardingWhoPatient: 'Ik hou zelf iets bij',
   onboardingWhoSupporter: 'Ik volg iemand die dat doet',

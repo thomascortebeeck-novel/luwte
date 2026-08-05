@@ -32,8 +32,10 @@ import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 const PROJECT_ID = 'demo-luwte-rules';
 const JONAS = 'uid-jonas';
 const OTHER = 'uid-someone-else';
-/** A clinician the admin has verified. Only the admin can create this. */
+/** A clinician the admin has verified. Only an admin can create this. */
 const DOCTOR = 'uid-doctor';
+/** The person who decides that. Made an admin only with the Admin SDK. */
+const ADMIN = 'uid-admin';
 
 let testEnv: RulesTestEnvironment;
 
@@ -1286,8 +1288,8 @@ describe('clinicians/{uid}', () => {
   });
 
   it('REFUSES anyone marking themselves verified', async () => {
-    // Verification is an out-of-band admin act, deliberately. If it could be
-    // claimed in-band, "verified clinician" would mean nothing.
+    // Verification is an admin act, deliberately. If it could be claimed
+    // in-band, "verified clinician" would mean nothing.
     await assertFails(setDoc(doc(asDoctor(), 'clinicians', DOCTOR), { verifiedAt: new Date() }));
     await assertFails(setDoc(doc(asJonas(), 'clinicians', JONAS), { verifiedAt: new Date() }));
   });
@@ -1295,6 +1297,213 @@ describe('clinicians/{uid}', () => {
   it('REFUSES reading another person’s verification record', async () => {
     await verifyClinician(DOCTOR);
     await assertFails(getDoc(doc(asJonas(), 'clinicians', DOCTOR)));
+  });
+});
+
+/*
+ * Verification is a decision an admin makes in the app rather than a script
+ * somebody runs (D27). That moved the root of trust from "only the Admin SDK
+ * writes clinicians/" to "only the Admin SDK writes admins/" — so these tests
+ * are about whether that root actually holds.
+ */
+describe('the admin who decides who is a clinician', () => {
+  const asAdmin = () => testEnv.authenticatedContext(ADMIN).firestore();
+
+  const makeAdmin = (uid: string) =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'admins', uid), { createdAt: new Date() });
+    });
+
+  const application = {
+    displayName: 'Dr. An Peeters',
+    discipline: 'psychiater',
+    rizivNumber: '12345678003',
+    practice: 'UZ Gent',
+    requestedAt: new Date(),
+    decidedAt: null,
+    decidedBy: null,
+    outcome: null,
+  };
+
+  const apply = (as: ReturnType<typeof asDoctor>, uid: string) =>
+    setDoc(doc(as, 'clinicianRequests', uid), application);
+
+  it('REFUSES anybody making themselves an admin', async () => {
+    // The whole chain rests on this one row.
+    await assertFails(setDoc(doc(asJonas(), 'admins', JONAS), { createdAt: new Date() }));
+    await assertFails(setDoc(doc(asDoctor(), 'admins', DOCTOR), { createdAt: new Date() }));
+  });
+
+  it('REFUSES an admin making somebody else an admin', async () => {
+    await makeAdmin(ADMIN);
+    await assertFails(setDoc(doc(asAdmin(), 'admins', DOCTOR), { createdAt: new Date() }));
+  });
+
+  it('REFUSES enumerating who the admins are', async () => {
+    await makeAdmin(ADMIN);
+    await assertFails(getDocs(collection(asAdmin(), 'admins')));
+  });
+
+  it('lets a clinician apply for themselves', async () => {
+    await assertSucceeds(apply(asDoctor(), DOCTOR));
+  });
+
+  it('REFUSES applying on somebody else’s behalf', async () => {
+    await assertFails(apply(asDoctor(), OTHER));
+  });
+
+  it('REFUSES an application that arrives already approved', async () => {
+    await assertFails(
+      setDoc(doc(asDoctor(), 'clinicianRequests', DOCTOR), {
+        ...application,
+        outcome: 'verified',
+        decidedBy: DOCTOR,
+        decidedAt: new Date(),
+      }),
+    );
+  });
+
+  it('REFUSES the applicant deciding their own request', async () => {
+    await apply(asDoctor(), DOCTOR);
+    await assertFails(
+      updateDoc(doc(asDoctor(), 'clinicianRequests', DOCTOR), {
+        outcome: 'verified',
+        decidedBy: DOCTOR,
+        decidedAt: new Date(),
+      }),
+    );
+  });
+
+  it('lets an admin read the queue and decide', async () => {
+    await makeAdmin(ADMIN);
+    await apply(asDoctor(), DOCTOR);
+    await assertSucceeds(getDocs(collection(asAdmin(), 'clinicianRequests')));
+    await assertSucceeds(
+      updateDoc(doc(asAdmin(), 'clinicianRequests', DOCTOR), {
+        outcome: 'verified',
+        decidedBy: ADMIN,
+        decidedAt: new Date(),
+      }),
+    );
+    await assertSucceeds(
+      setDoc(doc(asAdmin(), 'clinicians', DOCTOR), {
+        verifiedAt: new Date(),
+        verifiedBy: ADMIN,
+      }),
+    );
+  });
+
+  it('REFUSES a decision that rewrites the application it is deciding', async () => {
+    // Otherwise approving could quietly change the RIZIV number it approved.
+    await makeAdmin(ADMIN);
+    await apply(asDoctor(), DOCTOR);
+    await assertFails(
+      updateDoc(doc(asAdmin(), 'clinicianRequests', DOCTOR), {
+        outcome: 'verified',
+        decidedBy: ADMIN,
+        decidedAt: new Date(),
+        rizivNumber: '99999999999',
+      }),
+    );
+  });
+
+  it('REFUSES an admin signing a decision as somebody else', async () => {
+    await makeAdmin(ADMIN);
+    await apply(asDoctor(), DOCTOR);
+    await assertFails(
+      updateDoc(doc(asAdmin(), 'clinicianRequests', DOCTOR), {
+        outcome: 'verified',
+        decidedBy: DOCTOR,
+        decidedAt: new Date(),
+      }),
+    );
+  });
+
+  it('REFUSES a non-admin reading the queue', async () => {
+    await apply(asDoctor(), DOCTOR);
+    await assertFails(getDocs(collection(asJonas(), 'clinicianRequests')));
+  });
+
+  it('REFUSES deleting a decided request, because who asked is a record', async () => {
+    await makeAdmin(ADMIN);
+    await apply(asDoctor(), DOCTOR);
+    await assertFails(deleteDoc(doc(asAdmin(), 'clinicianRequests', DOCTOR)));
+  });
+
+  it('REFUSES the applicant editing their application after it was decided', async () => {
+    await makeAdmin(ADMIN);
+    await apply(asDoctor(), DOCTOR);
+    await updateDoc(doc(asAdmin(), 'clinicianRequests', DOCTOR), {
+      outcome: 'declined',
+      decidedBy: ADMIN,
+      decidedAt: new Date(),
+    });
+    await assertFails(
+      updateDoc(doc(asDoctor(), 'clinicianRequests', DOCTOR), { rizivNumber: '12345678004' }),
+    );
+  });
+});
+
+/*
+ * D27, the second half: the patient's word decides *whose* clinician somebody
+ * is. It cannot decide *that they are one*.
+ */
+describe('naming somebody as your clinician', () => {
+  const card = (role: string) => ({
+    memberUid: DOCTOR,
+    role,
+    permissions: {
+      checkins: true,
+      medication: role === 'clinician',
+      health: false,
+      feed: false,
+      calendar: false,
+    },
+    grantedAt: new Date(),
+    revokedAt: null,
+  });
+
+  it('works when the admin verified them', async () => {
+    await verifyClinician(DOCTOR);
+    await assertSucceeds(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'circle', DOCTOR), card('clinician')),
+    );
+  });
+
+  it('REFUSES a clinician card for somebody nobody verified', async () => {
+    await assertFails(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'circle', DOCTOR), card('clinician')),
+    );
+  });
+
+  it('still lets anyone at all be a supporter', async () => {
+    // Verification gates the clinical role and nothing else. A brother needs
+    // no credential to be a brother.
+    await assertSucceeds(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'circle', DOCTOR), card('supporter')),
+    );
+  });
+
+  it('REFUSES promoting a supporter card into a clinician one', async () => {
+    // The same escalation, split across two writes.
+    await setDoc(doc(asJonas(), 'patients', JONAS, 'circle', DOCTOR), card('supporter'));
+    await assertFails(
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'circle', DOCTOR), {
+        role: 'clinician',
+        permissions: card('clinician').permissions,
+      }),
+    );
+  });
+
+  it('allows the promotion once they are verified', async () => {
+    await setDoc(doc(asJonas(), 'patients', JONAS, 'circle', DOCTOR), card('supporter'));
+    await verifyClinician(DOCTOR);
+    await assertSucceeds(
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'circle', DOCTOR), {
+        role: 'clinician',
+        permissions: card('clinician').permissions,
+      }),
+    );
   });
 });
 

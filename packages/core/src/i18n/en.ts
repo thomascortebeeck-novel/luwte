@@ -86,6 +86,33 @@ export const en: Dictionary = {
   onboardingHourTitle: 'When does it suit you to look back on your day?',
   onboardingHourExplanation: 'One reminder a day. If you miss it, nothing happens.',
   onboardingFinish: 'Done',
+  // Verification — the clinician's side
+  verifyTitle: 'Have it checked that you are a clinician',
+  verifyIntro:
+    'A person checks this before you can follow anybody. Until that happens, you see nobody.',
+  verifyName: 'Your name, as patients know it',
+  verifyDiscipline: 'What you do',
+  verifyRiziv: 'Your RIZIV number',
+  verifyRizivHint: 'Eleven digits. We check it against the RIZIV register.',
+  verifyPractice: 'Where you work',
+  verifySend: 'Send',
+  verifyPending: 'Your request has been sent. Someone is looking at it.',
+  verifyDeclined: 'Your request was not approved. Get in touch if you think that is wrong.',
+  verifyNotYet: 'You have not been checked yet, so you see nobody.',
+  disciplinePsychiater: 'Psychiatrist',
+  disciplineHuisarts: 'GP',
+  disciplinePsycholoog: 'Psychologist',
+  disciplineVerpleegkundige: 'Nurse',
+  disciplineAndere: 'Something else',
+
+  // Verification — the admin's side
+  adminTitle: 'Requests',
+  adminEmpty: 'Nobody is waiting.',
+  adminApprove: 'Approve',
+  adminDecline: 'Do not approve',
+  adminDecided: 'Decided',
+  adminCheckFirst: 'Check the number against the RIZIV register before you decide.',
+
   onboardingWhoTitle: 'What brings you here?',
   onboardingWhoPatient: 'I am keeping track of my own days',
   onboardingWhoSupporter: 'I am following someone who is',

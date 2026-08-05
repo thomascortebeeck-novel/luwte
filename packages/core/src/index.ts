@@ -131,6 +131,17 @@ export {
   type ConsentRecord,
 } from './model/consent';
 export {
+  DECISION_KEYS,
+  clinicianRequestSchema,
+  competencyCode,
+  disciplines,
+  isDecided,
+  isPlausibleRiziv,
+  normaliseRiziv,
+  type ClinicianRequest,
+  type Discipline,
+} from './model/clinician';
+export {
   keepsOwnLogbook,
   onboardingRoles,
   roleSchema,

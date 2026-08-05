@@ -1,12 +1,32 @@
 # Verifying a clinician — admin only
 
 PRD 6.7: whether someone is a clinician is "checked manually at first". This
-is that manual step, and it is deliberately not something the app can do.
+is that manual step. It is made by a person, in the app, at **`/admin`**
+(D27) — and the check itself is still theirs to do, against the RIZIV
+register. The panel shows the number and says so; approving is a judgement,
+not a button.
 
-A verified clinician is a document at `clinicians/{uid}`. **No client may
-write one** — the security rules refuse it outright, including to the person
-it would be about. Verification is granted out of band, by an admin, with
-credentials the app does not have.
+A verified clinician is a document at `clinicians/{uid}`, written **only by an
+admin** and signed with their uid. Nobody verifies themselves.
+
+## Where the root of trust actually sits
+
+Moving the check into the app moved the out-of-band step rather than removing
+it. It now sits one level down:
+
+| Document | Written by | How |
+|---|---|---|
+| `admins/{uid}` | **Nobody, from any client** | the Admin SDK, by a human who meant to |
+| `clinicianRequests/{uid}` | the applicant, for themselves | applying grants nothing |
+| `clinicians/{uid}` | an admin, from `/admin` | signed with their own uid |
+
+**`admins/` is the whole chain.** If a client could write it, everything above
+it would be worthless. The rules refuse every write to it, including from an
+admin — an admin cannot make another admin. There are tests for each of those.
+
+A decided request is **kept, never deleted**. Who asked to be trusted with
+somebody else's clinical record, and what was decided, is exactly the kind of
+record this project does not erase.
 
 ## Why it is a document rather than a custom claim
 
@@ -37,18 +57,23 @@ Writing medication needs all three:
 
 ## Doing it
 
-Against the emulator, for local testing:
+**Verifying a clinician:** open `/admin`, check the RIZIV number against
+[the register](https://www.riziv.fgov.be/nl/webtoepassingen/een-zorgverlener-zoeken),
+and approve or decline. The last three digits are the competency code, which
+is what distinguishes a psychiatrist from a doctor in general; the panel shows
+them separately for that reason.
+
+**Becoming an admin in the first place** is the step no screen can do:
 
 ```bash
-curl -X PATCH "http://127.0.0.1:8080/v1/projects/demo-luwte/databases/(default)/documents/clinicians/THE_UID" -H "Authorization: Bearer owner" -H "Content-Type: application/json" -d "{\"fields\":{\"verifiedAt\":{\"timestampValue\":\"2026-08-04T00:00:00Z\"}}}"
+node scripts/make-admin.mjs <uid>
 ```
 
-Against a real project, this needs the Admin SDK with a service account, run
-by a human who has checked the person is who they say they are. That check is
-the entire point of the step, and it is not a formality: this is the one
-permission in luwte that lets a person write something clinical about someone
-else.
+That script refuses any project id not starting with `demo-`. Against a real
+project it needs the Admin SDK and a service account, run by a human who meant
+to — and per the project rules, that is not something a session does on its
+own.
 
-**Undoing it is deleting the document**, which needs the same admin
-credentials, and — per the project rules — an explicit go-ahead before anyone
-runs it.
+**Undoing verification is deleting `clinicians/{uid}`**, which an admin may do
+and which takes effect immediately: every read resolves through `exists()`.
+Per the project rules, ask before running it.

@@ -6,6 +6,7 @@ import { CheckIn } from './routes/CheckIn';
 import { Circle } from './routes/Circle';
 import { CircleMember } from './routes/CircleMember';
 import { Consent } from './routes/Consent';
+import { Admin } from './routes/Admin';
 import { Console } from './routes/Console';
 import { ConsolePatient } from './routes/ConsolePatient';
 import { Crisis } from './routes/Crisis';
@@ -212,6 +213,18 @@ export function App() {
           element={
             <Gate>
               <ConsolePatient />
+            </Gate>
+          }
+        />
+        {/* PRD 6.7 / D27 — where a person decides who is a clinician. The
+            route is open to anyone signed in and shows nothing to anyone who
+            is not an admin; `admins/{uid}` is written only with the Admin SDK
+            and the rules refuse every write here to everybody else. */}
+        <Route
+          path="/admin"
+          element={
+            <Gate>
+              <Admin />
             </Gate>
           }
         />

@@ -416,8 +416,27 @@ record. A prescribing clinician can read adherence and cannot write it.
 `changeLog` may only grow. Shortening it would erase a dose change that
 happened, and those changes are what draw the vertical rules on the chart.
 
-Verification is an admin act with the Admin SDK, never a client write — see
-[docs/CLINICIAN-VERIFICATION.md](docs/CLINICIAN-VERIFICATION.md). Plain
+**Verification is a decision a person makes at `/admin`** (D27), not a script
+somebody runs. That moved the root of trust rather than removing it:
+
+| Document | Written by |
+|---|---|
+| `admins/{uid}` | **nobody, from any client** — `scripts/make-admin.mjs`, or the Admin SDK |
+| `clinicianRequests/{uid}` | the applicant, for themselves. Applying grants nothing. |
+| `clinicians/{uid}` | an admin, signed with their own uid |
+
+**`admins/` is the whole chain.** An admin cannot even make another admin —
+there is a test for that, and for self-promotion, and for enumerating who the
+admins are. A decided request is kept, never deleted.
+
+**A circle card naming somebody as a clinician requires that they are one.**
+`clinicianIsVerified()` gates create *and* update — without the update half,
+a supporter card could be edited into a clinician one, which is the same
+escalation in two writes. The patient's word decides *whose* clinician someone
+is; it cannot decide *that they are one*. Anyone at all can still be a
+supporter: verification gates the clinical role and nothing else.
+
+See [docs/CLINICIAN-VERIFICATION.md](docs/CLINICIAN-VERIFICATION.md). Plain
 language in [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) §3.
 
 ### The calendar and the feed — the two places another person reaches in
@@ -501,6 +520,7 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-05 | P9.3 — **verification of a clinician is now a decision a person makes at `/admin`** (Thomas, D27), not a script somebody runs. A clinician applies with their name, discipline and RIZIV number; an admin checks it against the register and approves. That moved the root of trust down one level rather than removing it: `admins/` is written only with the Admin SDK, and an admin cannot even make another admin. Also the clamp Thomas approved: **a circle card naming somebody as a clinician requires that they are one**, on create *and* update, since without the update half a supporter card could be promoted in a second write. Anyone can still be a supporter — verification gates the clinical role only. `scripts/make-admin.mjs` refuses any project id not starting with `demo-`. 18 more rules tests (163), 8 more unit tests (336). Walked it as three people: applied, approved, and confirmed 403 → 200 on naming her as clinician either side of the decision. |
 | 2026-08-05 | P9.2 — onboarding branches on who arrived, so a supporter is no longer told "dit is een schriftje dat onthoudt wat jij vergeet" and asked what hour to remind him to check in. Inferred from a pending invite where possible, asked once otherwise; choosing grants nothing, because verification is an admin write. Walking it caught three things tests did not: the shared consent items still described "het uur van je herinnering" to someone never asked for one; the security rules refused a supporter's consent record outright, because they hardcoded `healthData == true`; and `ensureAccount` seeded a default `checkinHour` at first sign-in, so the nudge would have survived anyway — with `functions/` defaulting an absent hour to 9am, moving the bug rather than fixing it. All three fixed, and the refusal now lives in `isDueForReminder`. 2 more rules tests (145), 1 more unit test (332). |
 | 2026-08-05 | Phase 9 planned, and its first defect fixed. **Revoking a prescriber froze their prescriptions permanently** — proven against the emulator before it was believed: the patient was refused an edit and refused a release, and the revoked doctor could not even read the document their patient's `pendingChange` was addressed to. A fourth update branch lets the patient take a line back once the prescriber is gone, and `onlyReleases()` stops that release carrying a dose change. An existing test broke and was right to: it asserted an invariant stronger than the system can deliver, using a state the rules cannot produce. Replaced with the real one — no disowning while the clinician is *still theirs* — plus a test for the two-write path, so the weakening is recorded rather than hidden. 10 more rules tests (143). |
 | 2026-08-05 | CLAUDE.md audited against the repo. Corrected the two places that said `apps/console` — it does not exist and the console is routes in `apps/web` (D19), which a future session would otherwise have built wrong. Replaced the stale "what exists" paragraph with a table by role, and added the calendar and feed sections, which existed only in the changelog. **Fixed a live AA failure found in the audit:** a chosen reaction drew its label in `--human`, and light-mode amber on the background is 3.82:1. BRAND-QA had predicted exactly this "when the feed lands" and named the fix — the label is `--text` and the amber is the border. `contrast.test.ts` now asserts both floors, so amber text fails the suite rather than shipping. |

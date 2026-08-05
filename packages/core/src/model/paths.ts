@@ -53,9 +53,19 @@ export const paths = {
   invites: () => 'invites',
   invite: (code: string) => `invites/${code}`,
 
-  /** PRD 6.7 — written by an admin only. Nothing client-side may create one. */
+  /** PRD 6.7 — written by an admin only, from the panel (D27). */
   clinicians: () => 'clinicians',
   clinician: (uid: string) => `clinicians/${uid}`,
+
+  /** Somebody asking to be verified. Applying grants nothing. */
+  clinicianRequests: () => 'clinicianRequests',
+  clinicianRequest: (uid: string) => `clinicianRequests/${uid}`,
+
+  /**
+   * The root of the whole chain: bootstrapped with the Admin SDK and never
+   * writable from a client, which is what keeps "an admin decided" meaningful.
+   */
+  admin: (uid: string) => `admins/${uid}`,
 
   doses: (patientId: string) => `patients/${patientId}/doses`,
   /** doseId is `yyyy-MM-dd_medId_HHmm`. */
