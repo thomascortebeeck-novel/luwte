@@ -1,9 +1,11 @@
 import {
+  GoogleAuthProvider,
   createUserWithEmailAndPassword,
   isSignInWithEmailLink,
   sendSignInLinkToEmail,
   signInWithEmailAndPassword,
   signInWithEmailLink,
+  signInWithPopup,
   signOut as fbSignOut,
   type UserCredential,
 } from 'firebase/auth';
@@ -72,6 +74,32 @@ export async function signInOrRegister(email: string, password: string): Promise
     }
     throw error;
   }
+}
+
+/**
+ * Signing in with a Google account.
+ *
+ * PRD 5.5 chose email deliberately, and this does not undo that: nothing more
+ * is stored either way. Firebase hands back a profile with a display name and
+ * a photo URL, and **neither is read here** — the name the app uses is the one
+ * the person types in onboarding, and there is no photo anywhere in luwte.
+ *
+ * What it does change is worth saying plainly rather than burying: using it
+ * tells Google this person opened luwte. For an app holding Article 9 data
+ * that is a real disclosure, so the consent screen says so and email stays an
+ * equal option rather than a fallback.
+ *
+ * A popup rather than a redirect: a redirect loses the invite code held in
+ * sessionStorage on some mobile browsers, and an invite link that works for
+ * everyone except Google users is the sort of bug nobody reports.
+ */
+export function signInWithGoogle(): Promise<UserCredential> {
+  const provider = new GoogleAuthProvider();
+  // Ask for nothing beyond the sign-in itself. No contacts, no calendar, no
+  // profile scopes — luwte's Google Calendar export is a prefilled link
+  // precisely so it never needs a token (D-calendar).
+  provider.setCustomParameters({ prompt: 'select_account' });
+  return signInWithPopup(auth, provider);
 }
 
 export function signOut(): Promise<void> {

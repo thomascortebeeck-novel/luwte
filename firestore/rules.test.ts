@@ -1667,6 +1667,88 @@ describe('patients/{patientId}/doses', () => {
       deleteDoc(doc(asJonas(), 'patients', JONAS, 'doses', '2026-08-04_med1_0800')),
     );
   });
+
+  /*
+   * What was actually taken, as opposed to what was prescribed.
+   *
+   * The line that must never blur: *what you are prescribed* is a clinical
+   * decision, *what you actually took* is your own account of your own day.
+   * A prescriber reads it — that is the whole point, it is the fact that
+   * changes a prescription — and can never write it. Nobody edits somebody
+   * else's account of what they took.
+   */
+  describe('and what was actually taken', () => {
+    const annotated = {
+      medId: 'med1',
+      status: 'taken',
+      takenAt: new Date(),
+      actualDose: 'de helft',
+      note: 'te suf om te werken',
+    };
+
+    it('lets the person say what they actually took, and why', async () => {
+      await assertSucceeds(
+        setDoc(doc(asJonas(), 'patients', JONAS, 'doses', '2026-08-04_med1_0800'), annotated),
+      );
+    });
+
+    it('lets the prescriber read it — this is the fact they came for', async () => {
+      await verifyClinician(DOCTOR);
+      await seedClinicianCircle(DOCTOR);
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), 'patients', JONAS, 'doses', '2026-08-04_med1_0800'),
+          annotated,
+        );
+      });
+      await assertSucceeds(
+        getDoc(doc(asDoctor(), 'patients', JONAS, 'doses', '2026-08-04_med1_0800')),
+      );
+    });
+
+    it('REFUSES the prescriber writing it, however well meant', async () => {
+      await verifyClinician(DOCTOR);
+      await seedClinicianCircle(DOCTOR);
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), 'patients', JONAS, 'doses', '2026-08-04_med1_0800'),
+          annotated,
+        );
+      });
+      await assertFails(
+        updateDoc(doc(asDoctor(), 'patients', JONAS, 'doses', '2026-08-04_med1_0800'), {
+          actualDose: 'alles',
+        }),
+      );
+    });
+
+    it('REFUSES a supporter reading it, medication card or not', async () => {
+      // canReadClinical checks the role as well as the permission, so a
+      // supporter card carrying medication: true still grants nothing.
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'circle', OTHER), {
+          memberUid: OTHER,
+          role: 'supporter',
+          permissions: {
+            checkins: true,
+            medication: true,
+            health: true,
+            feed: true,
+            calendar: true,
+          },
+          grantedAt: new Date(),
+          revokedAt: null,
+        });
+        await setDoc(
+          doc(ctx.firestore(), 'patients', JONAS, 'doses', '2026-08-04_med1_0800'),
+          annotated,
+        );
+      });
+      await assertFails(
+        getDoc(doc(asOther(), 'patients', JONAS, 'doses', '2026-08-04_med1_0800')),
+      );
+    });
+  });
 });
 
 /**

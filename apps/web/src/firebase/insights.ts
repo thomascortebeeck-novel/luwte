@@ -1,6 +1,7 @@
 import {
   DEFAULT_TIMEZONE,
   dateKey,
+  hasAnnotation,
   paths,
   windowDateKeys,
   type InsightsMarker,
@@ -116,6 +117,44 @@ export async function readAdherence(
     if (document.data().status === 'taken') taken += 1;
   }
   return { taken, scheduled };
+}
+
+/**
+ * The days somebody took something other than what was prescribed, in their
+ * own words.
+ *
+ * The count above answers "did they take it". This answers "what did they
+ * actually take", which is the question a psychiatrist cannot get from a tick
+ * and the one that changes a prescription — somebody halving a dose because
+ * it left them too drowsy to work is not non-adherence, it is information.
+ *
+ * Only the doses carrying something are returned. A fortnight of plain ticks
+ * needs no lines on the paper, and printing an empty remark per dose would
+ * bury the three that matter.
+ */
+export async function readDoseNotes(
+  uid: string,
+  keys: readonly string[],
+): Promise<{ date: string; actualDose: string; note: string }[]> {
+  const snapshot = await getDocs(
+    query(
+      collection(db, paths.doses(uid)),
+      where('date', '>=', keys[0]!),
+      where('date', '<=', keys.at(-1)!),
+    ),
+  );
+
+  return snapshot.docs
+    .map((document) => {
+      const data = document.data();
+      return {
+        date: (data.date ?? '') as string,
+        actualDose: (data.actualDose ?? '') as string,
+        note: (data.note ?? '') as string,
+      };
+    })
+    .filter((entry) => hasAnnotation(entry))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export async function readDiary(

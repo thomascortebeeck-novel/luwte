@@ -3,8 +3,10 @@ import {
   applyPendingChange,
   diffMedication,
   doseId,
+  hasAnnotation,
   paths,
   releaseChange,
+  type DoseAnnotation,
   type DoseStatus,
   type Medication,
   type PendingChange,
@@ -142,6 +144,49 @@ export async function readDoseStatuses(
     statuses[document.id] = (document.data().status ?? 'pending') as DoseStatus;
   }
   return statuses;
+}
+
+/** What was actually taken today, where the person said something about it. */
+export async function readDoseAnnotations(
+  uid: string,
+  dateKey: string,
+): Promise<Record<string, DoseAnnotation>> {
+  const snapshot = await getDocs(
+    query(collection(db, paths.doses(uid)), where('date', '==', dateKey)),
+  );
+  const notes: Record<string, DoseAnnotation> = {};
+  for (const document of snapshot.docs) {
+    const data = document.data();
+    const annotation: DoseAnnotation = {
+      ...(data.actualDose ? { actualDose: data.actualDose as string } : {}),
+      ...(data.note ? { note: data.note as string } : {}),
+    };
+    if (hasAnnotation(annotation)) notes[document.id] = annotation;
+  }
+  return notes;
+}
+
+/**
+ * Recording that what was taken is not what was prescribed.
+ *
+ * Merged onto the dose the tick already created, never replacing it — the
+ * tick is the load-bearing fact and this is a remark on it. Written after the
+ * tick has been saved, so abandoning this form loses nothing, exactly as the
+ * pleasure and mastery questions do.
+ */
+export async function annotateDose(
+  uid: string,
+  doseKey: string,
+  annotation: DoseAnnotation,
+): Promise<void> {
+  await setDoc(
+    doc(db, paths.dose(uid, doseKey)),
+    {
+      actualDose: annotation.actualDose?.trim() ?? '',
+      note: annotation.note?.trim() ?? '',
+    },
+    { merge: true },
+  );
 }
 
 /**

@@ -21,6 +21,7 @@ import { isVerifiedClinician } from '../firebase/clinician';
 import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
 import { useLocale } from '../providers/LocaleProvider';
+import { useTheme } from '../providers/ThemeProvider';
 import styles from './Settings.module.css';
 
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
@@ -32,6 +33,7 @@ const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
  */
 export function Settings() {
   const { t, locale, setLocale } = useLocale();
+  const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
   const { patient, reload } = useAccount();
   const navigate = useNavigate();
@@ -224,6 +226,23 @@ export function Settings() {
         <div className={styles.row}>
           <Button variant="quiet" onClick={() => setLocale(locale === 'nl' ? 'en' : 'nl')}>
             {locale === 'nl' ? 'English' : 'Nederlands'}
+          </Button>
+        </div>
+      </section>
+
+      <Hairline />
+
+      {/* BRAND 3.2 — dark is what opens, and `prefers-color-scheme` does not
+          override it, because the app is used at 03:00 by somebody whose
+          sleep is disrupted. Light is a choice a person makes here, and once
+          made it is remembered. The palette and its contrast floors have
+          existed since Phase 0; this is the switch that was missing. */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>{t('settingsTheme')}</h2>
+        <p className={styles.note}>{t('settingsThemeIntro')}</p>
+        <div className={styles.row}>
+          <Button variant="quiet" onClick={toggleTheme}>
+            {t(theme === 'dark' ? 'themeLight' : 'themeDark')}
           </Button>
         </div>
       </section>

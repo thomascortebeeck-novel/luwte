@@ -5,13 +5,16 @@ import { useNavigate } from 'react-router';
 import { readCheckin } from '../firebase/checkins';
 import { readWindlineDays } from '../firebase/history';
 import {
+  annotateDose,
   readActiveMedications,
+  readDoseAnnotations,
   readDoseStatuses,
   setDose,
   type MedicationRecord,
 } from '../firebase/medication';
 import { ActivitiesSection, MedicationSection, PracticesSection } from './TodaySections';
 import { ActivityRating } from './ActivityRating';
+import { DoseNote } from './DoseNote';
 import {
   completeActivity,
   rateCompletion,
@@ -22,7 +25,7 @@ import {
 } from '../firebase/activities';
 import { onDay } from '@luwte/core';
 import { postCompletion } from '../firebase/feed';
-import type { DoseStatus } from '@luwte/core';
+import { hasAnnotation, type DoseAnnotation, type DoseStatus } from '@luwte/core';
 import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
 import { useLocale } from '../providers/LocaleProvider';
@@ -46,6 +49,8 @@ export function Today() {
   const [history, setHistory] = useState<(WindlineDay | null)[]>([]);
   const [medications, setMedications] = useState<MedicationRecord[]>([]);
   const [statuses, setStatuses] = useState<Record<string, DoseStatus>>({});
+  const [annotations, setAnnotations] = useState<Record<string, DoseAnnotation>>({});
+  const [annotating, setAnnotating] = useState<{ key: string; title: string } | null>(null);
   const [activities, setActivities] = useState<ActivityRecord[]>([]);
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
   /** The activity just ticked, waiting to be asked about. Never blocks. */
@@ -70,6 +75,9 @@ export function Today() {
     void readDoseStatuses(user.uid, today)
       .then(setStatuses)
       .catch(() => setStatuses({}));
+    void readDoseAnnotations(user.uid, today)
+      .then(setAnnotations)
+      .catch(() => setAnnotations({}));
     void readActivities(user.uid)
       .then(setActivities)
       .catch(() => setActivities([]));
@@ -90,6 +98,24 @@ export function Today() {
     // Optimistic, because the write is queued locally and may not reach the
     // server for hours. Waiting would make a tap feel broken.
     setStatuses((prev) => ({ ...prev, [id]: next }));
+  };
+
+  /*
+   * Recording that what was taken is not what was prescribed. Opened from a
+   * dose already ticked, so nothing here is in the way of taking medication —
+   * the same shape as the pleasure and mastery questions.
+   */
+  const saveDoseNote = (annotation: DoseAnnotation) => {
+    if (!user || !annotating) return;
+    const key = annotating.key;
+    void annotateDose(user.uid, key, annotation);
+    setAnnotations((prev) => {
+      const next = { ...prev };
+      if (hasAnnotation(annotation)) next[key] = annotation;
+      else delete next[key];
+      return next;
+    });
+    setAnnotating(null);
   };
 
   const plannedToday = useMemo(() => onDay(activities, today), [activities, today]);
@@ -165,9 +191,20 @@ export function Today() {
       <MedicationSection
         medications={medications}
         statuses={statuses}
+        annotations={annotations}
         dateKey={today}
         onToggle={toggleDose}
+        onAnnotate={(key, title) => setAnnotating({ key, title })}
       />
+
+      {annotating ? (
+        <DoseNote
+          title={annotating.title}
+          initial={annotations[annotating.key] ?? {}}
+          onSave={saveDoseNote}
+          onSkip={() => setAnnotating(null)}
+        />
+      ) : null}
 
       <ActivitiesSection
         activities={plannedToday}

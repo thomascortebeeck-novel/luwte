@@ -7,6 +7,7 @@ import {
   pendingEmail,
   sendLink,
   signInOrRegister,
+  signInWithGoogle,
 } from '../firebase/auth';
 import { useLocale } from '../providers/LocaleProvider';
 import styles from './SignIn.module.css';
@@ -57,6 +58,21 @@ export function SignIn() {
     }
   };
 
+  const withGoogle = async () => {
+    setMessage(null);
+    setBusy(true);
+    try {
+      await signInWithGoogle();
+    } catch {
+      // Includes the person simply closing the popup, which is not a failure
+      // worth a different message — they are still on the sign-in screen with
+      // every other way in available.
+      setMessage(t('signInFailed'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const canSubmit = emailValid && (mode === 'link' || password.length >= 6) && !busy;
 
   return (
@@ -76,6 +92,13 @@ export function SignIn() {
             }}
           >
             {mode === 'link' ? t('signInUsePassword') : t('signInUseLink')}
+          </Button>
+          {/* An equal option, not a promoted one. It is quicker for most
+              people and it tells Google this person opened luwte — which is
+              a real disclosure for an app holding health data, so the note
+              below says so rather than leaving it to be discovered. */}
+          <Button variant="quiet" disabled={busy} onClick={() => void withGoogle()}>
+            {t('signInGoogle')}
           </Button>
         </>
       }
@@ -102,6 +125,8 @@ export function SignIn() {
           onChange={(e) => setPassword(e.target.value)}
         />
       ) : null}
+
+      <p className={styles.note}>{t('signInGoogleNote')}</p>
 
       {linkSent ? <p className={styles.note}>{t('signInLinkSent')}</p> : null}
       {message ? <p className={styles.note}>{message}</p> : null}

@@ -4,8 +4,10 @@ import {
   OPTIONAL_PRACTICES,
   adoptionChange,
   diffMedication,
+  doseAnnotationSchema,
   doseId,
   doseTimeSchema,
+  hasAnnotation,
   medicationSchema,
   prescriberGone,
   releaseChange,
@@ -176,6 +178,37 @@ describe('a clinician taking over a line the person wrote', () => {
     // Still not an adoption from the person's side: the line was never theirs
     // to lose. The ordinary field diff records what actually changed.
     expect(adoptionChange({ prescribedBy: 'uid-huisarts' }, 'uid-psychiater', at)).toBeNull();
+  });
+});
+
+/*
+ * The question a tick cannot answer.
+ *
+ * Whether a dose was taken has always been recorded. What was *actually*
+ * taken has not, and that is the more useful fact — somebody halving a dose
+ * because it left them too drowsy to work is information, not non-adherence.
+ */
+describe('what was actually taken', () => {
+  it('counts as something said when either field carries anything', () => {
+    expect(hasAnnotation({ actualDose: '100 mg' })).toBe(true);
+    expect(hasAnnotation({ note: 'te suf om te werken' })).toBe(true);
+  });
+
+  it('counts as nothing when both are empty or whitespace', () => {
+    // The report prints only the days carrying something. A fortnight of
+    // plain ticks needs no lines on the paper, and an empty remark per dose
+    // would bury the three that matter.
+    expect(hasAnnotation({})).toBe(false);
+    expect(hasAnnotation({ actualDose: '', note: '' })).toBe(false);
+    expect(hasAnnotation({ actualDose: '   ' })).toBe(false);
+  });
+
+  it('accepts the answers people actually give, not just numbers', () => {
+    // 'de helft' and '150 mg' are both answers, which is why this is free
+    // text rather than a number picker that would refuse one of them.
+    for (const actualDose of ['de helft', '150 mg', '1 in plaats van 2']) {
+      expect(doseAnnotationSchema.parse({ actualDose }).actualDose).toBe(actualDose);
+    }
   });
 });
 

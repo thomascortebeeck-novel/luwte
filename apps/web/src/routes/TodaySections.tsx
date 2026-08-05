@@ -1,4 +1,9 @@
-import { OPTIONAL_PRACTICES, doseId, type DoseStatus } from '@luwte/core';
+import {
+  OPTIONAL_PRACTICES,
+  doseId,
+  type DoseAnnotation,
+  type DoseStatus,
+} from '@luwte/core';
 import type { ActivityRecord } from '../firebase/activities';
 import type { MedicationRecord } from '../firebase/medication';
 import { useLocale } from '../providers/LocaleProvider';
@@ -13,13 +18,17 @@ import styles from './TodaySections.module.css';
 export function MedicationSection({
   medications,
   statuses,
+  annotations,
   dateKey,
   onToggle,
+  onAnnotate,
 }: {
   medications: MedicationRecord[];
   statuses: Record<string, DoseStatus>;
+  annotations: Record<string, DoseAnnotation>;
   dateKey: string;
   onToggle: (medId: string, time: string, next: DoseStatus) => void;
+  onAnnotate: (doseKey: string, label: string) => void;
 }) {
   const { t } = useLocale();
 
@@ -36,27 +45,49 @@ export function MedicationSection({
           medication.times.map((time) => {
             const id = doseId(dateKey, medication.id, time);
             const taken = statuses[id] === 'taken';
+            const said = annotations[id];
             return (
-              <button
-                key={id}
-                type="button"
-                className={styles.dose}
-                data-taken={taken || undefined}
-                aria-pressed={taken}
-                onClick={() => onToggle(medication.id, time, taken ? 'pending' : 'taken')}
-              >
-                <span className={styles.time}>{time}</span>
-                <span className={styles.doseText}>
-                  <span>
-                    {medication.name} {medication.dose}
+              <div key={id}>
+                <button
+                  type="button"
+                  className={styles.dose}
+                  data-taken={taken || undefined}
+                  aria-pressed={taken}
+                  onClick={() => onToggle(medication.id, time, taken ? 'pending' : 'taken')}
+                >
+                  <span className={styles.time}>{time}</span>
+                  <span className={styles.doseText}>
+                    <span>
+                      {medication.name} {medication.dose}
+                    </span>
+                    {/* PRD 6.2 — a plain-language line on what each is for. */}
+                    {medication.purpose ? (
+                      <span className={styles.purpose}>{medication.purpose}</span>
+                    ) : null}
                   </span>
-                  {/* PRD 6.2 — a plain-language line on what each is for. */}
-                  {medication.purpose ? (
-                    <span className={styles.purpose}>{medication.purpose}</span>
-                  ) : null}
-                </span>
-                <span className={styles.mark} aria-hidden="true" />
-              </button>
+                  <span className={styles.mark} aria-hidden="true" />
+                </button>
+
+                {/*
+                 * Only once it is ticked, and never in the way of the tick.
+                 * Taking a dose has to stay one tap — this is the answer to a
+                 * question the app could not ask before ("what did you
+                 * actually take"), not a second thing to get through.
+                 */}
+                {taken ? (
+                  <button
+                    type="button"
+                    className={styles.doseNote}
+                    onClick={() => onAnnotate(id, `${medication.name} ${medication.dose}`)}
+                  >
+                    {said?.actualDose
+                      ? said.actualDose
+                      : said?.note
+                        ? t('doseNoteSaid')
+                        : t('doseNoteAsk')}
+                  </button>
+                ) : null}
+              </div>
             );
           }),
         )

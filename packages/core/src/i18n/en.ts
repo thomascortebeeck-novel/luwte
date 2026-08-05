@@ -51,6 +51,8 @@ export const en: Dictionary = {
 
   settingsTheme: 'Light or dark',
   settingsLocale: 'Language',
+  settingsThemeIntro:
+    'luwte opens dark, in the daytime too. That reads more easily when your sleep is disrupted.',
   themeDark: 'Dark',
   themeLight: 'Light',
 
@@ -73,6 +75,9 @@ export const en: Dictionary = {
   signInLinkSent: 'Check your inbox. The link stays valid for an hour.',
   signInUsePassword: 'Use a password instead',
   signInUseLink: 'Use a link in my email instead',
+  signInGoogle: 'Continue with Google',
+  signInGoogleNote:
+    'If you choose Google, Google knows you use luwte. What you write here, Google does not see.',
   signInPasswordLabel: 'Password',
   signInSubmit: 'Sign in',
   signInInvalidEmail: "That doesn't look like an email address.",
@@ -256,6 +261,12 @@ export const en: Dictionary = {
   medicationTaken: 'Taken',
   medicationHistory: 'What changed',
   medicationByClinician: 'Your care team set this one.',
+  doseNoteAsk: 'Took something different?',
+  doseNoteSaid: 'You wrote something about this',
+  doseNoteTitle: 'What did you actually take?',
+  doseNoteActual: 'What you took',
+  doseNoteActualHint: 'For example: half, or 150 mg.',
+  doseNoteWhy: 'Why, if you want to write it down',
   medicationPropose: 'Ask for a change',
   medicationProposeIntro:
     'Your care team set this one, so they look at it first. Write down what you would want instead.',
@@ -290,6 +301,7 @@ export const en: Dictionary = {
   diaryTitle: 'What you wrote down',
   diaryEmpty: "You haven't written anything down yet.",
   adherenceLabel: 'Medication taken',
+  reportDoseNotes: 'Days when something different was taken',
 
   // Report — printed, taken to an appointment
   reportTitle: 'For your appointment',

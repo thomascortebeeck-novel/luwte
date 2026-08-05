@@ -53,6 +53,8 @@ export const nl = {
 
   settingsTheme: 'Licht of donker',
   settingsLocale: 'Taal',
+  settingsThemeIntro:
+    'luwte opent donker, ook overdag. Dat is prettiger om te lezen als je slaap verstoord is.',
   themeDark: 'Donker',
   themeLight: 'Licht',
 
@@ -75,6 +77,9 @@ export const nl = {
   signInLinkSent: 'Kijk in je mailbox. De link blijft een uur geldig.',
   signInUsePassword: 'Liever een wachtwoord',
   signInUseLink: 'Liever een link in je mail',
+  signInGoogle: 'Verder met Google',
+  signInGoogleNote:
+    'Kies je Google, dan weet Google dat je luwte gebruikt. Wat je hier schrijft, ziet Google niet.',
   signInPasswordLabel: 'Wachtwoord',
   signInSubmit: 'Aanmelden',
   signInInvalidEmail: 'Dat lijkt geen e-mailadres.',
@@ -260,6 +265,12 @@ export const nl = {
   medicationTaken: 'Genomen',
   medicationHistory: 'Wat er veranderde',
   medicationByClinician: 'Dit zette je zorgverlener klaar.',
+  doseNoteAsk: 'Iets anders genomen?',
+  doseNoteSaid: 'Je schreef er iets bij',
+  doseNoteTitle: 'Wat nam je echt?',
+  doseNoteActual: 'Wat je nam',
+  doseNoteActualHint: 'Bijvoorbeeld: de helft, of 150 mg.',
+  doseNoteWhy: 'Waarom, als je dat wil opschrijven',
   medicationPropose: 'Vraag een wijziging',
   medicationProposeIntro:
     'Je zorgverlener zette dit klaar, dus die kijkt er eerst naar. Schrijf op wat je anders zou willen.',
@@ -294,6 +305,7 @@ export const nl = {
   diaryTitle: 'Wat je opschreef',
   diaryEmpty: 'Je hebt nog niets opgeschreven.',
   adherenceLabel: 'Medicatie genomen',
+  reportDoseNotes: 'Dagen waarop er iets anders genomen is',
 
   // Report — printed, taken to an appointment
   reportTitle: 'Voor je afspraak',

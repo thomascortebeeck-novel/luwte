@@ -181,6 +181,38 @@ export const doseStatusSchema = z.enum(['taken', 'skipped', 'pending']);
 export type DoseStatus = z.infer<typeof doseStatusSchema>;
 
 /**
+ * What was actually taken, as opposed to what was prescribed.
+ *
+ * This is the question a psychiatrist cannot get an answer to today. The app
+ * already records *whether* a dose was taken; it never recorded that somebody
+ * halved it because it made them too drowsy to work, which is both the more
+ * useful fact and the one that changes a prescription.
+ *
+ * Both fields are optional and both stay on `doses/`, which is the person's
+ * own record in both directions: a prescribing clinician reads adherence and
+ * can never write it. Nobody edits somebody else's account of what they took.
+ */
+export const doseAnnotationSchema = z.object({
+  /** Free text, because '1 in plaats van 2' and '150 mg' are both answers. */
+  actualDose: z.string().max(60).optional(),
+  /** Their own words about why. Read by a person, never parsed. */
+  note: z.string().max(500).optional(),
+});
+
+export type DoseAnnotation = z.infer<typeof doseAnnotationSchema>;
+
+/**
+ * Whether this dose carries anything beyond the tick.
+ *
+ * Used to decide whether to show it on the report: a fortnight of plain ticks
+ * says "as prescribed" in one line, and printing an empty annotation per dose
+ * would bury the three that matter.
+ */
+export function hasAnnotation(dose: DoseAnnotation): boolean {
+  return (dose.actualDose ?? '').trim().length > 0 || (dose.note ?? '').trim().length > 0;
+}
+
+/**
  * PRD 5.2 — `doses/{yyyy-MM-dd_medId_HHmm}`. Keyed rather than auto-id for
  * the same reason check-ins are: it makes the write idempotent, so ticking a
  * dose offline and syncing twice records one dose, not two.

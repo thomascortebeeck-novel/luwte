@@ -75,6 +75,32 @@
   color: var(--text-quiet);
 }
 
+/*
+ * "Iets anders genomen?" under a dose already ticked.
+ *
+ * Deliberately the quietest thing on the screen and deliberately not a
+ * Button: taking a dose is one tap, and this must never read as a second step
+ * that is expected of you. It carries no --amber — this is the person's own
+ * record of their own day, not somewhere another human has been.
+ */
+.doseNote {
+  display: block;
+  margin: 0 0 var(--space-2) calc(var(--space-3) * 2);
+  padding: var(--space-1) 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: inherit;
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--text-quiet);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  /* Still reachable by a shaking hand, even though it looks like text. */
+  min-height: var(--tap-min);
+}
+
 /* The person's own action, so the mark is the cold accent. */
 .mark {
   margin-left: auto;

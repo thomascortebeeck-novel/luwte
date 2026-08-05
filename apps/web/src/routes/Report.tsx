@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
   readAdherence,
+  readDoseNotes,
   readDiary,
   readInsights,
   readMedicationMarkers,
@@ -58,6 +59,9 @@ export function Report() {
   const [points, setPoints] = useState<InsightsPoint[]>([]);
   const [markers, setMarkers] = useState<InsightsMarker[]>([]);
   const [adherence, setAdherence] = useState({ taken: 0, scheduled: 0 });
+  const [doseNotes, setDoseNotes] = useState<
+    { date: string; actualDose: string; note: string }[]
+  >([]);
   const [diary, setDiary] = useState<{ date: string; note: string }[]>([]);
 
   useEffect(() => {
@@ -67,6 +71,9 @@ export function Report() {
     void readAdherence(user.uid, keys)
       .then(setAdherence)
       .catch(() => setAdherence({ taken: 0, scheduled: 0 }));
+    void readDoseNotes(user.uid, keys)
+      .then(setDoseNotes)
+      .catch(() => setDoseNotes([]));
     void readDiary(user.uid, keys).then(setDiary).catch(() => setDiary([]));
   }, [user, today, keys]);
 
@@ -110,6 +117,24 @@ export function Report() {
         <p className={styles.meta}>
           {t('adherenceLabel')}: {adherence.taken} / {adherence.scheduled}
         </p>
+
+        {/* The count says whether. This says what — the days somebody took
+            something other than what was prescribed, in their own words.
+            Nothing prints when there is nothing to say. */}
+        {doseNotes.length > 0 ? (
+          <>
+            <p className={styles.meta}>{t('reportDoseNotes')}</p>
+            <ul className={styles.diary}>
+              {doseNotes.map((entry, index) => (
+                <li key={`${entry.date}-${index}`}>
+                  <span className={styles.diaryDate}>{entry.date}</span>
+                  {entry.actualDose ? <span> {entry.actualDose}</span> : null}
+                  {entry.note ? <HumanText>{entry.note}</HumanText> : null}
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
 
         {/* BRAND 4.2 — the caveat travels with the chart, onto the paper. */}
         <p className={styles.meta}>{t('insightsCaveat')}</p>
