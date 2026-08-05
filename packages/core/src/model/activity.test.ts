@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
+  RATING_INTERVAL,
   RECURRENCES,
   WEEK_RADIUS,
   activitySchema,
   centredWeek,
   completionId,
   completionSchema,
+  hasExpectation,
   occursOn,
   onDay,
+  shouldAskRating,
   type Activity,
 } from './activity';
 
@@ -19,6 +22,8 @@ const base = (overrides: Partial<Activity> = {}): Activity => ({
   createdBy: 'uid-jonas',
   status: 'accepted',
   recurrence: null,
+  expectedPleasure: null,
+  expectedMastery: null,
   ...overrides,
 });
 
@@ -145,6 +150,47 @@ describe('completionId', () => {
   });
 });
 
+describe('shouldAskRating', () => {
+  it('asks the first time, which is where an expectation gets tested', () => {
+    expect(shouldAskRating({ completedBefore: 0 })).toBe(true);
+  });
+
+  it('says nothing on the next four, so a weekly walk is not re-rated weekly', () => {
+    // The friction this removes is the whole point: accepting that mastery
+    // and pleasure are worth keeping does not mean asking every Tuesday.
+    for (let before = 1; before < RATING_INTERVAL; before += 1) {
+      expect(shouldAskRating({ completedBefore: before })).toBe(false);
+    }
+  });
+
+  it('comes back on the fifth, because how something feels changes', () => {
+    expect(shouldAskRating({ completedBefore: RATING_INTERVAL })).toBe(true);
+    expect(shouldAskRating({ completedBefore: RATING_INTERVAL * 4 })).toBe(true);
+  });
+
+  it('never asks twice in a row after a skip', () => {
+    /*
+     * The cadence counts completions, not answers, precisely so that a
+     * dismissal is not met with the same question tomorrow. Never chase is a
+     * rule about the app's behaviour, and re-asking is chasing.
+     */
+    expect(shouldAskRating({ completedBefore: 0 })).toBe(true);
+    expect(shouldAskRating({ completedBefore: 1 })).toBe(false);
+  });
+
+  it('refuses a count that cannot have happened', () => {
+    expect(shouldAskRating({ completedBefore: -1 })).toBe(false);
+  });
+});
+
+describe('hasExpectation', () => {
+  it('is true when either half was answered, since both are optional', () => {
+    expect(hasExpectation({ expectedPleasure: null, expectedMastery: null })).toBe(false);
+    expect(hasExpectation({ expectedPleasure: 3, expectedMastery: null })).toBe(true);
+    expect(hasExpectation({ expectedPleasure: null, expectedMastery: 6 })).toBe(true);
+  });
+});
+
 describe('schemas', () => {
   it('accepts an activity with no time and nobody named', () => {
     expect(
@@ -170,6 +216,22 @@ describe('schemas', () => {
       expect(parsed.data.mastery).toBeNull();
       expect(parsed.data.postedToFeed).toBe(false);
     }
+  });
+
+  it('lets an activity be planned without saying what it will be like', () => {
+    // Planning has to stay one field and a tap. The expectation is worth
+    // having and is never worth making somebody answer.
+    const parsed = activitySchema.safeParse({ ...base(), expectedPleasure: undefined });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.expectedPleasure).toBeNull();
+  });
+
+  it('keeps an expectation on the same seven-point scale as the answer', () => {
+    // Otherwise "you expected 8, you got 7" would compare two different
+    // scales and read as a drop.
+    expect(activitySchema.safeParse(base({ expectedMastery: 7 })).success).toBe(true);
+    expect(activitySchema.safeParse(base({ expectedMastery: 8 as 7 })).success).toBe(false);
+    expect(activitySchema.safeParse(base({ expectedMastery: 0 as 7 })).success).toBe(false);
   });
 
   it('keeps ratings on the seven-point scale', () => {

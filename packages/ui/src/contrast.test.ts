@@ -46,6 +46,7 @@ const LIGHT = {
   zeeglas: '#3E7C63',
   amber: '#9A6F32',
   onSelf: '#FFFFFF',
+  selfText: '#3A755D',
 } as const;
 
 /** WCAG 1.4.11 — borders, icons and other non-text marks. */
@@ -78,6 +79,8 @@ describe('light theme meets AA', () => {
     ['secondary text on the background', LIGHT.nevel, LIGHT.diep],
     ['secondary text on a card', LIGHT.nevel, LIGHT.luwte1],
     ['the primary button label on its fill', LIGHT.onSelf, LIGHT.zeeglas],
+    ['the cold accent drawn as text', LIGHT.selfText, LIGHT.diep],
+    ['the cold accent drawn as text on a card', LIGHT.selfText, LIGHT.luwte1],
   ])('%s', (_label, fg, bg) => {
     expect(contrast(fg, bg)).toBeGreaterThanOrEqual(AA_NORMAL);
   });
@@ -86,6 +89,17 @@ describe('light theme meets AA', () => {
     // The bug this token exists to prevent. If someone reverts --on-self to
     // --diep-l in light mode, the button drops to 4.2:1.
     expect(contrast(LIGHT.diep, LIGHT.zeeglas)).toBeLessThan(AA_NORMAL);
+  });
+
+  it('would have failed with --self itself as text, which is the same 4.2:1', () => {
+    /*
+     * The other half of the pair above, and the half nobody looked at: the
+     * calendar drew "today" in --self from Phase 5 onwards, so a live AA
+     * failure sat in the light theme for as long as the light theme existed.
+     * Found by adding two more usages, fixed with a darker token rather than
+     * a relaxed floor — the same answer this file gives for amber.
+     */
+    expect(contrast(LIGHT.zeeglas, LIGHT.diep)).toBeLessThan(AA_NORMAL);
   });
 });
 

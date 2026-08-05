@@ -114,3 +114,21 @@ When the feed lands in Phase 6 and a comment or kudos needs amber *text*,
 either draw the text in `--text` and mark it amber some other way, or add an
 `--on-surface-human` token at roughly #8A6329, which measures 4.60:1. Add the
 pairing to `contrast.test.ts` at the same time.
+
+---
+
+**FIXED 2026-08-05, and it had been live since Phase 5.** The same trap on the
+*cold* accent, in the direction nobody checked. `--on-self` exists because
+`--diep-l` on `--zeeglas-l` is 4.20:1 — but contrast is symmetric, so
+`--zeeglas-l` **as text on** `--diep-l` is the same 4.20:1, and the calendar
+had been drawing "today" in exactly that since the week view shipped.
+
+It survived because this file's own rule — *"these are the pairs actually
+rendered today; when a new pairing appears on a screen, it gets a line here"* —
+was followed for the button and missed for the label. The lesson is that a
+token used one way is not the same pairing used the other way, and both belong
+in `contrast.test.ts`.
+
+Fixed as prescribed for amber above: a darker `--self-text` (#3A755D, 4.62:1
+on the background and 5.01:1 on a card), never a relaxed floor. `--self` stays
+for fills, borders and strokes, which need 3:1 and clear it comfortably.

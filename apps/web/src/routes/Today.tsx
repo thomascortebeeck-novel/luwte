@@ -17,13 +17,14 @@ import { ActivityRating } from './ActivityRating';
 import { DoseNote } from './DoseNote';
 import {
   completeActivity,
+  countCompletionsBefore,
   rateCompletion,
   readActivities,
   readCompletions,
   uncompleteActivity,
   type ActivityRecord,
 } from '../firebase/activities';
-import { onDay } from '@luwte/core';
+import { onDay, shouldAskRating } from '@luwte/core';
 import { postCompletion } from '../firebase/feed';
 import { hasAnnotation, type DoseAnnotation, type DoseStatus } from '@luwte/core';
 import { useAccount } from '../providers/AccountProvider';
@@ -124,6 +125,11 @@ export function Today() {
    * The tick is recorded first and the question comes after, so dismissing it
    * loses nothing. PRD 6.2 calls the two-tap rating optional; that is only
    * true if the completion does not depend on answering it.
+   *
+   * Whether to ask at all is `shouldAskRating` — the first time, then every
+   * fifth. Asked after the count returns rather than before, so the screen
+   * never shows the question and then takes it away; if the count fails, the
+   * offer simply does not appear, which is the harmless direction.
    */
   const toggleActivity = (activity: ActivityRecord, done: boolean) => {
     if (!user) return;
@@ -138,7 +144,11 @@ export function Today() {
         activityId: activity.id,
         title: activity.title,
       });
-      setRating({ activity, key });
+      void countCompletionsBefore(user.uid, activity.id, today)
+        .then((completedBefore) => {
+          if (shouldAskRating({ completedBefore })) setRating({ activity, key });
+        })
+        .catch(() => undefined);
     } else {
       uncompleteActivity(user.uid, activity.id, today);
       setRating((prev) => (prev?.activity.id === activity.id ? null : prev));
@@ -215,6 +225,8 @@ export function Today() {
       {rating ? (
         <ActivityRating
           title={rating.activity.title}
+          expectedPleasure={rating.activity.expectedPleasure}
+          expectedMastery={rating.activity.expectedMastery}
           onSave={(ratings) => {
             if (user) rateCompletion(user.uid, rating.key, ratings);
             setRating(null);

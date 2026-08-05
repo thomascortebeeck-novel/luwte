@@ -5,6 +5,22 @@ export const scaleSchema = z.number().int().min(1).max(7);
 export type Scale = z.infer<typeof scaleSchema>;
 
 /**
+ * A word per step, low to high — what a screen reader says instead of a
+ * digit, and what any scale outside the check-in should also be using. BRAND
+ * forbids the number, not the meaning: "heel weinig" is answerable, "3 of 7"
+ * invites somebody to score themselves.
+ */
+export const SCALE_STEP_KEYS = [
+  'scaleStep1',
+  'scaleStep2',
+  'scaleStep3',
+  'scaleStep4',
+  'scaleStep5',
+  'scaleStep6',
+  'scaleStep7',
+] as const;
+
+/**
  * PRD 5.2 — one document per local calendar day, keyed by the date string
  * rather than an auto id. That makes one-per-day idempotent and makes an
  * offline write safely mergeable when it finally syncs.

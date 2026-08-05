@@ -8,6 +8,15 @@
         { "fieldPath": "listed", "order": "ASCENDING" },
         { "fieldPath": "searchName", "order": "ASCENDING" }
       ]
+    },
+    {
+      "//": "How often something planned has already been finished, which decides whether to ask how it went. Counted rather than fetched, and bounded to days before today so the answer does not depend on whether the tick that triggered it has synced yet.",
+      "collectionGroup": "completions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "activityId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [

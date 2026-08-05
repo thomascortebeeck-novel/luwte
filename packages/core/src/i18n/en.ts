@@ -373,9 +373,16 @@ export const en: Dictionary = {
   consoleBackToOwn: 'Back to your own luwte',
 
   // The calendar
-  calendarTitle: 'Your week',
+  calendarTitle: 'Your calendar',
   calendarEmptyDay: 'Nothing planned.',
   calendarAdd: 'Plan something',
+  calendarViewLabel: 'View',
+  calendarViewDay: 'Day',
+  calendarViewWeek: 'Week',
+  calendarPrevious: 'Earlier',
+  calendarNext: 'Later',
+  calendarBackToToday: 'Back to today',
+  calendarUntimed: 'No set time',
   calendarWhat: 'What are you doing?',
   calendarWhen: 'What time',
   calendarWhenHint: 'You can leave this empty.',
@@ -390,6 +397,12 @@ export const en: Dictionary = {
   calendarRepeatYearly: 'Every year',
   calendarSave: 'Save',
   calendarToday: 'Today',
+
+  // What you think beforehand. Optional, and shown later beside how it went.
+  calendarExpect: 'What do you think it will be like?',
+  calendarExpectHint: 'You can skip this. Later you see it beside how it went.',
+  calendarExpectPleasure: 'How pleasant, do you think?',
+  calendarExpectMastery: 'How hard, do you think?',
 
   // Suggestions from someone else — separate, and never straight onto the day
   suggestionsTitle: 'Suggested',
@@ -406,6 +419,11 @@ export const en: Dictionary = {
   ratingMastery: 'How hard was it?',
   ratingSkip: 'Never mind',
   ratingSave: 'Save',
+  ratingExpected: 'Beforehand you thought this',
+  // Short nouns: the questions are past tense, and "beforehand you thought
+  // this: how did it feel?" does not read.
+  ratingPleasureShort: 'pleasant',
+  ratingMasteryShort: 'hard',
   activityDone: 'Done',
   activityMarkDone: 'I did this',
 

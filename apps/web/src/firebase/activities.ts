@@ -8,6 +8,7 @@ import {
 import {
   collection,
   doc,
+  getCountFromServer,
   getDocs,
   query,
   serverTimestamp,
@@ -29,6 +30,8 @@ const toActivity = (id: string, data: Record<string, unknown>): ActivityRecord =
   createdBy: (data.createdBy ?? '') as string,
   status: (data.status ?? 'accepted') as ActivityStatus,
   recurrence: (data.recurrence ?? null) as Activity['recurrence'],
+  expectedPleasure: (data.expectedPleasure ?? null) as number | null,
+  expectedMastery: (data.expectedMastery ?? null) as number | null,
 });
 
 /**
@@ -57,15 +60,30 @@ export async function readSharedActivities(uid: string): Promise<ActivityRecord[
   return snapshot.docs.map((document) => toActivity(document.id, document.data()));
 }
 
+type NewActivity = Omit<
+  Activity,
+  'createdBy' | 'status' | 'expectedPleasure' | 'expectedMastery'
+> &
+  Partial<Pick<Activity, 'expectedPleasure' | 'expectedMastery'>>;
+
 export async function createActivity(
   uid: string,
-  values: Omit<Activity, 'createdBy' | 'status'>,
+  values: NewActivity,
   createdBy: string,
   /** 'suggested' when a supporter offers it — the rules allow them no other. */
   status: ActivityStatus = 'accepted',
 ): Promise<void> {
   const id = doc(collection(db, paths.activities(uid))).id;
-  await setDoc(doc(db, paths.activity(uid, id)), { ...values, createdBy, status });
+  await setDoc(doc(db, paths.activity(uid, id)), {
+    ...values,
+    // An expectation is what the person thought when they planned it, so a
+    // suggestion carries none — dropped here as well as refused by the rules,
+    // because the suggest form has no business sending one at all.
+    expectedPleasure: status === 'suggested' ? null : (values.expectedPleasure ?? null),
+    expectedMastery: status === 'suggested' ? null : (values.expectedMastery ?? null),
+    createdBy,
+    status,
+  });
 }
 
 /**
@@ -127,6 +145,33 @@ export function completeActivity(uid: string, activityId: string, date: string):
     { merge: true },
   );
   return id;
+}
+
+/**
+ * How many times this was already finished, on days before `before`.
+ *
+ * Feeds `shouldAskRating`, which is why it is a count and not a fetch: the
+ * cadence needs a number, and reading a year of a daily activity's
+ * completions to get one would be a page of documents per tick.
+ *
+ * **Bounded to earlier days deliberately.** `completeActivity` is not awaited
+ * — the tick has to feel instant offline — so counting up to and including
+ * today would return a different number depending on whether that write had
+ * landed yet, and the question would appear at random.
+ */
+export async function countCompletionsBefore(
+  uid: string,
+  activityId: string,
+  before: string,
+): Promise<number> {
+  const snapshot = await getCountFromServer(
+    query(
+      collection(db, paths.completions(uid)),
+      where('activityId', '==', activityId),
+      where('date', '<', before),
+    ),
+  );
+  return snapshot.data().count;
 }
 
 /** PRD 6.2 — the two-tap question, which may always be skipped. */

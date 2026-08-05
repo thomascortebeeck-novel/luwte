@@ -11,6 +11,8 @@
  * correctly, including both DST transitions, without a date library.
  */
 
+import type { Locale } from './i18n/index';
+
 export type DateKey = string; // yyyy-MM-dd
 export type WeekKey = string; // yyyy-'W'ww
 
@@ -46,22 +48,63 @@ function fromUtcDate(date: Date): DateKey {
   return date.toISOString().slice(0, 10);
 }
 
-export function previousDateKey(key: DateKey): DateKey {
+/**
+ * Days forward or back, arithmetic done at UTC midnight so a clock change
+ * never turns seven days into six and a bit.
+ */
+export function shiftDateKey(key: DateKey, days: number): DateKey {
   const date = toUtcDate(key);
-  date.setUTCDate(date.getUTCDate() - 1);
+  date.setUTCDate(date.getUTCDate() + days);
   return fromUtcDate(date);
 }
 
+export function previousDateKey(key: DateKey): DateKey {
+  return shiftDateKey(key, -1);
+}
+
 export function nextDateKey(key: DateKey): DateKey {
-  const date = toUtcDate(key);
-  date.setUTCDate(date.getUTCDate() + 1);
-  return fromUtcDate(date);
+  return shiftDateKey(key, 1);
 }
 
 /** ISO weekday: Monday is 1, Sunday is 7. */
 export function weekdayOf(key: DateKey): number {
   const day = toUtcDate(key).getUTCDay();
   return day === 0 ? 7 : day;
+}
+
+/*
+ * Reading a day out loud, which is a different job from keying one.
+ *
+ * The keys above are `yyyy-MM-dd` because that sorts and compares; a person
+ * reading a calendar wants "woensdag 5 augustus". Both formatters take the
+ * key rather than an instant, so they cannot reintroduce the timezone bug the
+ * keys exist to prevent — the day has already been decided by then.
+ *
+ * `nl-BE` rather than `nl-NL`: this is Flanders, and the Belgian locale is
+ * what a person here would expect to see.
+ */
+const LOCALE_TAG: Record<Locale, string> = { nl: 'nl-BE', en: 'en-GB' };
+
+function labeller(locale: Locale, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+  const key = `${locale}:${JSON.stringify(options)}`;
+  let existing = cache.get(key);
+  if (!existing) {
+    // UTC, because the key was parsed as UTC midnight. Any other zone can
+    // shift it back a day.
+    existing = new Intl.DateTimeFormat(LOCALE_TAG[locale], { ...options, timeZone: 'UTC' });
+    cache.set(key, existing);
+  }
+  return existing;
+}
+
+/** A whole day as somebody would say it: "woensdag 5 augustus". */
+export function formatDay(key: DateKey, locale: Locale): string {
+  return labeller(locale, { weekday: 'long', day: 'numeric', month: 'long' }).format(toUtcDate(key));
+}
+
+/** The weekday alone, short, for a column heading: "wo". */
+export function formatWeekday(key: DateKey, locale: Locale): string {
+  return labeller(locale, { weekday: 'short' }).format(toUtcDate(key));
 }
 
 /**

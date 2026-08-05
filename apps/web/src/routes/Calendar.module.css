@@ -26,21 +26,93 @@
   gap: var(--space-1);
 }
 
-.day,
-.dayToday {
+/*
+ * Seven days stacked, at every width, and that is a measured decision rather
+ * than a mobile-first default.
+ *
+ * Seven columns is the calendar idiom and it was tried: `Screen` caps at
+ * 640px for reading comfort, so the columns come out at 83px each and
+ * "Zwemmen met Sam" wraps to three lines or truncates to "Zwemmen met…".
+ * Widening past the reading measure to fit a grid would trade the thing that
+ * makes every other screen legible for a layout borrowed from a desktop app
+ * this is not. A day people can read beats a week shaped like a calendar.
+ */
+.week {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.views,
+.navigate {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.heading,
+.headingToday {
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* Today in the person's own colour, in the heading only — the same restraint
+   as the week: one day shouted at reads as more important than the one you
+   are actually having. */
+.headingToday {
+  color: var(--self-text);
+}
+
+.agendaItem {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.agendaText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/*
+ * A whole day is one target, because the week exists to find a day rather
+ * than to act on one. Left-aligned and unfilled: a grid of buttons that look
+ * like buttons turns a quiet overview into a control panel.
+ */
+.dayCell,
+.dayCellToday {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
   align-items: flex-start;
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: var(--space-1);
+  font: inherit;
+  font-family: var(--font-ui);
+  text-align: left;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom-color: var(--line);
+  border-radius: var(--radius-input);
+  cursor: pointer;
 }
 
-/*
- * Today is marked by the person's own colour, in the label only. Not a filled
- * block: the week is a horizon, and one day shouted at is a day that reads as
- * more important than the one you are actually having.
- */
-.dayToday .dayLabel {
-  color: var(--self);
+.dayCellToday {
+  border-color: var(--self);
+}
+
+.dayCellToday .dayLabel {
+  color: var(--self-text);
+}
+
+.chip {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text);
 }
 
 .dayLabel {
@@ -79,6 +151,21 @@
   font-size: var(--text-sm);
   line-height: var(--leading-sm);
   color: var(--text-quiet);
+}
+
+/*
+ * The question above its scale.
+ *
+ * `ScaleInput` carries the wording as an aria-label only, which is right on
+ * the check-in where one question fills a screen. Anywhere two scales sit
+ * together it is not enough on its own: seven identical dots under "weinig /
+ * veel", twice, is a screen a sighted person cannot answer.
+ */
+.question {
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  color: var(--text);
+  margin: 0;
 }
 
 .decide {
@@ -120,4 +207,11 @@
   gap: var(--space-2);
   padding-top: var(--space-2);
   border-top: 1px solid var(--line);
+}
+
+/* What the person expected, stated and left alone. `--self`, because it is
+   their own earlier answer and not somewhere another human has been. */
+.expectedLine {
+  display: block;
+  color: var(--self-text);
 }

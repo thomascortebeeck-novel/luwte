@@ -445,7 +445,12 @@ always reachable in one tap — not the empty grid.
    shape makes this a migration of real health records instead of an edit.
 
 **Third, the substance:**
-4. **6 + 13 + 7** the calendar as one piece of work.
+4. ~~**6 + 13 + 7** the calendar as one piece of work.~~ **Done 2026-08-05.**
+   Recurrence is a real RFC 5545 subset; the calendar is a day view and a week
+   view of one anchor date; the completion question keeps both halves and
+   appears the first time then every fifth, with the *expected* rating
+   captured at planning time. Seven columns was built and removed after
+   measuring — 83px inside the reading measure.
 5. **5** diary prompts, breathing, early-warning-signs plan.
 
 **Fourth, once Thomas has decided:**

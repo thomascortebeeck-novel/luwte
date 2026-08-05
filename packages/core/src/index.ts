@@ -170,6 +170,7 @@ export { paths } from './model/paths';
 export {
   CHECKIN_STEPS,
   HOPELESSNESS_CRISIS_THRESHOLD,
+  SCALE_STEP_KEYS,
   WEEKLY_STEPS,
   checkinSchema,
   scaleSchema,
@@ -189,6 +190,7 @@ export {
   type RecurrencePresetId,
 } from './model/recurrence';
 export {
+  RATING_INTERVAL,
   RECURRENCES,
   WEEK_RADIUS,
   activitySchema,
@@ -196,9 +198,11 @@ export {
   centredWeek,
   completionId,
   completionSchema,
+  hasExpectation,
   occursOn,
   onDay,
   recurrenceSchema,
+  shouldAskRating,
   type Activity,
   type ActivityStatus,
   type Completion,
@@ -206,10 +210,13 @@ export {
 } from './model/activity';
 export {
   dateKey,
+  formatDay,
+  formatWeekday,
   isBackfillable,
   isEditable,
   nextDateKey,
   previousDateKey,
+  shiftDateKey,
   weekKey,
   weekdayOf,
   type DateKey,

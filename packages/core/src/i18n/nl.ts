@@ -377,9 +377,16 @@ export const nl = {
   consoleBackToOwn: 'Naar je eigen luwte',
 
   // De agenda
-  calendarTitle: 'Je week',
+  calendarTitle: 'Je agenda',
   calendarEmptyDay: 'Niets gepland.',
   calendarAdd: 'Iets plannen',
+  calendarViewLabel: 'Weergave',
+  calendarViewDay: 'Dag',
+  calendarViewWeek: 'Week',
+  calendarPrevious: 'Eerder',
+  calendarNext: 'Later',
+  calendarBackToToday: 'Terug naar vandaag',
+  calendarUntimed: 'Zonder tijdstip',
   calendarWhat: 'Wat ga je doen?',
   calendarWhen: 'Hoe laat',
   calendarWhenHint: 'Mag je ook leeg laten.',
@@ -394,6 +401,12 @@ export const nl = {
   calendarRepeatYearly: 'Elk jaar',
   calendarSave: 'Bewaren',
   calendarToday: 'Vandaag',
+
+  // Wat je vooraf denkt. Optioneel, en later zie je het naast hoe het ging.
+  calendarExpect: 'Hoe denk je dat het zal zijn?',
+  calendarExpectHint: 'Mag je overslaan. Later zie je dit naast hoe het ging.',
+  calendarExpectPleasure: 'Hoe aangenaam, denk je?',
+  calendarExpectMastery: 'Hoe zwaar, denk je?',
 
   // Voorstellen van iemand anders — apart, en nooit meteen in de agenda
   suggestionsTitle: 'Voorgesteld',
@@ -410,6 +423,11 @@ export const nl = {
   ratingMastery: 'Hoe zwaar was het?',
   ratingSkip: 'Laat maar',
   ratingSave: 'Bewaren',
+  ratingExpected: 'Vooraf dacht je dit',
+  // Korte naamwoorden, want de vragen staan in de verleden tijd en "vooraf
+  // dacht je dit: hoe voelde het?" loopt niet.
+  ratingPleasureShort: 'aangenaam',
+  ratingMasteryShort: 'zwaar',
   activityDone: 'Gedaan',
   activityMarkDone: 'Dit heb ik gedaan',
 

@@ -208,6 +208,12 @@ tasks would be ceremony.
   mode amber is a border colour, never a text colour** — 3.82:1 clears the
   3:1 floor for a mark and fails the 4.5:1 floor for text. `contrast.test.ts`
   asserts both halves.
+- **A colour used as text is a different pairing from the same colour used as
+  a fill, and both need a line in `contrast.test.ts`.** `--on-self` was added
+  because light `--diep-l` on `--zeeglas-l` is 4.20:1; contrast is symmetric,
+  so `--zeeglas-l` *as text* fails identically, and the calendar drew "today"
+  that way from Phase 5 until 2026-08-05. Use **`--self-text`** for text and
+  `--self` for fills, borders and strokes.
 - **Sans for everything the app says; serif only for what a person wrote.**
 - **No exclamation marks. No emoji in system copy. `je`, never `u`.**
 - **On a missed day, say nothing.** No catch-up prompt, no visible gap.
@@ -251,10 +257,11 @@ deletion, and the family pilot. Phase 10 is the thirteen features Thomas
 asked for; the plan and its priority order are in
 [docs/superpowers/plans/2026-08-05-phase-10-thirteen-features.md](docs/superpowers/plans/2026-08-05-phase-10-thirteen-features.md).
 Built so far: the theme switch, Google sign-in, the actual dose taken,
-hosting, the check-in redesign and real recurrence. **Still open:** the
-calendar's day/week views, asking pleasure and mastery less often, the diary
-prompts and breathing exercises, and the two decided-but-unbuilt items above
-(D29 dose sharing, D30 the nurse role).
+hosting, the check-in redesign, real recurrence, the calendar's day and week
+views, and asking pleasure and mastery less often. **Still open:** the diary
+prompts and breathing exercises (feature 5), and the three decided-but-unbuilt
+items above — D29 dose sharing, D30 the nurse role, and the Garmin ingestion,
+which is blocked on Garmin's approval and on a Blaze decision.
 
 Nothing needs a Firebase project. `pnpm emulators` plus `pnpm dev` is the
 whole setup.
@@ -581,6 +588,35 @@ done it — is solved by **"dit heb ik gedaan"** in the tray, which accepts and
 completes in one tap. The calendar is for planning ahead, not for being fed
 after the fact.
 
+**One anchor date, two views of it.** The day view is the default and shows
+the anchor; the week shows seven days with the anchor in the middle. Moving
+shifts the same date by a day or by a week, switching never loses your place,
+and tapping a day in the week opens it — so there is one add button in the
+product rather than seven. **Deliberately not a time grid**: a column of
+labelled empty hours is a visual reproach on a bad day, and most things here
+have no time at all. What is worth taking from a calendar app is the
+navigation, not the grid.
+
+**The week is stacked at every width, and that is measured rather than
+assumed.** Seven columns was built and removed: `Screen` caps at 640px for
+reading comfort, so the columns land at 83px and an activity title wraps to
+three lines. Widening past the reading measure to fit a grid trades what makes
+every other screen legible for a desktop idiom.
+
+**The two-tap question after finishing something now appears the first time,
+then every fifth** (`shouldAskRating`). The research says keep *both* halves —
+mastery and pleasure come apart, and a walk that gave one without the other is
+the distinction worth recording — so what was wrong was the frequency, not the
+count. It counts completions rather than answers on purpose: a skip is not met
+with the same question tomorrow, because **never chase** covers this too.
+
+**What the person expected is recorded when they plan it**, on the activity
+rather than the completion, and shown beside the answer afterwards. Expected
+mastery and pleasure predict more than what was obtained, which is the
+mechanism the product already claims for itself. A supporter may never write
+it — the rules refuse an expectation on a suggestion, and `createActivity`
+drops one, because it is later quoted back as the person's own thought.
+
 **Finishing something planned auto-posts it** to whoever was granted `feed`.
 `shouldPostCompletion` refuses anything without an activity id, which is what
 makes "a dose never posts" true where the decision is made rather than in
@@ -673,6 +709,8 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-05 | **The calendar's two views, and asking how it went less often.** One anchor date with a day view and a week view of it, navigable in either direction, today one tap away. Seven columns was built and then removed after measuring: inside the 640px reading measure they come out at 83px and a title wraps to three lines, so the week stays stacked. The completion question keeps both halves — mastery and pleasure genuinely come apart — and now appears the first time then every fifth, counting completions rather than answers so a skip is not re-asked tomorrow. What somebody *expected* is captured at planning time and shown beside the answer, which is the half of the research that predicts more; a supporter can never write it. **Two live defects found by walking it.** A second "Vandaag" button that did something different from the footer's — unresolvable through a screen reader, now "Terug naar vandaag" and only present once you have left. And `ActivityRating` rendered two scales with the question only in an `aria-label`, so a sighted person saw seven identical dots between "weinig" and "veel", twice, with nothing saying which was which. 30 more unit tests (412), 2 more rules tests (188). |
+| 2026-08-05 | **A live AA failure in the light theme, shipped since Phase 5.** `--on-self` exists because `--diep-l` on `--zeeglas-l` is 4.20:1 — and contrast is symmetric, so `--zeeglas-l` **as text** fails identically. The calendar had been drawing "today" in it the whole time. It survived because `contrast.test.ts` lists "the pairs actually rendered today" and the button was the pairing anybody looked at. Fixed the way that file prescribes for amber — a darker `--self-text` (#3A755D, 4.62:1) rather than a relaxed floor — with a test asserting the old colour still fails, so the reason is recorded rather than erased. |
 | 2026-08-05 | **Real recurrence.** The field was already an rrule string, deliberately, but only three exact values were ever parsed — so a fortnightly appointment or a monthly depot injection could not be written down at all. Now a genuine RFC 5545 subset. `COUNT` is refused on purpose: it cannot be answered from one day. The compatibility property has its own tests — the three previously-storable rules still mean exactly what they meant. One test failed on the first run and **the test was what was wrong**: 2026-12-30 is 21 weeks after the fixture start, which is odd. 26 more unit tests (382). |
 | 2026-08-05 | **Two decisions recorded that this file previously stated as absolute** (D29, D30). Thomas decided family may be granted medication and dose access, split into two permissions and never in the feed; and that a nurse role reads medication, never prescribes, needs verification, and still *suggests* rather than places. **Neither is built** — the code still refuses — so the non-negotiables above now say "cannot currently" with the decision beside them, rather than "never". Also recorded the MDR line for wearable data: luwte may carry a conclusion somebody else is licensed to draw, and may never draw one. |
 | 2026-08-05 | **The daily check-in goes from six items to four**, before the pilot writes data in the old shape — afterwards it is a migration of real health records rather than an edit. The circumplex model says valence and arousal span momentary affect: `energy` and `anxiety` were both arousal differing only in valence, which is why answering all three felt like the same question three ways, and `sleepRested` is largely absorbed by the pair. `flatness` stays separate on purpose — it is the absence of a response, not a point on the circumplex, and it is what antipsychotics blunt. Fixing the windline came with it: it followed the single anxiety item, so a day spent busy and *delighted* drew the same restless line as one spent agitated. It now follows arousal modulated by unpleasantness, which is the actual high-arousal/unpleasant corner. `arousal` needed per-question scale ends, since "weinig / veel" would ask somebody to rate feeling slowed down as a small amount of restlessness. |

@@ -30,6 +30,9 @@
   --human: var(--amber);
   /* Text drawn on top of --self, e.g. the primary button label. */
   --on-self: var(--diep);
+  /* --self used *as* text. In dark mode it already clears AA at 8.97:1, so
+     this is the same colour; see the light block for why it exists. */
+  --self-text: var(--zeeglas);
 
   color-scheme: dark;
 }
@@ -56,6 +59,18 @@
    * than the background, so the label goes white and reaches 4.92:1.
    */
   --on-self: #ffffff;
+  /*
+   * The same 4.20:1, the other way round: --zeeglas-l *as* text on the
+   * background fails AA too, and that half went unnoticed because the button
+   * was the case anybody looked at. The calendar had been drawing "today" in
+   * it since Phase 5.
+   *
+   * Fixed the way `contrast.test.ts` says to fix the amber equivalent — a
+   * darker token, never a relaxed floor. 4.62:1 on the background and 5.01:1
+   * on a card, and close enough to --zeeglas-l that it still reads as the
+   * person's own colour.
+   */
+  --self-text: #3a755d;
 
   color-scheme: light;
 }

@@ -57,9 +57,30 @@ export const activitySchema = z.object({
   createdBy: z.string().min(1),
   status: activityStatusSchema,
   recurrence: recurrenceSchema.nullable().default(null),
+  /*
+   * What the person thought it would be like, recorded when they planned it.
+   *
+   * Behavioural activation research finds *expected* mastery and pleasure
+   * contribute more than what was actually obtained — which is the mechanism
+   * this product already claims for itself: noticing that something you
+   * expected to be hard turned out to be fine is what changes what you do
+   * next. Without this recorded, that comparison is implied and never shown.
+   *
+   * Belongs to the activity rather than the completion because it is said
+   * once, at planning time, and a weekly walk was planned once.
+   */
+  expectedPleasure: z.number().int().min(1).max(7).nullable().default(null),
+  expectedMastery: z.number().int().min(1).max(7).nullable().default(null),
 });
 
 export type Activity = z.infer<typeof activitySchema>;
+
+/** Whether there is anything to compare an answer against. */
+export function hasExpectation(
+  activity: Pick<Activity, 'expectedPleasure' | 'expectedMastery'>,
+): boolean {
+  return activity.expectedPleasure !== null || activity.expectedMastery !== null;
+}
 
 export const completionSchema = z.object({
   activityId: z.string().min(1),
@@ -80,6 +101,32 @@ export type Completion = z.infer<typeof completionSchema>;
  */
 export function completionId(activityId: string, date: DateKey): string {
   return `${activityId}_${date}`;
+}
+
+/** Completions apart the question comes back, after the first one. */
+export const RATING_INTERVAL = 5;
+
+/**
+ * Whether to ask how it went, this time.
+ *
+ * PRD 6.2 puts a two-tap question after finishing something planned, and the
+ * research says to keep **both** halves — mastery and pleasure come apart,
+ * and a walk that gave one without the other is exactly the distinction worth
+ * recording. What was wrong was the frequency: re-rating Tuesday's walk every
+ * Tuesday is bookkeeping, and bookkeeping is what makes people stop.
+ *
+ * So: the first time, then every fifth. The first matters most because it is
+ * where an expectation gets tested; the returns are there because how a thing
+ * feels changes over months, which is the only reason to ask twice at all.
+ *
+ * Counting completions rather than answers is deliberate. If somebody skipped
+ * it, the question comes back on the fifth like everybody else's rather than
+ * the next day — **the app never chases**, and re-asking a question somebody
+ * just dismissed is chasing.
+ */
+export function shouldAskRating({ completedBefore }: { completedBefore: number }): boolean {
+  if (completedBefore < 0) return false;
+  return completedBefore % RATING_INTERVAL === 0;
 }
 
 /**

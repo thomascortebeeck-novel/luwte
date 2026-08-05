@@ -378,10 +378,20 @@ service cloud.firestore {
         allow list: if isSelf(patientId)
                     || (granted(patientId, 'calendar') && resource.data.status != 'declined');
 
+        /*
+         * A suggestion carries no expectation. `expectedPleasure` and
+         * `expectedMastery` are what *the person* thought something would be
+         * like when they planned it — the comparison they are later shown
+         * against how it actually went. A supporter filling that in would be
+         * putting words in somebody's mouth and then having the app quote
+         * them back as their own.
+         */
         allow create: if isSelf(patientId)
                       || (granted(patientId, 'calendar')
                           && request.resource.data.status == 'suggested'
-                          && request.resource.data.createdBy == request.auth.uid);
+                          && request.resource.data.createdBy == request.auth.uid
+                          && request.resource.data.get('expectedPleasure', null) == null
+                          && request.resource.data.get('expectedMastery', null) == null);
 
         allow update: if isSelf(patientId);
         // Removing something from the day is declining it, which keeps the

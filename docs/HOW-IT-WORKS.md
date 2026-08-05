@@ -202,7 +202,7 @@ that already happened.
 | Onboarding | Four screens: what luwte is, who sees what, your name, what time to remind you |
 | Consent | Explicit permission to store health data. Nothing pre-ticked |
 | **Today** | The home screen: the windline, the way into the check-in, medication to tick off, and a few optional suggestions |
-| Check-in | Six questions, one per screen, then an optional diary line, plus four more once a week |
+| Check-in | Four questions — three scales and the hours you slept — one per screen, then an optional diary line, plus four more once a week |
 | Medication | Your list, and the form to add to it |
 | Overview | The chart over 2, 6 or 12 weeks, plus everything you wrote |
 | Report | A printable A4 sheet for an appointment |
@@ -210,7 +210,7 @@ that already happened.
 | **Circle** | Who has access, what each of them sees, and the way to change or stop it |
 | Invite | Choose what a link will carry, then get the link to send |
 | Join | The other side of that link: what you will see, before you accept |
-| **Calendar** | Your week, today in the middle. Plan something, or repeat it daily, weekly or on weekdays |
+| **Calendar** | A day at a time by default, or a week with that day in the middle. Plan something, repeat it on any of seven rules, and optionally say what you expect it to be like |
 | Suggestions | What someone else offered, waiting for you to decide |
 | **Shared** | What you finished or wrote, and what your circle said back |
 | Who you follow | For a supporter: the people who share with them, their feed, and their calendar |

@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   dateKey,
+  formatDay,
+  formatWeekday,
   isBackfillable,
   isEditable,
   previousDateKey,
+  shiftDateKey,
   weekKey,
   weekdayOf,
 } from './dates';
@@ -123,5 +126,51 @@ describe('weekdayOf', () => {
   it('reports Monday as 1 and Sunday as 7, like ISO', () => {
     expect(weekdayOf('2026-08-03')).toBe(1);
     expect(weekdayOf('2026-08-09')).toBe(7);
+  });
+});
+
+describe('shiftDateKey', () => {
+  it('moves a whole week without landing between days', () => {
+    expect(shiftDateKey('2026-08-05', 7)).toBe('2026-08-12');
+    expect(shiftDateKey('2026-08-05', -7)).toBe('2026-07-29');
+  });
+
+  it('stays exact across a clock change', () => {
+    /*
+     * The last Sunday of October is 25 October 2026, when Brussels loses an
+     * hour. A week forward has to be a week, not six days and 23 hours —
+     * which is what date arithmetic in local time gives you.
+     */
+    expect(shiftDateKey('2026-10-22', 7)).toBe('2026-10-29');
+    expect(shiftDateKey('2027-03-25', 7)).toBe('2027-04-01');
+  });
+
+  it('crosses a year and a leap day', () => {
+    expect(shiftDateKey('2026-12-30', 7)).toBe('2027-01-06');
+    expect(shiftDateKey('2028-02-26', 7)).toBe('2028-03-04');
+  });
+});
+
+describe('reading a day out loud', () => {
+  it('says the day the way somebody here would', () => {
+    expect(formatDay('2026-08-05', 'nl')).toBe('woensdag 5 augustus');
+    expect(formatDay('2026-08-05', 'en')).toBe('Wednesday 5 August');
+  });
+
+  it('abbreviates the weekday for a column heading', () => {
+    // These used to be a hardcoded Dutch array, so an English-speaking
+    // supporter read "ma di wo" on their own calendar.
+    expect(formatWeekday('2026-08-03', 'nl')).toBe('ma');
+    expect(formatWeekday('2026-08-03', 'en')).toBe('Mon');
+  });
+
+  it('reads the key itself and not the device timezone', () => {
+    /*
+     * The formatter is pinned to UTC because the key was parsed as UTC
+     * midnight. Anywhere west of Greenwich, a local-time formatter renders
+     * that instant as the previous day — the same off-by-one the keys exist
+     * to prevent, reintroduced at the last step.
+     */
+    expect(formatDay('2026-01-01', 'nl')).toBe('donderdag 1 januari');
   });
 });

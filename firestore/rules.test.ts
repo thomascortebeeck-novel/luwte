@@ -647,6 +647,36 @@ describe('patients/{patientId}/activities', () => {
     );
   });
 
+  it('lets the patient say what they expect something to be like', async () => {
+    await assertSucceeds(
+      setDoc(
+        doc(asJonas(), 'patients', JONAS, 'activities', 'act1'),
+        activity({ expectedPleasure: 5, expectedMastery: 2 }),
+      ),
+    );
+  });
+
+  it('REFUSES a supporter saying how the patient will feel about it', async () => {
+    /*
+     * The expectation is shown back to the person later, beside how it
+     * actually went. Somebody else writing it turns that comparison into the
+     * app quoting a family member's opinion as the person's own thought.
+     */
+    await grantCalendar();
+    await assertFails(
+      setDoc(
+        doc(asOther(), 'patients', JONAS, 'activities', 'act2'),
+        activity({ status: 'suggested', createdBy: OTHER, expectedPleasure: 7 }),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(asOther(), 'patients', JONAS, 'activities', 'act3'),
+        activity({ status: 'suggested', createdBy: OTHER, expectedMastery: 1 }),
+      ),
+    );
+  });
+
   it('REFUSES a supporter suggesting in somebody else’s name', async () => {
     await grantCalendar();
     await assertFails(
