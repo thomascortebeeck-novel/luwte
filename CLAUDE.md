@@ -354,15 +354,35 @@ shows up locally.
 
 ### Deploying
 
-`.github/workflows/deploy.yml`. **dev deploys itself when something reaches
+`.github/workflows/deploy.yml`, and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for
+what exists in each project. **dev deploys itself when something reaches
 `main`** — the merge was the human decision and this only follows it. **prod is
-`workflow_dispatch` only**, with a GitHub environment that can require a
-reviewer: `luwte-prod` holds one family's health records and a deploy nobody
-chose is not acceptable there. That is the standing rule, not a preference.
+`workflow_dispatch` only**, and the `production` environment now **carries a
+required reviewer**: `luwte-prod` holds one family's health records and a deploy
+nobody chose is not acceptable there. That is the standing rule, not a
+preference.
+
+**CI holds no key.** Deploys authenticate by Workload Identity Federation, so
+GitHub presents a token that expires in an hour and no credential to Google
+exists anywhere. Two conditions must hold, and the second does real work:
+`assertion.repository` pins the trust to this repository — without it a
+federation provider trusts *every* workflow on GitHub, which is how this is
+usually got wrong — and `assertion.environment == 'production'` means **the prod
+identity can only be assumed by a job GitHub has already made somebody
+approve**. "Prod deploys are admin-only" is therefore enforced by Google IAM
+rather than by everyone remembering it.
+
+**The deployer cannot read health data.** Hosting, rules and indexes only — no
+`datastore.owner`, no `datastore.user`. A compromised CI run could serve a bad
+build and still could not read one check-in.
 
 Rules and indexes ship **with** the app and before it — better for the database
 to be stricter than the app for a moment than looser. Hosting is free on Spark,
 so `luwte-dev` still needs no billing.
+
+**A Firestore database's location is permanent.** Both are `eur3` per PRD §4;
+prod additionally has delete protection. Changing either means export, delete
+and re-import.
 
 **The hosting emulator applies no custom headers at all**, so the CSP cannot be
 tested through `pnpm emulators`. It was verified by serving the real build with
@@ -780,6 +800,7 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-05 | **The production project was not deployable, and "not hosted" understated it.** The hosting *site* existed and nothing else did: **no web app**, so no `VITE_FIREBASE_*` config at all; **Firestore API not even enabled**, so no database; and on GitHub **neither environment existed and not one secret was set**. A prod deploy would have failed at the first step — or, with secrets but no web app, *succeeded* and served the blank white screen this file warns about. Now: web app registered, Firestore in **`eur3` with delete protection** (the location is permanent, so it was taken from PRD §4 rather than chosen), both GitHub environments created, config secrets set per environment, and email plus passwordless link confirmed on prod. **CI authenticates by Workload Identity Federation, so no key exists anywhere** — chosen over a service account JSON because a permanent credential to a project holding one family's health records is a thing nobody remembers to rotate. Two clauses carry it: `assertion.repository` pins the trust to this repo, without which a provider trusts *every* workflow on GitHub, and `assertion.environment == 'production'` means the prod identity can only be assumed by a run somebody already approved — the standing rule enforced by Google IAM rather than by memory. The deployer holds hosting, rules and index roles and **no datastore role**, so a compromised run could serve a bad build and still not read a check-in. Verified by deploying rules and indexes to dev, which compiled and released cleanly. New guard in the workflow: the built bundle's project id must match the project being deployed, so a `production` environment holding dev's secrets fails in CI instead of serving a bundle that talks to `luwte-dev` from the prod domain. Written down in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). **Prod is deliberately live and empty** — P8.2 does not exist yet, and Art. 15 and Art. 17 are not optional for Art. 9 records. |
 | 2026-08-05 | **Phase 8 opened with the accessibility pass, and it found a second failure immediately.** `contrast.test.ts` said "these are the pairs actually rendered today" — an instruction followed for the pairs somebody thought about and missed for the ones nobody did, which is how a light-mode failure shipped from Phase 5 to August. It now **enumerates**: every token × both surfaces × both themes, plus a guard that reads every stylesheet and fails on any colour it does not cover. The guard was proved by adding a fake token and watching it fail. The enumeration then caught `--line` at 1.18–1.33:1 doing the job of a control edge — field borders, the unticked dose ring, unselected scale dots, progress pips — where 1.4.11 asks 3:1. New `--edge` token, sixteen declarations moved, and `--line` keeps only the decoration. Same shape as the `--self-text` fix: a new token, never a relaxed floor. |
 | 2026-08-05 | **Reactions became icons** — heart, applause, a sparkle for "trots" — with the word kept as the accessible name. Not a star and not a medal: a star is the rating glyph and a medal is a badge, and an icon can smuggle in gamification where the copy never would. The clap took three attempts, and the first two were only rejected by rendering them at 150px and looking: anatomy does not survive 24px. **And fewer commas** — 25 strings, plus a copy-lint rule refusing `, en` and `, of` in Dutch so it stays fixed. Narrow on purpose: `Mis je ze, dan gebeurt er niets` and every list keep theirs. |
 | 2026-08-05 | **The Garmin block was the wrong architecture, not a closed door.** Garmin's *cloud* API does need approval, a server and Blaze — but Garmin Connect for Android writes steps, resting HR and sleep to **Health Connect**, which is on-device. No agreement, no client secret, no webhook, no backend, and it works with any watch that writes there rather than Garmin alone. ECG is not a Health Connect type and stays deferred; the gate becomes Google Play's health declaration. Recorded with the Phase 8 and Android plan in [docs/superpowers/plans/2026-08-05-phase-8-and-android.md](docs/superpowers/plans/2026-08-05-phase-8-and-android.md), which also settles Capacitor over a rewrite, local notifications over FCM for the daily reminder (free, no server, works offline), App Links for the invite, and no usage analytics on Android either. |

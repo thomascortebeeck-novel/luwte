@@ -10,8 +10,8 @@ name: deploy
 # push, no schedule, no way for an agent or a merge to reach it. That is a
 # standing rule of this project rather than a preference: `luwte-prod` holds
 # one family's health records, and a deploy nobody chose is not acceptable
-# there. `environment: production` means GitHub can additionally require a
-# named reviewer to approve the run.
+# there. The `production` environment carries a **required reviewer**, so the
+# rule is enforced by GitHub rather than by everyone remembering it.
 on:
   push:
     branches: [main]
@@ -36,6 +36,14 @@ jobs:
     # A push to main can only ever mean dev. Choosing prod requires the manual
     # trigger, which is what makes "a person decided" true.
     environment: ${{ github.event_name == 'workflow_dispatch' && inputs.target == 'prod' && 'production' || 'development' }}
+
+    # `id-token: write` is what lets this job ask GitHub for an OIDC token to
+    # present to Google. Without it the auth step fails; with it, and nothing
+    # else, no credential is stored anywhere. `contents: read` is stated
+    # explicitly so the job does not inherit a broader default token.
+    permissions:
+      contents: read
+      id-token: write
 
     env:
       PROJECT: ${{ github.event_name == 'workflow_dispatch' && inputs.target || 'dev' }}
@@ -78,6 +86,17 @@ jobs:
           grep -q 'VITE_FIREBASE_PROJECT_ID=.\+' apps/web/.env.production \
             || { echo "The Firebase web config secrets are not set for this environment."; exit 1; }
 
+      # The environment's own project id is what the bundle must carry. Without
+      # this, a misconfigured `production` environment holding dev's secrets
+      # would deploy a bundle talking to `luwte-dev` onto the prod domain, and
+      # every check below would still pass.
+      - name: Confirm the config matches the project being deployed
+        run: |
+          EXPECTED="luwte-${PROJECT}"
+          ACTUAL="$(grep VITE_FIREBASE_PROJECT_ID apps/web/.env.production | cut -d= -f2)"
+          [ "$ACTUAL" = "$EXPECTED" ] \
+            || { echo "Deploying to $EXPECTED but the config is for '$ACTUAL'."; exit 1; }
+
       # The full gate before anything ships, rather than trusting that the PR
       # run was on the same tree. `test:rules` needs Java and an emulator and
       # is covered by verify.yml on the PR; this is the deployable-artifact
@@ -94,16 +113,27 @@ jobs:
           grep -rq "$(grep VITE_FIREBASE_PROJECT_ID apps/web/.env.production | cut -d= -f2)" apps/web/dist/assets/*.js \
             || { echo "The built bundle carries no Firebase project id — it would render blank."; exit 1; }
 
+      # Workload Identity Federation, so **no key to Google exists anywhere**.
+      #
+      # GitHub mints a short-lived OIDC token describing this exact run; Google
+      # trades it for an access token that expires in an hour. The trust is
+      # pinned to this repository in the provider's condition, so a token from
+      # anybody else's workflow is refused at Google rather than trusted
+      # because it is well-formed.
+      #
+      # The alternative — a service account JSON key in a GitHub secret — is a
+      # permanent credential to a project holding one family's health records,
+      # and rotating it is a manual job nobody remembers. Neither of these
+      # values is secret, so they are environment *variables*: which provider
+      # to use and which identity to assume are configuration, not credentials.
+      - name: Authenticate to Google
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.DEPLOY_SERVICE_ACCOUNT }}
+
       - name: Install Firebase CLI
         run: npm install --global firebase-tools@13
-
-      # Written to a file rather than passed inline, because the CLI wants a
-      # path and because a key on a command line ends up in process listings.
-      # Removed again in the last step, whatever happens.
-      - name: Write the service account key
-        run: |
-          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > sa.json
-          test -s sa.json || { echo "FIREBASE_SERVICE_ACCOUNT is not set"; exit 1; }
 
       # Rules and indexes ship **with** the app, never after it. A build that
       # reads a field the deployed rules refuse is a broken app, and a query
@@ -111,6 +141,9 @@ jobs:
       #
       # Note firestore rules deploy before hosting: it is safer for the
       # database to be stricter than the app for a moment than looser.
+      #
+      # Functions are deliberately not deployed — they need Blaze, and nothing
+      # in the app depends on one.
       - name: Deploy rules, indexes and hosting
         run: |
           firebase deploy \
@@ -118,12 +151,3 @@ jobs:
             --only firestore:rules,firestore:indexes,hosting:app \
             --non-interactive \
             --message "${{ github.sha }}"
-        env:
-          # A service account with Firebase Hosting Admin and Cloud Datastore
-          # Index Admin. Functions are deliberately not deployed by this
-          # workflow — they need Blaze, and nothing in the app depends on one.
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/sa.json
-
-      - name: Clean up credentials
-        if: always()
-        run: rm -f sa.json
