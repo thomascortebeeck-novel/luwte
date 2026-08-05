@@ -150,9 +150,11 @@ export function ActivitiesSection({
 
 /**
  * PRD 6.2 — offered, and ignoring them costs nothing and is never recorded.
- * They are plain text rather than anything tappable: a checkbox would turn an
- * invitation into a task, and there would then be a state in which the person
- * had failed to do one.
+ *
+ * **Still no checkbox.** A checkbox would turn an invitation into a task, and
+ * there would then be a state in which the person had failed to do one. Two of
+ * them are now links, which is a different thing: a link goes somewhere and
+ * records nothing, so ignoring it still costs exactly nothing.
  */
 export function PracticesSection() {
   const { t } = useLocale();
@@ -160,11 +162,17 @@ export function PracticesSection() {
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>{t('practicesTitle')}</h2>
-      {OPTIONAL_PRACTICES.map((practice) => (
-        <p key={practice.id} className={styles.practice}>
-          {t(practice.labelKey)}
-        </p>
-      ))}
+      {OPTIONAL_PRACTICES.map((practice) =>
+        practice.href === null ? (
+          <p key={practice.id} className={styles.practice}>
+            {t(practice.labelKey)}
+          </p>
+        ) : (
+          <a key={practice.id} className={styles.practiceLink} href={practice.href}>
+            {t(practice.labelKey)}
+          </a>
+        ),
+      )}
     </section>
   );
 }

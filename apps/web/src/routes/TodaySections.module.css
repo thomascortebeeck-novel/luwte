@@ -121,6 +121,22 @@
  * recorded. They are text, deliberately: anything tappable would imply
  * something is expected.
  */
+/*
+ * A practice that leads somewhere. Sized for a thumb and underlined so it is
+ * visibly a way in, but drawn in --text-quiet like the plain ones beside it:
+ * these are offers, and an offer that looks like a button is a nudge.
+ */
+.practiceLink {
+  min-height: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .practice {
   font-size: var(--text-sm);
   line-height: var(--leading-sm);

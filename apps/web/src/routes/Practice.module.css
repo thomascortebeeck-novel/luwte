@@ -1,0 +1,104 @@
+/*
+ * The two guided practices. Shared, because they are the same screen with a
+ * different thing in the middle: an intro, one large calm element, and a way
+ * out that is always visible.
+ */
+
+.intro {
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
+.stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  min-height: 320px;
+}
+
+/*
+ * The phase word, and the only thing being read while breathing. Large and in
+ * --text: naming it in the person's own colour would make the word compete
+ * with the circle for the same meaning.
+ */
+.phase {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-2xl);
+  font-weight: 400;
+  color: var(--text);
+  margin: 0;
+}
+
+/*
+ * The circle. It grows over the in-breath and shrinks over the out-breath,
+ * driven by a transition whose duration is set per phase — so the movement
+ * *is* the timing rather than something running alongside it.
+ *
+ * Under prefers-reduced-motion the global reset collapses that transition to
+ * nothing and the circle simply snaps. That is the right degradation: the
+ * phase word above still carries the whole instruction, so the practice keeps
+ * working for somebody who cannot watch movement.
+ */
+.circle {
+  width: 200px;
+  height: 200px;
+  max-width: 60vw;
+  max-height: 60vw;
+  border-radius: 999px;
+  border: 1px solid var(--self);
+  background: color-mix(in srgb, var(--self) 12%, transparent);
+  transform: scale(var(--breath-scale, 0.45));
+  transition-property: transform;
+  transition-timing-function: var(--ease-settle);
+}
+
+/* BRAND — no numbers. How far in you are is dots, the same as the check-in. */
+.breaths {
+  display: flex;
+  gap: 6px;
+}
+
+.breath {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.breath[data-done] {
+  background: var(--self);
+}
+
+/*
+ * Grounding: the count and the thing, on two lines. The count is large
+ * because it is the whole instruction — five things, then four — and it is a
+ * quantity rather than a rating, so a digit is right here in a way it never
+ * is on a scale.
+ */
+.count {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-2xl);
+  font-weight: 400;
+  color: var(--self-text);
+  margin: 0;
+}
+
+.what {
+  font-size: var(--text-xl);
+  line-height: var(--leading-xl);
+  color: var(--text);
+  margin: 0;
+  text-align: center;
+}
+
+.done {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-2xl);
+  color: var(--text);
+  margin: 0;
+}

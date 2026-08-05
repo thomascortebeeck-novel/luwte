@@ -21,6 +21,14 @@ export const nl = {
   checkinArousalHigh: 'onrustig',
   checkinFlatness: 'Kon je vandaag iets voelen?',
   checkinDiary: 'Iets dat je wil onthouden van vandaag?',
+  // Dezelfde vraag, anders gesteld. Eén per dag, en de eerste hierboven doet
+  // gewoon mee — zodat er niets verdwijnt op de dagen dat die aan de beurt is.
+  diaryPromptAlright: 'Wat viel vandaag mee?',
+  diaryPromptSmall: 'Was er iets kleins dat goed was?',
+  diaryPromptWho: 'Wie sprak je vandaag?',
+  diaryPromptHelped: 'Waar had je vandaag iets aan?',
+  diaryPromptEffort: 'Wat kostte vandaag moeite?',
+  diaryPromptTomorrow: 'Is er iets dat je morgen niet wil vergeten?',
   checkinDone: 'Bewaard.',
 
   todayEmpty: 'Vandaag staat er niets. Dat mag.',
@@ -294,7 +302,30 @@ export const nl = {
   practicesTitle: 'Als je zin hebt',
   practiceGratitude: 'Schrijf iets op dat vandaag meeviel.',
   practiceBreathing: 'Adem een minuut traag in en uit.',
+  practiceGrounding: 'Kijk even rond, en tel mee.',
   practiceWalk: 'Ga even naar buiten.',
+
+  // Ademen — kort, met open ogen, en er wordt niets van bijgehouden.
+  breathingTitle: 'Ademen',
+  breathingIntro: 'Vier keer traag in en uit. Je mag altijd stoppen.',
+  breathingIn: 'in',
+  breathingHold: 'houd vast',
+  breathingOut: 'uit',
+  breathingStart: 'Beginnen',
+  breathingStop: 'Stoppen',
+  breathingDone: 'Klaar.',
+  breathingProgress: 'Hoeveel ademhalingen je gehad hebt',
+
+  // Gronden — 5-4-3-2-1. Alles wijst naar buiten, naar de kamer.
+  groundingTitle: 'Even rondkijken',
+  groundingIntro: 'Tel in je hoofd. Er hoeft niets ingevuld te worden.',
+  groundingSee: 'dingen die je ziet',
+  groundingHear: 'dingen die je hoort',
+  groundingTouch: 'dingen die je kan voelen',
+  groundingSmell: 'dingen die je ruikt',
+  groundingTaste: 'ding dat je proeft',
+  groundingNext: 'Verder',
+  groundingDone: 'Klaar.',
 
   // Insights
   insightsTitle: 'Overzicht',

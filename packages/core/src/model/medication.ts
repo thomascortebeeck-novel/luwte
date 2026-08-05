@@ -260,8 +260,8 @@ export function diffMedication(
  * documents: there is nothing to store, because storing it would make it a
  * task.
  */
-export const OPTIONAL_PRACTICES = [
-  { id: 'gratitude', labelKey: 'practiceGratitude' },
-  { id: 'breathing', labelKey: 'practiceBreathing' },
-  { id: 'walk', labelKey: 'practiceWalk' },
-] as const;
+/*
+ * Moved to `practices.ts`, which is where the two guided ones live and where
+ * the reason they are the *only* two guided ones is written down.
+ */
+export { OPTIONAL_PRACTICES } from './practices';

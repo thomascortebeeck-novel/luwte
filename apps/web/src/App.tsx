@@ -1,8 +1,10 @@
 import { NavLink, Route, Routes, useLocation } from 'react-router';
 import styles from './App.module.css';
 import { useLocale } from './providers/LocaleProvider';
+import { Breathing } from './routes/Breathing';
 import { Calendar } from './routes/Calendar';
 import { CheckIn } from './routes/CheckIn';
+import { Grounding } from './routes/Grounding';
 import { Circle } from './routes/Circle';
 import { CircleMember } from './routes/CircleMember';
 import { Consent } from './routes/Consent';
@@ -102,6 +104,25 @@ export function App() {
           element={
             <Gate>
               <Calendar />
+            </Gate>
+          }
+        />
+        {/* The two guided practices. Short, guided, externally focused and
+            eyes open — the safe subset for somebody with a psychosis history.
+            Neither writes anything: see `practices.ts`. */}
+        <Route
+          path="/breathing"
+          element={
+            <Gate>
+              <Breathing />
+            </Gate>
+          }
+        />
+        <Route
+          path="/grounding"
+          element={
+            <Gate>
+              <Grounding />
             </Gate>
           }
         />

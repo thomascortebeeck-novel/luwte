@@ -3,6 +3,7 @@ import {
   DEFAULT_TIMEZONE,
   WEEKLY_STEPS,
   dateKey,
+  diaryPromptFor,
   shouldOfferCrisis,
   weekKey,
   weekdayOf,
@@ -62,6 +63,7 @@ export function CheckIn() {
 
   const dailySteps = CHECKIN_STEPS.length;
   const diaryStep = dailySteps; // then the optional line
+  const diaryPrompt = useMemo(() => diaryPromptFor(today), [today]);
   const weeklyStart = diaryStep + 1;
   const totalSteps = weeklyStart + (weeklyDue ? WEEKLY_STEPS.length : 0);
 
@@ -188,13 +190,19 @@ export function CheckIn() {
     }
   } else if (step === diaryStep) {
     canContinue = true; // the diary line is optional, always
+    /*
+     * The same box, asked a different way each day. One free-text question
+     * worded identically every evening becomes furniture, and the original
+     * wording is still in the rotation so nothing is lost when it comes round.
+     * Keyed to the day, so it cannot change while somebody is typing.
+     */
     body = (
       <>
-        <p className={styles.question}>{t('checkinDiary')}</p>
+        <p className={styles.question}>{t(diaryPrompt)}</p>
         <div className={styles.answer}>
           <textarea
             className={styles.diary}
-            aria-label={t('checkinDiary')}
+            aria-label={t(diaryPrompt)}
             placeholder={t('checkinDiaryPlaceholder')}
             value={note}
             onChange={(e) => setNote(e.target.value)}

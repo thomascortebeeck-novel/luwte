@@ -97,8 +97,18 @@ export {
   type InsightsWindow,
 } from './insights';
 export {
-  CLINICAL_PERMISSION_KEYS,
+  BREATHING_CYCLES,
+  BREATHING_PHASES,
+  BREATHING_SECONDS,
+  DIARY_PROMPTS,
+  GROUNDING_STEPS,
   OPTIONAL_PRACTICES,
+  breathingAt,
+  diaryPromptFor,
+  type BreathingPhase,
+} from './model/practices';
+export {
+  CLINICAL_PERMISSION_KEYS,
   adoptionChange,
   applyPendingChange,
   diffMedication,

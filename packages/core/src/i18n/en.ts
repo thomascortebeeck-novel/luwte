@@ -20,6 +20,14 @@ export const en: Dictionary = {
   checkinArousalHigh: 'restless',
   checkinFlatness: 'Could you feel anything today?',
   checkinDiary: 'Anything you want to remember about today?',
+  // The same question, asked differently. One a day, and the first one above
+  // takes its turn like the rest, so nothing is lost when it comes round.
+  diaryPromptAlright: 'What went alright today?',
+  diaryPromptSmall: 'Was there something small that was good?',
+  diaryPromptWho: 'Who did you speak to today?',
+  diaryPromptHelped: 'What helped today?',
+  diaryPromptEffort: 'What took effort today?',
+  diaryPromptTomorrow: 'Anything you do not want to forget tomorrow?',
   checkinDone: 'Saved.',
 
   todayEmpty: "Nothing today. That's allowed.",
@@ -290,7 +298,30 @@ export const en: Dictionary = {
   practicesTitle: 'If you feel like it',
   practiceGratitude: 'Write down something that went alright today.',
   practiceBreathing: 'Breathe slowly for a minute.',
+  practiceGrounding: 'Look around for a moment, and count along.',
   practiceWalk: 'Step outside for a moment.',
+
+  // Breathing — short, eyes open, and nothing about it is recorded.
+  breathingTitle: 'Breathing',
+  breathingIntro: 'Four slow breaths. You can stop whenever you want.',
+  breathingIn: 'in',
+  breathingHold: 'hold',
+  breathingOut: 'out',
+  breathingStart: 'Start',
+  breathingStop: 'Stop',
+  breathingDone: 'Done.',
+  breathingProgress: 'How many breaths you have had',
+
+  // Grounding — 5-4-3-2-1. Every step points outwards, at the room.
+  groundingTitle: 'A look around',
+  groundingIntro: 'Count in your head. There is nothing to fill in.',
+  groundingSee: 'things you can see',
+  groundingHear: 'things you can hear',
+  groundingTouch: 'things you can feel',
+  groundingSmell: 'things you can smell',
+  groundingTaste: 'thing you can taste',
+  groundingNext: 'Next',
+  groundingDone: 'Done.',
 
   // Insights
   insightsTitle: 'Overview',

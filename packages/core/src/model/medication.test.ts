@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dictionaries, type Locale } from '../i18n/index';
 import {
-  OPTIONAL_PRACTICES,
   adoptionChange,
   diffMedication,
   doseAnnotationSchema,
@@ -14,7 +12,6 @@ import {
   type Medication,
 } from './medication';
 
-const locales = Object.keys(dictionaries) as Locale[];
 const at = new Date('2026-08-04T10:00:00Z');
 
 const valid: Medication = {
@@ -212,20 +209,4 @@ describe('what was actually taken', () => {
   });
 });
 
-describe('optional practices', () => {
-  it('offers three, and stores no completion state for any of them', () => {
-    // PRD 6.2 — no checkbox, no tracking, no completion state. Ignoring one
-    // costs nothing and is never recorded, which is why they are constants
-    // rather than documents.
-    expect(OPTIONAL_PRACTICES.map((p) => p.id)).toEqual(['gratitude', 'breathing', 'walk']);
-    for (const practice of OPTIONAL_PRACTICES) {
-      expect(Object.keys(practice)).toEqual(['id', 'labelKey']);
-    }
-  });
-
-  it.each(locales)('has copy for every practice in %s', (locale) => {
-    for (const practice of OPTIONAL_PRACTICES) {
-      expect(dictionaries[locale][practice.labelKey], practice.labelKey).toBeTruthy();
-    }
-  });
-});
+/* The practices moved to `practices.ts`, and so did their tests. */
