@@ -14,10 +14,8 @@ const locales = Object.keys(dictionaries) as Locale[];
 const validCheckin = {
   date: '2026-08-04',
   mood: 4,
-  energy: 3,
+  arousal: 5,
   sleepHours: 7.5,
-  sleepRested: 4,
-  anxiety: 5,
   flatness: 2,
   source: 'manual' as const,
 };
@@ -51,15 +49,35 @@ describe('checkinSchema', () => {
 });
 
 describe('the daily questions', () => {
-  it('asks six things, in the PRD order', () => {
+  /*
+   * Three scales and one number, down from five and one.
+   *
+   * The circumplex model of core affect says valence and arousal span
+   * momentary feeling. `energy` and `anxiety` were both arousal, differing
+   * only in valence, which is why answering all three felt like the same
+   * question asked three ways — and `sleepRested` is largely absorbed by the
+   * two axes together.
+   *
+   * If this list grows again, the question to answer first is which existing
+   * item the new one is a rotation of.
+   */
+  it('asks four things, and no longer asks the same question three ways', () => {
     expect(CHECKIN_STEPS.map((s) => s.id)).toEqual([
       'mood',
-      'energy',
-      'sleepHours',
-      'sleepRested',
-      'anxiety',
+      'arousal',
       'flatness',
+      'sleepHours',
     ]);
+  });
+
+  /*
+   * The one item that must survive every round of shortening. Flatness is not
+   * a position on the circumplex — it is the absence of a response at all,
+   * which no combination of valence and arousal can express. It is also what
+   * antipsychotics blunt, which makes it the item that changes an appointment.
+   */
+  it('keeps flatness as its own question', () => {
+    expect(CHECKIN_STEPS.map((s) => s.id)).toContain('flatness');
   });
 
   it('asks hours as a quantity and everything else on a scale', () => {
@@ -71,6 +89,24 @@ describe('the daily questions', () => {
     for (const step of CHECKIN_STEPS) {
       expect(dictionaries[locale][step.questionKey], step.questionKey).toBeTruthy();
     }
+  });
+
+  /*
+   * Arousal is bipolar and the others are not, so the ends cannot be shared.
+   * Labelling arousal "weinig / veel" would ask somebody to rate feeling
+   * slowed down as a small amount of restlessness.
+   */
+  it.each(locales)('has copy for both ends of every scale in %s', (locale) => {
+    for (const step of CHECKIN_STEPS) {
+      expect(dictionaries[locale][step.lowKey], step.lowKey).toBeTruthy();
+      expect(dictionaries[locale][step.highKey], step.highKey).toBeTruthy();
+    }
+  });
+
+  it('gives arousal its own ends rather than the generic pair', () => {
+    const arousal = CHECKIN_STEPS.find((s) => s.id === 'arousal');
+    expect(arousal?.lowKey).not.toBe('scaleLow');
+    expect(arousal?.highKey).not.toBe('scaleHigh');
   });
 
   it.each(locales)('has copy for every weekly question in %s', (locale) => {

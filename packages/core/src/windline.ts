@@ -20,34 +20,45 @@
  */
 
 export type WindlineDay = {
-  /** 1..7 */
+  /** 1..7 valence — how pleasant or unpleasant the day felt. */
   mood: number;
-  /** 1..7, how rested */
-  sleepRested: number;
-  /** 1..7, higher is more restless */
-  anxiety: number;
+  /** 1..7 arousal — how activated, regardless of whether it was pleasant. */
+  arousal: number;
 };
 
 /** Maps 1..7 onto 0..1. */
 const normalise = (value: number) => (Math.min(7, Math.max(1, value)) - 1) / 6;
 
 /**
- * How agitated a single day reads.
+ * How unsettled a single day reads, on the two axes of core affect.
  *
- * Anxiety carries the most weight because it is the most direct report of
- * unrest. Poor sleep and low mood contribute because both show up as
- * agitation in the shape of a fortnight, but neither is treated as a verdict
- * on the day.
+ * Unrest is the **high-arousal, unpleasant** corner of the circumplex, and
+ * writing it that way fixes something the old formula got wrong. Before, unrest
+ * followed `anxiety` alone at half its weight, so a day that was busy and
+ * *good* — high arousal, high valence — drew the same restless line as a day
+ * spent agitated. Multiplying arousal by how unpleasant the day was separates
+ * them: elated and agitated are both activated, and only one of them is unrest.
  *
- * Activity will join this when the calendar lands (BRAND 3.7 names mood,
- * sleep and activity); until then the three self-reported items carry it.
+ * Sleep used to contribute a third of this and no longer does. `sleepRested`
+ * is gone from the check-in — it was largely absorbed by these two axes — and
+ * hours slept is a different scale that would need mixing in arbitrarily. It
+ * can rejoin honestly once a wearable supplies duration without asking.
+ *
+ * **It remains not a score.** A person can be unsettled and having a good
+ * week. Nothing here may be phrased, coloured or ranked as good or bad.
  */
 export function dayUnrest(day: WindlineDay): number {
-  const anxiety = normalise(day.anxiety);
-  const unrested = 1 - normalise(day.sleepRested);
-  const lowMood = 1 - normalise(day.mood);
+  const arousal = normalise(day.arousal);
+  const unpleasant = 1 - normalise(day.mood);
 
-  const weighted = anxiety * 0.5 + unrested * 0.3 + lowMood * 0.2;
+  /*
+   * Arousal leads because it is what the line's frequency and amplitude
+   * actually depict, and unpleasantness modulates rather than replaces it —
+   * hence a floor of 0.35 rather than a bare multiplication, which would zero
+   * the line entirely on a good day and make a calm fortnight and an elated
+   * one indistinguishable.
+   */
+  const weighted = arousal * (0.35 + 0.65 * unpleasant);
   return Math.min(1, Math.max(0, weighted));
 }
 

@@ -14,9 +14,10 @@ export const en: Dictionary = {
 
   checkinEntry: 'How was today?',
   checkinMood: 'How did you feel?',
-  checkinEnergy: 'How much energy did you have?',
-  checkinSleep: 'How did you sleep?',
-  checkinAnxiety: 'How restless was it?',
+  // Bipolar: both ends are a state, not a shortage of the other.
+  checkinArousal: 'Were you restless, or more slowed down?',
+  checkinArousalLow: 'slowed down',
+  checkinArousalHigh: 'restless',
   checkinFlatness: 'Could you feel anything today?',
   checkinDiary: 'Anything you want to remember about today?',
   checkinDone: 'Saved.',
@@ -184,7 +185,7 @@ export const en: Dictionary = {
     'Your name, your language and the hour of your reminder. The app does not work without this.',
   consentHealthLabel: 'Store what you write about how you feel',
   consentHealthExplanation:
-    'Mood, energy, sleep, restlessness, medication. This is health data. It is stored in Belgium and nobody sees it unless you choose that.',
+    'Mood, restlessness, flatness, sleep, medication. This is health data. It is stored in Belgium and nobody sees it unless you choose that.',
   consentEssentialFollowingExplanation:
     'Your name and your language. The app does not work without this.',
   consentRemindersFollowingExplanation:
@@ -297,7 +298,7 @@ export const en: Dictionary = {
   insightsWindow6: '6 weeks',
   insightsWindow12: '12 weeks',
   insightsEmpty: 'Nothing to show yet. That will come.',
-  insightsChartLabel: 'Chart of your mood, energy, flatness and sleep',
+  insightsChartLabel: 'Chart of your mood, restlessness, flatness and sleep',
   diaryTitle: 'What you wrote down',
   diaryEmpty: "You haven't written anything down yet.",
   adherenceLabel: 'Medication taken',

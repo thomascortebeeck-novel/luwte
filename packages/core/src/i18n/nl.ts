@@ -15,9 +15,10 @@ export const nl = {
 
   checkinEntry: 'Hoe was vandaag?',
   checkinMood: 'Hoe voelde je je?',
-  checkinEnergy: 'Hoeveel energie had je?',
-  checkinSleep: 'Hoe heb je geslapen?',
-  checkinAnxiety: 'Hoe onrustig was het?',
+  // Bipolar: allebei de uiteinden zijn iets, geen tekort aan het andere.
+  checkinArousal: 'Was je onrustig, of eerder traag?',
+  checkinArousalLow: 'traag',
+  checkinArousalHigh: 'onrustig',
   checkinFlatness: 'Kon je vandaag iets voelen?',
   checkinDiary: 'Iets dat je wil onthouden van vandaag?',
   checkinDone: 'Bewaard.',
@@ -187,7 +188,7 @@ export const nl = {
     'Je naam, je taal en het uur van je herinnering. Zonder dit werkt de app niet.',
   consentHealthLabel: 'Bewaren wat je invult over hoe je je voelt',
   consentHealthExplanation:
-    'Stemming, energie, slaap, onrust, medicatie. Dit zijn gezondheidsgegevens. Ze staan in België en niemand ziet ze tenzij jij dat kiest.',
+    'Stemming, onrust, vlakheid, slaap, medicatie. Dit zijn gezondheidsgegevens. Ze staan in België en niemand ziet ze tenzij jij dat kiest.',
   consentEssentialFollowingExplanation:
     'Je naam en je taal. Zonder dit werkt de app niet.',
   consentRemindersFollowingExplanation:
@@ -301,7 +302,7 @@ export const nl = {
   insightsWindow6: '6 weken',
   insightsWindow12: '12 weken',
   insightsEmpty: 'Nog niets om te tonen. Dat komt vanzelf.',
-  insightsChartLabel: 'Grafiek van je stemming, energie, vlakheid en slaap',
+  insightsChartLabel: 'Grafiek van je stemming, onrust, vlakheid en slaap',
   diaryTitle: 'Wat je opschreef',
   diaryEmpty: 'Je hebt nog niets opgeschreven.',
   adherenceLabel: 'Medicatie genomen',

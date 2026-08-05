@@ -26,16 +26,8 @@ export async function readWindlineDays(
   const byDate = new Map<string, WindlineDay>();
   for (const document of snapshot.docs) {
     const data = document.data();
-    if (
-      typeof data.mood === 'number' &&
-      typeof data.sleepRested === 'number' &&
-      typeof data.anxiety === 'number'
-    ) {
-      byDate.set(document.id, {
-        mood: data.mood,
-        sleepRested: data.sleepRested,
-        anxiety: data.anxiety,
-      });
+    if (typeof data.mood === 'number' && typeof data.arousal === 'number') {
+      byDate.set(document.id, { mood: data.mood, arousal: data.arousal });
     }
   }
 

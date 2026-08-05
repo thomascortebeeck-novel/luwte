@@ -253,10 +253,8 @@ describe('patients/{patientId}/checkins', () => {
   const checkin = {
     date: '2026-08-04',
     mood: 4,
-    energy: 3,
+    arousal: 5,
     sleepHours: 7,
-    sleepRested: 4,
-    anxiety: 5,
     flatness: 2,
     source: 'manual',
   };

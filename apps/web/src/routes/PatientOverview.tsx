@@ -92,7 +92,7 @@ export function PatientOverview({
   }));
 
   const hasAnything = points.some(
-    (point) => point.mood !== null || point.energy !== null || point.flatness !== null,
+    (point) => point.mood !== null || point.arousal !== null || point.flatness !== null,
   );
 
   const chartMarkers = markers

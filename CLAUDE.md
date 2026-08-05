@@ -558,17 +558,35 @@ segments after `{path=**}` are not.
 - `sleepHours` is the one check-in field shown as a number. It is a quantity,
   not a rating; BRAND's "never a visible number" governs the subjective
   scales, where a number invites scoring yourself.
+- **The daily check-in is three scales and one number, on the circumplex.**
+  Valence (`mood`) and arousal (`arousal`) span momentary affect, which is why
+  `energy` and `anxiety` are gone: both were arousal, differing only in
+  valence, so asking all three was the same question three ways. `sleepRested`
+  went with them — largely absorbed by the two axes, and not something a watch
+  can supply either, since consumer sleep staging validates weakly against
+  polysomnography. **`flatness` is never folded in**: it is the *absence* of a
+  response rather than a position on the circumplex, and it is what
+  antipsychotics blunt. Before adding a daily item, say which existing one it
+  is a rotation of.
+- **`arousal` is bipolar and no other scale is**, so `CHECKIN_STEPS` carries
+  `lowKey`/`highKey` per question. "weinig / veel" would ask somebody to rate
+  feeling slowed down as a small amount of restlessness.
 - **The windline is not a score.** Unrest is not badness — a person can be
-  unsettled and having a good week. Both amplitude *and* frequency follow
-  unrest, because amplitude alone reads as a chart with a y-axis where bigger
-  means worse. A missed day is bridged from its neighbours, never drawn as a
-  gap. It animates with `requestAnimationFrame`, so a hidden tab stops it for
-  free.
+  unsettled and having a good week. It follows arousal **modulated by how
+  unpleasant the day was**, not arousal alone: elation and agitation are both
+  activated, and following the old single anxiety item drew the same restless
+  line for a day spent busy and delighted. Both amplitude *and* frequency
+  follow unrest, because amplitude alone reads as a chart with a y-axis where
+  bigger means worse. A missed day is bridged from its neighbours, never drawn
+  as a gap. It animates with `requestAnimationFrame`, so a hidden tab stops it
+  for free.
 
 ## Changelog
 
 | Date | Change |
 |---|---|
+| 2026-08-05 | **The daily check-in goes from six items to four**, before the pilot writes data in the old shape — afterwards it is a migration of real health records rather than an edit. The circumplex model says valence and arousal span momentary affect: `energy` and `anxiety` were both arousal differing only in valence, which is why answering all three felt like the same question three ways, and `sleepRested` is largely absorbed by the pair. `flatness` stays separate on purpose — it is the absence of a response, not a point on the circumplex, and it is what antipsychotics blunt. Fixing the windline came with it: it followed the single anxiety item, so a day spent busy and *delighted* drew the same restless line as one spent agitated. It now follows arousal modulated by unpleasantness, which is the actual high-arousal/unpleasant corner. `arousal` needed per-question scale ends, since "weinig / veel" would ask somebody to rate feeling slowed down as a small amount of restlessness. |
+| 2026-08-05 | The pilot's small things: the **light-theme switch** (the palette, persistence and contrast floors had existed since Phase 0 — only the switch in Settings was missing), **Google sign-in** beside email with the disclosure stated on the screen, and **what was actually taken** on a dose. That last is the question a tick cannot answer, and it reaches the printable A4 as the days something different was taken. Setting up **Firebase Hosting** found that `pnpm build` with no `.env.production` ships a **blank white screen** — the build succeeds and Firebase throws while its modules evaluate, before any error boundary exists. Fixed with fallback markup inside `#root` (plain markup, because the new CSP is `script-src 'self'`), named variables in the failure, and a CI step that greps the built bundle for the project id. |
 | 2026-08-05 | **Phase 9 complete** — P9.5 search by name, and P9.4 addressed invites underneath it. The two ways in differ in who agreed to what: a code was *handed over*, so it connects; a name was *found*, so it asks. `forUid` is the whole of it — one clause in `redeemable()`, one on the claim, and `list` widened to the addressee, which gives the console an inbox with no server and no second collection. Doing nothing is the decline and there is no button for it. Walked over the wire as three people: a stranger holding the code can neither join (403) nor burn it (403), an unverified doctor is refused (403) and the same doctor accepted once approved (200). Two defects found in `readMedicationMarkers` while wiring adoption into it: every changeLog entry drew a vertical rule, so a release printed a raw uid onto the A4 a psychiatrist reads — ownership changes are now logged and never drawn; and the marker date used `toISOString().slice(0, 10)`, the UTC antipattern this file warns about, putting a 23:30 Brussels change on the wrong day. 11 more rules tests (182), 11 more unit tests (347). |
 | 2026-08-05 | P9.4 — **a doctor hands over a code and the person is connected.** The research finding that shaped it: there is no public register to search — RIZIV publishes a web form, not an API — so the directory can only ever cover clinicians who already use luwte, and the copy says that rather than implying a national lookup. `clinicianDirectory/{code}` uses the code as the document id, so `get`-by-code is free and a doctor who does not want to be listed still has a working code; `list` is restricted to `listed == true`, so an unfiltered sweep is refused rather than filtered. **It needed no new write path**: the patient always writes their own circle, so the code names the clinician and the patient's write grants — which is also why "the doctor invites the patient" collapses into this same flow. 8 more rules tests (171). Walked as three people: applied, approved, code issued, wrong code refused plainly, right code confirmed and connected. |
 | 2026-08-05 | P9.3 — **verification of a clinician is now a decision a person makes at `/admin`** (Thomas, D27), not a script somebody runs. A clinician applies with their name, discipline and RIZIV number; an admin checks it against the register and approves. That moved the root of trust down one level rather than removing it: `admins/` is written only with the Admin SDK, and an admin cannot even make another admin. Also the clamp Thomas approved: **a circle card naming somebody as a clinician requires that they are one**, on create *and* update, since without the update half a supporter card could be promoted in a second write. Anyone can still be a supporter — verification gates the clinical role only. `scripts/make-admin.mjs` refuses any project id not starting with `demo-`. 18 more rules tests (163), 8 more unit tests (336). Walked it as three people: applied, approved, and confirmed 403 → 200 on naming her as clinician either side of the decision. |

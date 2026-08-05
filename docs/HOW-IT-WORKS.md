@@ -153,8 +153,8 @@ that already happened.
 
 ### The patient
 
-- *In the evening I open the app, answer six short questions about my day, and
-  optionally write a line about it. It takes under a minute.* → Check-in
+- *In the evening I open the app, answer four short questions about my day, and
+  optionally write a line about it. It takes well under a minute.* → Check-in
 - *Once a week there are four extra questions about restlessness, stiffness,
   drowsiness and hopelessness.* → Weekly extra
 - *If I answer the hopelessness question at the very top of the scale, the app
@@ -342,8 +342,9 @@ The person
   their settings        reminder hour, which notifications they want
 
   Daily check-ins       one page per day, filed by date
-                        mood, energy, hours slept, how rested,
-                        restlessness, flatness, and their own line of text
+                        how the day felt, how restless or slowed down it was,
+                        whether they could feel anything, hours slept,
+                        and their own line of text
 
   Weekly extras         one page per week
                         restlessness, stiffness, drowsiness, hopelessness

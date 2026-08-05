@@ -9,18 +9,53 @@ export type Scale = z.infer<typeof scaleSchema>;
  * rather than an auto id. That makes one-per-day idempotent and makes an
  * offline write safely mergeable when it finally syncs.
  */
+/**
+ * The daily check-in, on the two axes that actually span momentary feeling —
+ * plus the one thing they cannot express.
+ *
+ * The circumplex model of core affect holds that two orthogonal dimensions
+ * cover it: **valence** (pleasant to unpleasant) and **arousal** (activated to
+ * deactivated). The earlier six items did not respect that. `mood` was
+ * valence; `energy` and `anxiety` were both *arousal*, differing only in
+ * valence, which is why answering all three felt like being asked the same
+ * question three ways. Together with valence, one arousal item already tells
+ * energised from agitated: high arousal and pleasant is one, high arousal and
+ * unpleasant is the other.
+ *
+ * **`flatness` is not folded in, and that is the point.** It is not a position
+ * on the circumplex — it is the absence of a response at all, which no
+ * combination of valence and arousal can express. It is a core negative
+ * symptom in psychosis, a core depression symptom, and the thing
+ * antipsychotics blunt, which makes it precisely the item that changes an
+ * appointment. The Maastricht experience-sampling tradition keeps positive and
+ * negative affect apart for the same reason.
+ *
+ * Three scales instead of five, and no clinical signal given up. Under half a
+ * minute, which is the other half of the argument: this is a logbook somebody
+ * unwell has to face every evening, and every question that earns its place
+ * makes the ones that do not more expensive.
+ */
 export const checkinSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  /** Valence: how pleasant or unpleasant the day felt. */
   mood: scaleSchema,
-  energy: scaleSchema,
+  /**
+   * Arousal: how activated or slowed-down, regardless of whether it was
+   * pleasant. Replaces `energy` and `anxiety`, which were the same axis.
+   */
+  arousal: scaleSchema,
   /**
    * A quantity, not a rating, so it is the one check-in field shown as a
    * number. BRAND's "never a visible number" governs the subjective scales,
    * where a number invites scoring yourself; hours slept has no such reading.
+   *
+   * `sleepRested` used to sit beside this and no longer does: sleep *quality*
+   * is largely absorbed by valence and arousal, and a watch cannot supply it
+   * either — consumer sleep staging validates weakly against polysomnography,
+   * so an automatic version would be a guess presented as a fact. Duration is
+   * different, and becomes automatic when a wearable is connected.
    */
   sleepHours: z.number().min(0).max(16),
-  sleepRested: scaleSchema,
-  anxiety: scaleSchema,
   /**
    * PRD 6.1 — the most important field in the product. Medication-induced
    * emotional blunting is absent from standard scales, and making it visible
@@ -49,14 +84,46 @@ export const weeklySchema = z.object({
 
 export type Weekly = z.infer<typeof weeklySchema>;
 
-/** The order the daily questions are asked in. One question per screen. */
+/**
+ * The order the daily questions are asked in. One question per screen.
+ *
+ * Each carries its own scale ends, because they are not all the same shape.
+ * Valence and flatness run from little to a lot; **arousal is bipolar** — both
+ * ends are a real state rather than an absence, and labelling it "weinig" to
+ * "veel" would ask people to rate slowness as a low amount of restlessness.
+ */
 export const CHECKIN_STEPS = [
-  { id: 'mood', questionKey: 'checkinMood', kind: 'scale' },
-  { id: 'energy', questionKey: 'checkinEnergy', kind: 'scale' },
-  { id: 'sleepHours', questionKey: 'checkinSleepHours', kind: 'hours' },
-  { id: 'sleepRested', questionKey: 'checkinSleep', kind: 'scale' },
-  { id: 'anxiety', questionKey: 'checkinAnxiety', kind: 'scale' },
-  { id: 'flatness', questionKey: 'checkinFlatness', kind: 'scale' },
+  {
+    id: 'mood',
+    questionKey: 'checkinMood',
+    kind: 'scale',
+    lowKey: 'scaleLow',
+    highKey: 'scaleHigh',
+  },
+  {
+    id: 'arousal',
+    questionKey: 'checkinArousal',
+    kind: 'scale',
+    lowKey: 'checkinArousalLow',
+    highKey: 'checkinArousalHigh',
+  },
+  {
+    id: 'flatness',
+    questionKey: 'checkinFlatness',
+    kind: 'scale',
+    lowKey: 'scaleLow',
+    highKey: 'scaleHigh',
+  },
+  // Last, and a number rather than a scale. It is the one item a wearable can
+  // eventually answer without asking, so it sits at the end where removing it
+  // later shortens the flow instead of leaving a hole in the middle.
+  {
+    id: 'sleepHours',
+    questionKey: 'checkinSleepHours',
+    kind: 'hours',
+    lowKey: 'scaleLow',
+    highKey: 'scaleHigh',
+  },
 ] as const;
 
 export const WEEKLY_STEPS = [

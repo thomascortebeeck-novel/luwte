@@ -1,35 +1,51 @@
 import { describe, expect, it } from 'vitest';
 import { WINDLINE_DAYS, dayUnrest, windlineSeries, type WindlineDay } from './windline';
 
-const settled: WindlineDay = { mood: 6, sleepRested: 6, anxiety: 1 };
-const unsettled: WindlineDay = { mood: 2, sleepRested: 2, anxiety: 7 };
-const middling: WindlineDay = { mood: 4, sleepRested: 4, anxiety: 4 };
+const settled: WindlineDay = { mood: 6, arousal: 1 };
+const unsettled: WindlineDay = { mood: 2, arousal: 7 };
+const middling: WindlineDay = { mood: 4, arousal: 4 };
 
 describe('dayUnrest', () => {
   it('runs from 0 to 1', () => {
-    expect(dayUnrest({ mood: 7, sleepRested: 7, anxiety: 1 })).toBe(0);
-    expect(dayUnrest({ mood: 1, sleepRested: 1, anxiety: 7 })).toBe(1);
-  });
-
-  it('sits in the middle for a middling day', () => {
-    expect(dayUnrest(middling)).toBeCloseTo(0.5, 5);
+    expect(dayUnrest({ mood: 7, arousal: 1 })).toBe(0);
+    expect(dayUnrest({ mood: 1, arousal: 7 })).toBe(1);
   });
 
   it('reads a restless day as more agitated than a calm one', () => {
     expect(dayUnrest(unsettled)).toBeGreaterThan(dayUnrest(settled));
   });
 
-  it('weights anxiety most heavily, because it reports unrest directly', () => {
-    const anxious = dayUnrest({ mood: 4, sleepRested: 4, anxiety: 7 });
-    const unrested = dayUnrest({ mood: 4, sleepRested: 1, anxiety: 4 });
-    const lowMood = dayUnrest({ mood: 1, sleepRested: 4, anxiety: 4 });
-    expect(anxious).toBeGreaterThan(unrested);
-    expect(unrested).toBeGreaterThan(lowMood);
+  /*
+   * The thing the old formula got wrong, and the reason this one is shaped
+   * around the circumplex rather than around a single anxiety item.
+   *
+   * Elation and agitation are both high arousal. Following arousal alone drew
+   * the same restless line for a day spent busy and delighted as for a day
+   * spent wound up and miserable — and telling somebody their good day looked
+   * unsettled is exactly the kind of false verdict BRAND forbids.
+   */
+  it('does not read an elated day as an unsettled one', () => {
+    const elated = dayUnrest({ mood: 7, arousal: 7 });
+    const agitated = dayUnrest({ mood: 1, arousal: 7 });
+    expect(elated).toBeLessThan(agitated);
+  });
+
+  it('still shows some movement on an elated day rather than flattening it', () => {
+    // Zeroing it would make a calm fortnight and an exhilarating one identical,
+    // which is a different falsehood from the one above.
+    expect(dayUnrest({ mood: 7, arousal: 7 })).toBeGreaterThan(dayUnrest({ mood: 7, arousal: 1 }));
+  });
+
+  it('is quiet when nothing is activated, however the day felt', () => {
+    // Low arousal is low arousal. A flat unhappy day is not an unsettled one,
+    // and the windline is not a happiness meter.
+    expect(dayUnrest({ mood: 1, arousal: 1 })).toBe(0);
   });
 
   it('clamps input that is out of range rather than escaping 0..1', () => {
-    expect(dayUnrest({ mood: -5, sleepRested: 99, anxiety: 42 })).toBeLessThanOrEqual(1);
-    expect(dayUnrest({ mood: -5, sleepRested: 99, anxiety: 42 })).toBeGreaterThanOrEqual(0);
+    expect(dayUnrest({ mood: -5, arousal: 42 })).toBeLessThanOrEqual(1);
+    expect(dayUnrest({ mood: -5, arousal: 42 })).toBeGreaterThanOrEqual(0);
+    expect(dayUnrest({ mood: 99, arousal: -7 })).toBeGreaterThanOrEqual(0);
   });
 });
 

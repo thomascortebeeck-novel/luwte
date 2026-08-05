@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { dictionaries, type Locale } from './i18n/index';
+import { CHECKIN_STEPS } from './model/checkin';
 import {
   INSIGHTS_METRICS,
   INSIGHTS_WINDOWS,
@@ -74,13 +75,26 @@ describe('positionOf', () => {
 });
 
 describe('insights metrics', () => {
-  it('draws mood, energy, flatness and sleep', () => {
+  it('draws mood, arousal, flatness and sleep', () => {
     expect(INSIGHTS_METRICS.map((m) => m.id)).toEqual([
       'mood',
-      'energy',
+      'arousal',
       'flatness',
       'sleepHours',
     ]);
+  });
+
+  /*
+   * The chart reads the check-in, so it has to move with it. A metric here
+   * that nothing writes any more draws a permanently empty line, which reads
+   * on the printed A4 as "this person stopped answering" rather than as
+   * "nobody asks this any more".
+   */
+  it('draws only what the check-in actually records', () => {
+    const asked = new Set(CHECKIN_STEPS.map((s) => s.id));
+    for (const metric of INSIGHTS_METRICS) {
+      expect(asked.has(metric.id), metric.id).toBe(true);
+    }
   });
 
   it('keeps sleep on its own scale rather than plotting hours as a 1..7 score', () => {

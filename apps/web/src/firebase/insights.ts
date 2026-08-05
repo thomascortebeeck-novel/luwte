@@ -33,7 +33,7 @@ export async function readInsights(
     byDate.set(document.id, {
       date: document.id,
       mood: typeof data.mood === 'number' ? data.mood : null,
-      energy: typeof data.energy === 'number' ? data.energy : null,
+      arousal: typeof data.arousal === 'number' ? data.arousal : null,
       flatness: typeof data.flatness === 'number' ? data.flatness : null,
       sleepHours: typeof data.sleepHours === 'number' ? data.sleepHours : null,
     });
@@ -41,7 +41,7 @@ export async function readInsights(
 
   return keys.map(
     (date) =>
-      byDate.get(date) ?? { date, mood: null, energy: null, flatness: null, sleepHours: null },
+      byDate.get(date) ?? { date, mood: null, arousal: null, flatness: null, sleepHours: null },
   );
 }
 

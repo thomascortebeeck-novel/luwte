@@ -21,8 +21,8 @@ import styles from './CheckIn.module.css';
 type Answers = Record<string, number>;
 
 /**
- * PRD 6.1 — the daily check-in. Six questions, one per screen, then an
- * optional diary line, plus four more once a week.
+ * PRD 6.1 — the daily check-in. Three scales and one number, one per screen,
+ * then an optional diary line, plus four more once a week.
  *
  * Nothing here blocks on the network. The write goes into Firestore's local
  * cache and syncs later, so the confirmation appears immediately even with no
@@ -60,7 +60,7 @@ export function CheckIn() {
     });
   }, [user, patient?.createdAt, timezone, today, thisWeek]);
 
-  const dailySteps = CHECKIN_STEPS.length; // six questions
+  const dailySteps = CHECKIN_STEPS.length;
   const diaryStep = dailySteps; // then the optional line
   const weeklyStart = diaryStep + 1;
   const totalSteps = weeklyStart + (weeklyDue ? WEEKLY_STEPS.length : 0);
@@ -73,10 +73,8 @@ export function CheckIn() {
     saveCheckin(user.uid, today, {
       date: today,
       mood: answers.mood as Scale,
-      energy: answers.energy as Scale,
+      arousal: answers.arousal as Scale,
       sleepHours: answers.sleepHours ?? 0,
-      sleepRested: answers.sleepRested as Scale,
-      anxiety: answers.anxiety as Scale,
       flatness: answers.flatness as Scale,
       ...(note.trim() ? { note: note.trim() } : {}),
       source: 'manual',
@@ -125,7 +123,18 @@ export function CheckIn() {
     t('scaleStep7'),
   ];
 
-  const renderScale = (id: string, questionKey: CopyKey) => (
+  /*
+   * The scale ends come from the step rather than being fixed, because they
+   * are not all the same shape: arousal is bipolar, where both ends are a real
+   * state, and "weinig / veel" would ask somebody to rate feeling slowed down
+   * as a small amount of restlessness.
+   */
+  const renderScale = (
+    id: string,
+    questionKey: CopyKey,
+    lowKey: CopyKey = 'scaleLow',
+    highKey: CopyKey = 'scaleHigh',
+  ) => (
     <>
       <p className={styles.question}>{t(questionKey)}</p>
       <div className={styles.answer}>
@@ -134,8 +143,8 @@ export function CheckIn() {
           legend={t(questionKey)}
           value={(answers[id] as ScaleValue | undefined) ?? null}
           onChange={(value) => setAnswer(id, value)}
-          lowLabel={t('scaleLow')}
-          highLabel={t('scaleHigh')}
+          lowLabel={t(lowKey)}
+          highLabel={t(highKey)}
           stepLabels={scaleLabels}
         />
       </div>
@@ -175,7 +184,7 @@ export function CheckIn() {
       canContinue = Number.isFinite(answers.sleepHours);
     } else {
       canContinue = answers[current.id] !== undefined;
-      body = renderScale(current.id, current.questionKey);
+      body = renderScale(current.id, current.questionKey, current.lowKey, current.highKey);
     }
   } else if (step === diaryStep) {
     canContinue = true; // the diary line is optional, always

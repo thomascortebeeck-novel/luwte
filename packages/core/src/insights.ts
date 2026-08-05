@@ -1,7 +1,7 @@
 import { previousDateKey, type DateKey } from './dates';
 
 /**
- * PRD 6.6 — one chart. Mood, energy, flatness, sleep over a selectable
+ * PRD 6.6 — one chart. Mood, arousal, flatness, sleep over a selectable
  * window, with medication changes marked as vertical rules.
  *
  * That last detail is the entire clinical value of the product: seeing
@@ -29,18 +29,18 @@ export function windowDateKeys(today: DateKey, weeks: InsightsWindow): DateKey[]
  * The metrics drawn. Sleep is on its own scale — hours, not 1..7 — so it is
  * marked as such rather than silently plotted against the same axis.
  */
-export type InsightsMetricId = 'mood' | 'energy' | 'flatness' | 'sleepHours';
+export type InsightsMetricId = 'mood' | 'arousal' | 'flatness' | 'sleepHours';
 
 export type InsightsMetric = {
   id: InsightsMetricId;
-  labelKey: 'checkinMood' | 'checkinEnergy' | 'checkinFlatness' | 'checkinSleepHours';
+  labelKey: 'checkinMood' | 'checkinArousal' | 'checkinFlatness' | 'checkinSleepHours';
   /** 1..7 for the subjective scales, hours for sleep. */
   scale: 'seven' | 'hours';
 };
 
 export const INSIGHTS_METRICS: readonly InsightsMetric[] = [
   { id: 'mood', labelKey: 'checkinMood', scale: 'seven' },
-  { id: 'energy', labelKey: 'checkinEnergy', scale: 'seven' },
+  { id: 'arousal', labelKey: 'checkinArousal', scale: 'seven' },
   // PRD 6.1 — the most important field in the product, and the reason the
   // chart exists at all.
   { id: 'flatness', labelKey: 'checkinFlatness', scale: 'seven' },
@@ -50,7 +50,7 @@ export const INSIGHTS_METRICS: readonly InsightsMetric[] = [
 export type InsightsPoint = {
   date: DateKey;
   mood: number | null;
-  energy: number | null;
+  arousal: number | null;
   flatness: number | null;
   sleepHours: number | null;
 };

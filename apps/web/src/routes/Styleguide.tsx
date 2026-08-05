@@ -73,20 +73,20 @@ export function Styleguide() {
         <Windline
           series={windlineSeries(
             [
-              { mood: 6, sleepRested: 6, anxiety: 1 },
-              { mood: 6, sleepRested: 5, anxiety: 2 },
-              { mood: 5, sleepRested: 5, anxiety: 2 },
+              { mood: 6, arousal: 1 },
+              { mood: 6, arousal: 2 },
+              { mood: 5, arousal: 2 },
               null,
-              { mood: 4, sleepRested: 3, anxiety: 5 },
-              { mood: 3, sleepRested: 2, anxiety: 6 },
-              { mood: 2, sleepRested: 2, anxiety: 7 },
-              { mood: 2, sleepRested: 2, anxiety: 7 },
-              { mood: 3, sleepRested: 3, anxiety: 6 },
+              { mood: 4, arousal: 5 },
+              { mood: 3, arousal: 6 },
+              { mood: 2, arousal: 7 },
+              { mood: 2, arousal: 7 },
+              { mood: 3, arousal: 6 },
               null,
-              { mood: 4, sleepRested: 4, anxiety: 4 },
-              { mood: 5, sleepRested: 5, anxiety: 3 },
-              { mood: 6, sleepRested: 6, anxiety: 2 },
-              { mood: 6, sleepRested: 6, anxiety: 1 },
+              { mood: 4, arousal: 4 },
+              { mood: 5, arousal: 3 },
+              { mood: 6, arousal: 2 },
+              { mood: 6, arousal: 1 },
             ] satisfies (WindlineDay | null)[],
           )}
           label="Overzicht van de laatste veertien dagen"
