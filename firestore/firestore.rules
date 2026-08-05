@@ -114,19 +114,32 @@ service cloud.firestore {
     }
 
     /*
-     * A circle card naming somebody as a clinician requires that they actually
-     * are one.
+     * D23, and D30 one role further out.
      *
-     * The patient's word decides *whose* clinician they are; it cannot decide
-     * *that they are one*. Without this, a patient could hand anyone a
-     * clinician card and that person would read their medication — and being
-     * persuaded to name someone "my doctor" is a thing that happens during an
-     * episode. Same reasoning as D23: a permission that cannot be granted to
-     * the wrong person cannot leak to them on a bad day.
+     * A circle card naming somebody a clinician or a nurse requires that an
+     * admin has verified them as one. The patient's word decides *whose*
+     * clinician somebody is; it cannot decide *that they are one*. Anyone at
+     * all can still be a supporter — verification gates the care roles and
+     * nothing else.
+     *
+     * **The kind matters too, not just the fact.** Verification records a
+     * `careRole`, derived from the discipline the admin checked, and naming
+     * somebody a clinician requires that theirs says clinician. Without that
+     * clause, verifying a nurse would quietly widen who may be named as a
+     * prescriber — the whole thing D30 must not do.
+     *
+     * A verification written before `careRole` existed has none, so it is
+     * read as 'clinician': those were all issued when clinician was the only
+     * verified role, and reading them as anything else would revoke a
+     * prescriber who was properly checked.
      */
-    function clinicianIsVerified(memberUid) {
-      return request.resource.data.role != 'clinician'
-             || exists(/databases/$(database)/documents/clinicians/$(memberUid));
+    function careRoleIsVerified(memberUid) {
+      return (request.resource.data.role != 'clinician'
+              && request.resource.data.role != 'nurse')
+             || (exists(/databases/$(database)/documents/clinicians/$(memberUid))
+                 && (request.resource.data.role != 'clinician'
+                     || get(/databases/$(database)/documents/clinicians/$(memberUid))
+                          .data.get('careRole', 'clinician') == 'clinician'));
     }
 
     /** An admin's decision may move these fields and nothing else. */
@@ -506,7 +519,7 @@ service cloud.firestore {
          * ever more than a family handing each other a link.
          */
         allow create: if honestMemberUid(memberUid)
-                      && clinicianIsVerified(memberUid)
+                      && careRoleIsVerified(memberUid)
                       && (isSelf(patientId)
                           || (isSelf(memberUid)
                               && request.resource.data.revokedAt == null
@@ -519,7 +532,7 @@ service cloud.firestore {
          */
         allow update: if isSelf(patientId)
                       && honestMemberUid(memberUid)
-                      && clinicianIsVerified(memberUid);
+                      && careRoleIsVerified(memberUid);
         allow delete: if false;
       }
 

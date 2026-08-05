@@ -1,4 +1,10 @@
-import { PERMISSION_SENTENCE, grantedKeys, inviteLink, isActive } from '@luwte/core';
+import {
+  CIRCLE_ROLE_COPY,
+  PERMISSION_SENTENCE,
+  grantedKeys,
+  inviteLink,
+  isActive,
+} from '@luwte/core';
 import { Button, Hairline, Screen } from '@luwte/ui';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -47,7 +53,7 @@ export function Circle() {
 
   const nameOf = (member: CircleMemberRecord) =>
     member.relation?.trim() ||
-    t(member.role === 'clinician' ? 'circleRoleClinician' : 'circleRoleSupporter');
+    t(CIRCLE_ROLE_COPY[member.role]);
 
   return (
     <Screen

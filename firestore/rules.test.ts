@@ -71,9 +71,17 @@ const asDoctor = () => testEnv.authenticatedContext(DOCTOR).firestore();
 const asStranger = () => testEnv.unauthenticatedContext().firestore();
 
 /** The admin marks a clinician verified out of band. Nobody else can. */
-const verifyClinician = (uid: string) =>
+/**
+ * An admin verification. `careRole` is deliberately absent by default, which
+ * is also what every verification written before D30 looks like — those are
+ * read as 'clinician', since clinician was the only verified role at the time.
+ */
+const verifyClinician = (uid: string, careRole?: 'clinician' | 'nurse') =>
   testEnv.withSecurityRulesDisabled(async (ctx) => {
-    await setDoc(doc(ctx.firestore(), 'clinicians', uid), { verifiedAt: new Date() });
+    await setDoc(doc(ctx.firestore(), 'clinicians', uid), {
+      verifiedAt: new Date(),
+      ...(careRole ? { careRole } : {}),
+    });
   });
 
 /** The patient puts them in the circle, with medication granted. */
@@ -1734,6 +1742,196 @@ describe('naming somebody as your clinician', () => {
         role: 'clinician',
         permissions: card('clinician').permissions,
       }),
+    );
+  });
+});
+
+/*
+ * D30 — a nurse, and the clause that keeps the role from being a way round
+ * everything above.
+ */
+describe('naming somebody as your nurse', () => {
+  const card = (role: string) => ({
+    memberUid: DOCTOR,
+    role,
+    permissions: {
+      checkins: true,
+      medication: true,
+      doses: true,
+      health: false,
+      feed: false,
+      calendar: true,
+      plan: false,
+    },
+    grantedAt: new Date(),
+    revokedAt: null,
+  });
+
+  it('REFUSES a nurse card for somebody nobody verified', async () => {
+    /*
+     * Without this the whole D23 protection is bypassed by calling somebody a
+     * nurse instead of a doctor — and a nurse the person granted medication is
+     * reading the most diagnostic thing here.
+     */
+    await assertFails(setDoc(doc(asJonas(), 'patients', JONAS, 'circle', DOCTOR), card('nurse')));
+  });
+
+  it('works once an admin verified them as one', async () => {
+    await verifyClinician(DOCTOR, 'nurse');
+    await assertSucceeds(setDoc(doc(asJonas(), 'patients', JONAS, 'circle', DOCTOR), card('nurse')));
+  });
+
+  it('REFUSES naming a verified nurse as a clinician', async () => {
+    /*
+     * The clause D30 turns on. `isPrescriber` requires `role == 'clinician'`,
+     * so without this a verified nurse could be given a clinician card and
+     * would inherit the ability to write what somebody is prescribed —
+     * exactly what the decision says a nurse never does.
+     *
+     * The admin decides *what kind* of professional; the patient decides
+     * whose. Neither can decide the other's half.
+     */
+    await verifyClinician(DOCTOR, 'nurse');
+    await assertFails(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'circle', DOCTOR), card('clinician')),
+    );
+  });
+
+  it('REFUSES the same promotion in a second write', async () => {
+    await verifyClinician(DOCTOR, 'nurse');
+    await setDoc(doc(asJonas(), 'patients', JONAS, 'circle', DOCTOR), card('nurse'));
+    await assertFails(
+      updateDoc(doc(asJonas(), 'patients', JONAS, 'circle', DOCTOR), { role: 'clinician' }),
+    );
+  });
+
+  it('lets a verified clinician be named a nurse, which grants less', async () => {
+    // Odd but harmless: they would simply lose the ability to prescribe for
+    // this person. Refusing it would be the app arguing with the patient
+    // about what somebody is to them.
+    await verifyClinician(DOCTOR, 'clinician');
+    await assertSucceeds(setDoc(doc(asJonas(), 'patients', JONAS, 'circle', DOCTOR), card('nurse')));
+  });
+
+  it('still reads a verification written before careRole existed as a clinician', async () => {
+    // Those were all issued when clinician was the only verified role, and
+    // reading them as anything else would revoke a properly checked
+    // prescriber the moment this shipped.
+    await verifyClinician(DOCTOR);
+    await assertSucceeds(
+      setDoc(doc(asJonas(), 'patients', JONAS, 'circle', DOCTOR), card('clinician')),
+    );
+  });
+});
+
+describe('what a nurse may do once they are in the circle', () => {
+  const seedNurse = () =>
+    testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'clinicians', DOCTOR), {
+        verifiedAt: new Date(),
+        careRole: 'nurse',
+      });
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'circle', DOCTOR), {
+        memberUid: DOCTOR,
+        role: 'nurse',
+        permissions: {
+          checkins: true,
+          medication: true,
+          doses: true,
+          health: false,
+          feed: false,
+          calendar: true,
+          plan: false,
+        },
+        grantedAt: new Date(),
+        revokedAt: null,
+      });
+    });
+
+  it('reads medication when the person granted it', async () => {
+    await seedNurse();
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'medications', 'med1'), {
+        name: 'Quetiapine',
+        dose: '200 mg',
+        times: ['20:00'],
+        prescribedBy: null,
+        changeLog: [],
+      });
+    });
+    await assertSucceeds(getDoc(doc(asDoctor(), 'patients', JONAS, 'medications', 'med1')));
+  });
+
+  it('REFUSES a nurse writing medication, which is the point of the role', async () => {
+    /*
+     * `isPrescriber` requires `role == 'clinician'`, so this needed no new
+     * code — but it is the sentence the whole decision rests on, and a test
+     * that fails loudly is what keeps it true through the next refactor.
+     */
+    await seedNurse();
+    await assertFails(
+      setDoc(doc(asDoctor(), 'patients', JONAS, 'medications', 'med2'), {
+        name: 'Iets anders',
+        dose: '50 mg',
+        times: ['08:00'],
+        prescribedBy: DOCTOR,
+        changeLog: [],
+      }),
+    );
+  });
+
+  it('offers something for the calendar, and only as a suggestion', async () => {
+    await seedNurse();
+    await assertSucceeds(
+      setDoc(doc(asDoctor(), 'patients', JONAS, 'activities', 'a1'), {
+        title: 'Wandelen',
+        date: '2026-08-05',
+        startTime: '',
+        withPerson: '',
+        createdBy: DOCTOR,
+        status: 'suggested',
+        // "Suggest a week" — one offer the person accepts once, landing on
+        // every day it names. Still an offer.
+        recurrence: 'FREQ=WEEKLY;BYDAY=MO,WE,FR',
+      }),
+    );
+  });
+
+  it('REFUSES a nurse putting something straight on the calendar', async () => {
+    /*
+     * "A supporter may offer, never place" is the resolution of the central
+     * tension of this product, and D30 says explicitly that it does not bend
+     * for a job title.
+     */
+    await seedNurse();
+    await assertFails(
+      setDoc(doc(asDoctor(), 'patients', JONAS, 'activities', 'a2'), {
+        title: 'Wandelen',
+        date: '2026-08-05',
+        startTime: '',
+        withPerson: '',
+        createdBy: DOCTOR,
+        status: 'accepted',
+        recurrence: null,
+      }),
+    );
+  });
+
+  it('REFUSES a nurse accepting their own suggestion', async () => {
+    await seedNurse();
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'patients', JONAS, 'activities', 'a3'), {
+        title: 'Wandelen',
+        date: '2026-08-05',
+        startTime: '',
+        withPerson: '',
+        createdBy: DOCTOR,
+        status: 'suggested',
+        recurrence: null,
+      });
+    });
+    await assertFails(
+      updateDoc(doc(asDoctor(), 'patients', JONAS, 'activities', 'a3'), { status: 'accepted' }),
     );
   });
 });

@@ -409,7 +409,11 @@ export const nl = {
   circleRevoke: 'Toegang stoppen',
   circleRestore: 'Weer toelaten',
   circleRoleSupporter: 'Naaste',
-  circleRoleClinician: 'Zorgverlener',
+  circleRoleClinician: 'Arts',
+  // D30 — leest je medicatie als je dat geeft, schrijft ze nooit voor, en
+  // stelt voor in plaats van in te plannen. Net als een naaste.
+  circleRoleNurse: 'Verpleegkundige',
+  circleRoleNurseNote: 'Kan geen medicatie voorschrijven, en stelt voor in plaats van in te plannen.',
   circleRelation: 'Wie is dit voor jou?',
   circleRelationHint: 'Bijvoorbeeld broer, mama, psychiater.',
   circleOpenInvites: 'Uitnodigingen die openstaan',

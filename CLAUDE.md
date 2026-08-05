@@ -191,12 +191,19 @@ tasks would be ceremony.
   Narrowing stays instant and silent — asking somebody whether they are sure
   they want to stop sharing is the app arguing with them about their own
   decision.
-- **⚠ A nurse role is decided and not built** (D30, 2026-08-05). A nurse reads
-  medication, never prescribes (`isPrescriber` already requires
-  `role == 'clinician'`), needs admin verification like a clinician, and
-  **still suggests rather than places** — "a supporter may offer, never place"
-  is the resolution of the central tension of this product and does not bend
-  for a job title. They get "suggest a week" instead.
+- **A nurse reads medication if granted, and never prescribes** (D30, built
+  2026-08-05). `isPrescriber` requires `role == 'clinician'`, so that half
+  needed no code. Two halves did. **A nurse card requires admin verification
+  like a clinician card** — without that, D23 is bypassed by calling somebody
+  a nurse. And **verification records *which*** (`careRole`, derived from the
+  discipline), so a verified nurse cannot then be named a clinician and
+  inherit prescribing. The admin decides what kind of professional; the
+  patient decides whose; neither decides the other's half.
+- **A nurse still suggests rather than places.** "A supporter may offer, never
+  place" is the resolution of the central tension of this product and does not
+  bend for a job title. "Suggest a week" needed no new concept: a *recurring*
+  suggestion is one offer accepted with one tap that then lands on every day
+  it names.
 - **luwte may carry a conclusion somebody else is licensed to draw, and may
   never draw one.** Under EU MDR it is *intended purpose* that makes software a
   medical device. Relaying a CE-marked device's own result, attributed to it,
@@ -259,12 +266,15 @@ Every screen, by who it is for:
 deletion, and the family pilot. Phase 10 is the thirteen features Thomas
 asked for; the plan and its priority order are in
 [docs/superpowers/plans/2026-08-05-phase-10-thirteen-features.md](docs/superpowers/plans/2026-08-05-phase-10-thirteen-features.md).
-Built so far: the theme switch, Google sign-in, the actual dose taken,
-hosting, the check-in redesign, real recurrence, the calendar's day and week
-views, and asking pleasure and mastery less often. **Still open:** the diary
-prompts and breathing exercises (feature 5), and the three decided-but-unbuilt
-items above — D29 dose sharing, D30 the nurse role, and the Garmin ingestion,
-which is blocked on Garmin's approval and on a Blaze decision.
+**Twelve of the thirteen are built.** Only **feature 11, the Garmin
+ingestion**, is not, and it is blocked on two things outside the code:
+Garmin's own approval of an application, and reversing D15 to put Blaze on a
+project — OAuth 2.0 with a client secret and a push callback cannot live in a
+browser. The design is settled in the plan: the patient decides who sees it
+(GDPR Art. 15 makes "the doctor grants access" non-compliance rather than a
+product choice), cardiac numbers are stored and not charted by default, and
+luwte may carry Garmin's own CE-marked conclusion attributed to Garmin while
+never drawing one itself.
 
 Nothing needs a Firebase project. `pnpm emulators` plus `pnpm dev` is the
 whole setup.
@@ -721,6 +731,9 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-05 | **D30 built — a nurse.** Most of it was already true: `isPrescriber` requires `role == 'clinician'`, and the activity `create` branch already refuses anything but a suggestion from a circle member. Two things were not. **A nurse card needs admin verification**, or D23 is bypassed by calling somebody a nurse instead of a doctor. And **verification now records *which*** — `careRole`, derived from the discipline the admin checked — because without it a verified nurse could be named a clinician on a card and inherit prescribing, which is the one thing the decision forbids. `psycholoog` is non-prescribing for the same reason as `verpleegkundige`, and `andere` resolves to the narrower answer. A verification written before `careRole` reads as clinician, since clinician was the only verified role at the time. **"Suggest a week" needed no new concept**: a recurring suggestion is one offer accepted with one tap that lands on every day it names — a batch of fourteen to accept individually was the tedium the decision was about. `circleRoleClinician` renamed "Zorgverlener" → "Arts", because a nurse *is* a zorgverlener and the old word stopped being precise. 27 more unit tests (478), 11 more rules tests (220). |
+| 2026-08-05 | **The early-warning-signs plan** (feature 5). The person's own pairs of *what I notice* and *what I do*, with its own `plan` permission — sharing what you do when it starts going wrong is a different decision from sharing how a Tuesday felt. Deliberately not a clinical key: the point of a relapse-prevention plan is that the people around you know it, so a confirmation would put friction on the thing that works. **luwte never matches anything against it, and the screen says so** — comparing a check-in to somebody's warning signs is clinical monitoring, Class IIa, the line this product does not cross. Delete is allowed here unlike almost everywhere else, because a plan is a current intention rather than a record. |
+| 2026-08-05 | **Breathing, grounding, and a diary question that changes** (feature 5). Short, guided, externally focused and eyes open is the safe subset for somebody with a psychosis history; long silent unguided sitting is where the case reports come from — so a timed breathing guide and 5-4-3-2-1 grounding, and a test asserting those are the only two. No meditation timer, no body scan, no video. **Neither records anything**, because "ignoring it costs nothing" is only true while there is nothing to ignore it against. The diary question rotates by day with the original wording still in the rotation. |
 | 2026-08-05 | **D29 built — family may be granted medication and doses.** The reversal of a rule this file called non-negotiable, decided by Thomas and now in the code. Three things carry the weight the ban used to. They are **two permissions**, because *what you are prescribed* and *whether you took it* are clinically different questions and somebody may well want a partner to see the first and not the second. A dose **still never reaches the feed** — being allowed to look is not the same as being told, and a notification per pill is what turned adherence into a performance. And turning either on **stops to say what it means**, naming the person, then writes to a log at `/circle/log` only they can read; narrowing stays instant and silent. Every test that asserted the old refusal was **rewritten to assert what replaced it**, never deleted, so the diff records the reversal. Walked over the wire as the brother: granted neither 403/403, doses only 403/200, medication only 200/403, both 200/200, revoked 403/403 — and refused writing either. `permissionsSchema` defaults `doses` to false so a card written before D29 parses as never granted. 22 more unit tests (451), 13 more rules tests (201). |
 | 2026-08-05 | **The calendar's two views, and asking how it went less often.** One anchor date with a day view and a week view of it, navigable in either direction, today one tap away. Seven columns was built and then removed after measuring: inside the 640px reading measure they come out at 83px and a title wraps to three lines, so the week stays stacked. The completion question keeps both halves — mastery and pleasure genuinely come apart — and now appears the first time then every fifth, counting completions rather than answers so a skip is not re-asked tomorrow. What somebody *expected* is captured at planning time and shown beside the answer, which is the half of the research that predicts more; a supporter can never write it. **Two live defects found by walking it.** A second "Vandaag" button that did something different from the footer's — unresolvable through a screen reader, now "Terug naar vandaag" and only present once you have left. And `ActivityRating` rendered two scales with the question only in an `aria-label`, so a sighted person saw seven identical dots between "weinig" and "veel", twice, with nothing saying which was which. 30 more unit tests (412), 2 more rules tests (188). |
 | 2026-08-05 | **A live AA failure in the light theme, shipped since Phase 5.** `--on-self` exists because `--diep-l` on `--zeeglas-l` is 4.20:1 — and contrast is symmetric, so `--zeeglas-l` **as text** fails identically. The calendar had been drawing "today" in it the whole time. It survived because `contrast.test.ts` lists "the pairs actually rendered today" and the button was the pairing anybody looked at. Fixed the way that file prescribes for amber — a darker `--self-text` (#3A755D, 4.62:1) rather than a relaxed floor — with a test asserting the old colour still fails, so the reason is recorded rather than erased. |

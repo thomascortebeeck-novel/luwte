@@ -54,7 +54,10 @@ export {
   type WindlineDay,
 } from './windline';
 export {
+  CIRCLE_ROLE_COPY,
   CLINICAL_KEYS,
+  VERIFIED_ROLES,
+  needsVerification,
   DEFAULT_CLINICIAN_PERMISSIONS,
   DEFAULT_PERMISSIONS,
   PERMISSION_CONFIRM,
@@ -155,6 +158,8 @@ export {
 } from './model/consent';
 export {
   DECISION_KEYS,
+  PRESCRIBING_DISCIPLINES,
+  careRoleFor,
   clinicianDirectorySchema,
   clinicianRequestSchema,
   competencyCode,
@@ -169,6 +174,7 @@ export {
   type Discipline,
 } from './model/clinician';
 export {
+  accountRoleFor,
   keepsOwnLogbook,
   onboardingRoles,
   roleSchema,

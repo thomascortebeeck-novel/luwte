@@ -32,7 +32,8 @@ anything. It shows what a person wrote to humans who decide.
 |---|---|---|
 | **Patient** | The person recovering. The app is theirs. | Everything about themselves |
 | **Supporter** | Family, a friend, a peer. | Only what the patient specifically granted, per person |
-| **Clinician** | The psychiatrist or care team. | Check-ins, medication, side effects — only after the patient grants it |
+| **Clinician** | The psychiatrist or GP. | Check-ins, medication, side effects — only after the patient grants it |
+| **Nurse** | A nurse or practice assistant. Verified like a doctor. | The same, if granted — but never prescribes, and suggests rather than schedules |
 | **Admin** | Whoever runs the service. | **No patient content, ever** |
 
 A patient can have many supporters and many clinicians. A supporter can
@@ -138,9 +139,23 @@ never write either.
 
 | Condition | Who decides |
 |---|---|
-| They are a verified clinician at all | An admin, checked by hand, out of band |
+| They are a verified care professional at all | An admin, checked by hand, out of band |
+| They are the kind who may prescribe — a doctor, not a nurse | An admin, from the discipline they checked |
 | They are in this person's circle, with medication shared | The patient |
-| They were invited *as* a clinician, not as a supporter | The patient |
+| They were invited *as* a clinician, not as a nurse or a supporter | The patient |
+
+The second row is what makes a nurse a real role rather than a label. A nurse
+can be verified, invited, and given the medication permission — and still
+cannot be named as the person who prescribed anything, because the admin
+recorded what kind of professional they are and the app checks it. **The admin
+decides what kind; the patient decides whose; neither decides the other's
+half.**
+
+A nurse also **suggests rather than schedules**, exactly like a family member.
+That is not an oversight about job titles: a person's own day is theirs, and
+something appearing on it that they did not agree to is a different product
+for the person living in it. What a nurse gets instead is a suggestion that
+repeats — offering a week is one action, and accepting it is one tap.
 
 Being a doctor somewhere is not the same as being *this* person's doctor. The
 patient's word settles it, and they can withdraw it at any moment.

@@ -11,8 +11,37 @@ import type { CopyKey } from '../i18n/types';
  * file is detail; that one line is the design.
  */
 
-export const circleRoleSchema = z.enum(['supporter', 'clinician']);
+/**
+ * D30 — a nurse or practice assistant is a third kind of member.
+ *
+ * They read medication if the person grants it, they are verified by an admin
+ * exactly like a clinician, and they **never prescribe** — `isPrescriber` in
+ * the rules requires `role == 'clinician'`, so that needed no new code.
+ *
+ * They also still *suggest* rather than place. "A supporter may offer, never
+ * place" is the resolution of the central tension of this product (PRD 6.3,
+ * D21) and it does not bend for a job title: somebody writing onto another
+ * person's day directly is a different product for the person living in it.
+ * What they get instead is a suggestion that can repeat, so offering a week
+ * is one action and accepting it is one tap.
+ */
+export const circleRoleSchema = z.enum(['supporter', 'clinician', 'nurse']);
 export type CircleRole = z.infer<typeof circleRoleSchema>;
+
+/** What each role is called on screen. One place, so a third role cannot be
+ *  added and then silently displayed as one of the other two. */
+export const CIRCLE_ROLE_COPY: Record<CircleRole, CopyKey> = {
+  supporter: 'circleRoleSupporter',
+  clinician: 'circleRoleClinician',
+  nurse: 'circleRoleNurse',
+};
+
+/** The roles an admin must have verified before a card may name somebody one. */
+export const VERIFIED_ROLES = ['clinician', 'nurse'] as const satisfies readonly CircleRole[];
+
+export function needsVerification(role: CircleRole): boolean {
+  return (VERIFIED_ROLES as readonly CircleRole[]).includes(role);
+}
 
 /*
  * D29 — `medication` and `doses` are two permissions, not one.

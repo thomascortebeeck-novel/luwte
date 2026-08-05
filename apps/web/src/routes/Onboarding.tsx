@@ -1,4 +1,9 @@
-import { DEFAULT_CHECKIN_HOUR, keepsOwnLogbook, type OnboardingRole } from '@luwte/core';
+import {
+  DEFAULT_CHECKIN_HOUR,
+  accountRoleFor,
+  keepsOwnLogbook,
+  type OnboardingRole,
+} from '@luwte/core';
 import { Button, Field, Screen } from '@luwte/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
@@ -54,7 +59,10 @@ export function Onboarding() {
     }
     void readInviteByCode(code)
       .then((invite) => {
-        if (invite) setRole(invite.role);
+        // A nurse belongs in the console beside the clinicians — see
+        // `accountRoleFor` for why the circle role and the account role are
+        // two different questions.
+        if (invite) setRole(accountRoleFor(invite.role));
       })
       .catch(() => {
         // An unreadable invite just means the question gets asked normally.

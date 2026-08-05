@@ -1,4 +1,5 @@
 import {
+  CIRCLE_ROLE_COPY,
   PERMISSION_CONFIRM,
   isActive,
   isClinicalKey,
@@ -98,7 +99,7 @@ export function CircleMember() {
 
   const title =
     member.relation?.trim() ||
-    t(member.role === 'clinician' ? 'circleRoleClinician' : 'circleRoleSupporter');
+    t(CIRCLE_ROLE_COPY[member.role]);
 
   /*
    * A whole screen rather than a dialog. What it says is the thing being

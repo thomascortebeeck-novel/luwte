@@ -63,7 +63,7 @@ describe('Invite', () => {
 
   it('starts a clinician on the clinical picture and nothing social', async () => {
     renderInvite();
-    await userEvent.click(screen.getByRole('radio', { name: 'Zorgverlener' }));
+    await userEvent.click(screen.getByRole('radio', { name: 'Arts' }));
 
     expect(checkbox('Kan zien hoe je je voelde.')).toBeChecked();
     expect(checkbox('Kan zien welke medicatie je neemt.')).toBeChecked();
@@ -92,6 +92,27 @@ describe('Invite', () => {
         plan: false,
       },
     });
+  });
+
+  /*
+   * D30 — a nurse is a third choice, and the screen says at the point of
+   * choosing what it means. "Verpleegkundige" does not on its own tell
+   * somebody that this person cannot prescribe and cannot put anything on
+   * their calendar.
+   */
+  it('offers a nurse, and says there what a nurse cannot do', async () => {
+    renderInvite();
+    await userEvent.click(screen.getByRole('radio', { name: 'Verpleegkundige' }));
+    expect(screen.getByText(/Kan geen medicatie voorschrijven/)).toBeInTheDocument();
+  });
+
+  it('starts a nurse narrow, like anyone else the person invites', async () => {
+    // Reading medication is something this person decides to give, not
+    // something a job title collects on arrival.
+    renderInvite();
+    await userEvent.click(screen.getByRole('radio', { name: 'Verpleegkundige' }));
+    expect(checkbox('Kan zien welke medicatie je neemt.')).not.toBeChecked();
+    expect(checkbox('Kan je agenda zien en iets voorstellen.')).toBeChecked();
   });
 
   it('shows the link to share once it exists', async () => {

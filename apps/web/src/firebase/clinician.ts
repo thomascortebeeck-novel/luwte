@@ -1,5 +1,6 @@
 import {
   DEFAULT_CLINICIAN_PERMISSIONS,
+  careRoleFor,
   inviteCode,
   paths,
   prefixRange,
@@ -236,6 +237,14 @@ export async function decideRequest(
       verifiedBy: adminUid,
       discipline: request.discipline,
       rizivNumber: request.rizivNumber,
+      /*
+       * D30 — *what kind* of professional, not only that they are one. This
+       * is what stops a verified nurse from being named a clinician on a
+       * circle card and inheriting the ability to prescribe. Derived from the
+       * discipline the admin just checked against the register, so it is not
+       * a separate judgement they have to remember to make.
+       */
+      careRole: careRoleFor(request.discipline),
     });
 
     /*

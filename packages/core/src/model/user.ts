@@ -27,6 +27,22 @@ export function keepsOwnLogbook(role: OnboardingRole): boolean {
 }
 
 /**
+ * What kind of *account* somebody arriving on an invite needs, given what the
+ * patient called them on it.
+ *
+ * These are two different questions and D30 is where they come apart. The
+ * circle role says what somebody is **to one patient** — a nurse to this
+ * person, a supporter to another. The account role decides which screens they
+ * get and where signing in takes them, and a nurse belongs in the console
+ * beside the clinicians: same application to be verified, same patient list,
+ * same per-patient overview. What they may *do* there is settled by the
+ * circle card and the rules, never by this.
+ */
+export function accountRoleFor(circleRole: 'supporter' | 'clinician' | 'nurse'): OnboardingRole {
+  return circleRole === 'supporter' ? 'supporter' : 'clinician';
+}
+
+/**
  * PRD 5.5 — Firebase Auth cannot be pinned to Europe, so it holds an email
  * and nothing else. Everything identifying lives here, in Firestore, under
  * the pseudonymous uid.

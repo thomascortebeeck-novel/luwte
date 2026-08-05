@@ -405,7 +405,11 @@ export const en: Dictionary = {
   circleRevoke: 'Stop their access',
   circleRestore: 'Let them back in',
   circleRoleSupporter: 'Someone close',
-  circleRoleClinician: 'Care team',
+  circleRoleClinician: 'Doctor',
+  // D30 — reads your medication if you grant it, never prescribes, and
+  // suggests rather than schedules. The same as someone close.
+  circleRoleNurse: 'Nurse',
+  circleRoleNurseNote: 'Cannot prescribe medication, and suggests rather than schedules.',
   circleRelation: 'Who is this to you?',
   circleRelationHint: 'Brother, mum, psychiatrist — your words.',
   circleOpenInvites: 'Invites still open',

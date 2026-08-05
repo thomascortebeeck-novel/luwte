@@ -23,6 +23,37 @@ export const disciplines = [
 export type Discipline = (typeof disciplines)[number];
 
 /**
+ * D30 — which disciplines may be named as *the prescriber* on a medication.
+ *
+ * The admin decides whether somebody is a real care professional; the patient
+ * decides whose they are. This is the third question in between: **what kind**
+ * of professional, which is what stops a verified nurse being named a
+ * clinician on a card and inheriting the ability to prescribe. Without it,
+ * verifying a nurse would quietly widen who can write medication — the D23
+ * protection, one role further out.
+ *
+ * A psychologist is in the non-prescribing list for the same reason a nurse
+ * is: they cannot prescribe in Belgium, and letting the app record one as the
+ * prescriber would make `prescribedBy` mean less than it says. `andere` is
+ * unknown, and unknown resolves to the narrower answer — an admin who knows
+ * better can decline the request and ask them to reapply.
+ */
+export const PRESCRIBING_DISCIPLINES = [
+  'psychiater',
+  'huisarts',
+] as const satisfies readonly Discipline[];
+
+/**
+ * What a verified person may be named on a circle card. Written into
+ * `clinicians/{uid}` by the admin's decision, and checked by the rules.
+ */
+export function careRoleFor(discipline: Discipline): 'clinician' | 'nurse' {
+  return (PRESCRIBING_DISCIPLINES as readonly Discipline[]).includes(discipline)
+    ? 'clinician'
+    : 'nurse';
+}
+
+/**
  * The Belgian provider register (RIZIV/INAMI) issues every practitioner an
  * eleven-digit number whose **last three digits are the competency code** —
  * which is how a psychiatrist is told apart from a doctor in general.

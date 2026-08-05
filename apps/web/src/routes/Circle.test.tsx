@@ -90,7 +90,7 @@ describe('Circle', () => {
   it('falls back to the role when no relation has been written yet', async () => {
     readCircle.mockResolvedValue([member({ relation: '', role: 'clinician' })]);
     renderCircle();
-    expect(await screen.findByText('Zorgverlener')).toBeInTheDocument();
+    expect(await screen.findByText('Arts')).toBeInTheDocument();
   });
 
   it('shows an open invite as a link that can be sent, and withdrawn', async () => {

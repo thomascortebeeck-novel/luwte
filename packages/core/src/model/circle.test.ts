@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CIRCLE_ROLE_COPY,
   CLINICAL_KEYS,
   DEFAULT_CLINICIAN_PERMISSIONS,
   DEFAULT_PERMISSIONS,
@@ -7,7 +8,9 @@ import {
   INVITE_CODE_LENGTH,
   INVITE_TTL_DAYS,
   canSee,
+  circleRoleSchema,
   diffPermissions,
+  needsVerification,
   grantedKeys,
   inviteCode,
   inviteExpiry,
@@ -22,6 +25,8 @@ import {
   widenedClinicalKeys,
 } from './circle';
 import { applyPendingChange, hasPendingChange, isPrescribed, needsApproval } from './medication';
+import { careRoleFor } from './clinician';
+import { accountRoleFor } from './user';
 
 describe('permissions', () => {
   it('starts a supporter on feed and calendar only', () => {
@@ -331,5 +336,75 @@ describe('inviteLink', () => {
 
   it('does not double the slash when the origin carries one', () => {
     expect(inviteLink('http://localhost:5173/', 'abc')).toBe('http://localhost:5173/join/abc');
+  });
+});
+
+/*
+ * D30 — a nurse or practice assistant, and the two things that make the role
+ * safe rather than merely convenient.
+ */
+describe('a nurse in the circle', () => {
+  it('is a role a card can carry', () => {
+    expect(circleRoleSchema.safeParse('nurse').success).toBe(true);
+  });
+
+  it('needs an admin to have verified them, exactly like a clinician', () => {
+    /*
+     * Without this the whole D23 protection is bypassed by calling somebody a
+     * nurse instead of a doctor — and a nurse who may read medication is
+     * reading the most diagnostic thing here.
+     */
+    expect(needsVerification('nurse')).toBe(true);
+    expect(needsVerification('clinician')).toBe(true);
+    expect(needsVerification('supporter')).toBe(false);
+  });
+
+  it('is offered every permission, like every other role', () => {
+    expect(permissionsForRole('nurse').map((entry) => entry.key)).toEqual(
+      permissionsForRole('supporter').map((entry) => entry.key),
+    );
+  });
+
+  it('has a name of its own on screen', () => {
+    // A third role displayed as one of the other two is worse than no third
+    // role: the person would be granting access to somebody mislabelled.
+    expect(CIRCLE_ROLE_COPY.nurse).toBe('circleRoleNurse');
+    expect(new Set(Object.values(CIRCLE_ROLE_COPY)).size).toBe(3);
+  });
+});
+
+describe('which account a person arriving on an invite needs', () => {
+  it('puts a nurse in the console beside the clinicians', () => {
+    // Same application to be verified, same patient list. What they may *do*
+    // there is settled by the circle card and the rules, never by this.
+    expect(accountRoleFor('nurse')).toBe('clinician');
+    expect(accountRoleFor('clinician')).toBe('clinician');
+  });
+
+  it('leaves a supporter a supporter', () => {
+    expect(accountRoleFor('supporter')).toBe('supporter');
+  });
+});
+
+describe('which disciplines may be named as the prescriber', () => {
+  it('is the ones that can actually prescribe in Belgium', () => {
+    expect(careRoleFor('psychiater')).toBe('clinician');
+    expect(careRoleFor('huisarts')).toBe('clinician');
+  });
+
+  it('is not a nurse, which is the whole of D30', () => {
+    expect(careRoleFor('verpleegkundige')).toBe('nurse');
+  });
+
+  it('is not a psychologist either, who cannot prescribe here', () => {
+    // Letting the app record one as the prescriber would make `prescribedBy`
+    // mean less than it says.
+    expect(careRoleFor('psycholoog')).toBe('nurse');
+  });
+
+  it('resolves an unknown discipline to the narrower answer', () => {
+    // An admin who knows better can decline the request and ask them to
+    // reapply. Guessing wide is the failure that cannot be undone.
+    expect(careRoleFor('andere')).toBe('nurse');
   });
 });

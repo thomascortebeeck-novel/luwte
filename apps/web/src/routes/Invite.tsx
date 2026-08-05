@@ -8,6 +8,7 @@ import {
   type Permissions,
 } from '@luwte/core';
 import { Button, Choice, Field, Hairline, Screen } from '@luwte/ui';
+import type { CopyKey } from '@luwte/core';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { createInvite } from '../firebase/circle';
@@ -15,6 +16,16 @@ import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
 import { useLocale } from '../providers/LocaleProvider';
 import styles from './Circle.module.css';
+
+/*
+ * D30 — three kinds of member. A nurse sits between the other two: verified
+ * like a doctor, and bound by the calendar rule like a supporter.
+ */
+const ROLE_OPTIONS: { id: CircleRole; labelKey: CopyKey }[] = [
+  { id: 'supporter', labelKey: 'circleRoleSupporter' },
+  { id: 'nurse', labelKey: 'circleRoleNurse' },
+  { id: 'clinician', labelKey: 'circleRoleClinician' },
+];
 
 /**
  * PRD 6.4 — the patient decides what an invite carries before it exists.
@@ -38,6 +49,12 @@ export function Invite() {
 
   const chooseRole = (next: CircleRole) => {
     setRole(next);
+    /*
+     * A nurse starts on the *supporter* defaults, not the clinician ones.
+     * Narrow by default is the rule an invite sent on a bad day depends on,
+     * and it holds here too — reading medication is something this person
+     * decides to give, not something a job title collects on arrival.
+     */
     setPermissions({
       ...(next === 'clinician' ? DEFAULT_CLINICIAN_PERMISSIONS : DEFAULT_PERMISSIONS),
     });
@@ -105,19 +122,23 @@ export function Invite() {
     >
       <h2 className={styles.sectionTitle}>{t('inviteWho')}</h2>
       <div className={styles.roles} role="radiogroup" aria-label={t('inviteWho')}>
-        {(['supporter', 'clinician'] as const).map((option) => (
+        {ROLE_OPTIONS.map((option) => (
           <button
-            key={option}
+            key={option.id}
             type="button"
             role="radio"
-            aria-checked={role === option}
+            aria-checked={role === option.id}
             className={styles.role}
-            onClick={() => chooseRole(option)}
+            onClick={() => chooseRole(option.id)}
           >
-            {t(option === 'clinician' ? 'circleRoleClinician' : 'circleRoleSupporter')}
+            {t(option.labelKey)}
           </button>
         ))}
       </div>
+      {/* D30 — said where the choice is made, because "verpleegkundige" does
+          not on its own tell somebody that this person cannot prescribe and
+          cannot put anything on their calendar. */}
+      {role === 'nurse' ? <p className={styles.quiet}>{t('circleRoleNurseNote')}</p> : null}
 
       <Field
         label={t('circleRelation')}

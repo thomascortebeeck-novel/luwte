@@ -451,13 +451,18 @@ always reachable in one tap — not the empty grid.
    appears the first time then every fifth, with the *expected* rating
    captured at planning time. Seven columns was built and removed after
    measuring — 83px inside the reading measure.
-5. **5** diary prompts, breathing, early-warning-signs plan.
+5. ~~**5** diary prompts, breathing, early-warning-signs plan.~~ **Done
+   2026-08-05.** Breathing and grounding ship; no meditation timer, no body
+   scan, no video. The diary question rotates. The early-warning-signs plan
+   has its own permission, and luwte never matches anything against it.
 
 **Fourth, once Thomas has decided:**
-6. **3** granular sharing · **1** the nurse role.
+6. ~~**3** granular sharing · **1** the nurse role.~~ **Both done 2026-08-05**
+   (D29, D30).
 
-**Last, and only with the Android app:**
-7. **11** watch data.
+**Last, and blocked on Garmin plus a Blaze decision:**
+7. **11** watch data. Design settled above; nothing to build until an
+   application is approved and billing is turned on somewhere.
 
 ---
 

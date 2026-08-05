@@ -1,4 +1,13 @@
-import { DEFAULT_TIMEZONE, centredWeek, dateKey, onDay } from '@luwte/core';
+import {
+  DEFAULT_TIMEZONE,
+  RECURRENCES,
+  centredWeek,
+  dateKey,
+  onDay,
+  type Activity,
+  type CopyKey,
+  type RecurrenceId,
+} from '@luwte/core';
 import { Button, Field, Hairline, Screen } from '@luwte/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
@@ -7,6 +16,19 @@ import { readMemberships, type Membership } from '../firebase/circle';
 import { useAuth } from '../providers/AuthProvider';
 import { useLocale } from '../providers/LocaleProvider';
 import styles from './Calendar.module.css';
+
+/*
+ * The everyday shapes an offer takes. Deliberately shorter than the patient's
+ * own list: somebody offering to help does not need a yearly rule, and the
+ * point of this control is "a week at a time" rather than every rule the
+ * parser understands.
+ */
+const SUGGEST_REPEATS: { id: RecurrenceId | 'never'; labelKey: CopyKey }[] = [
+  { id: 'never', labelKey: 'calendarRepeatNever' },
+  { id: 'weekdays', labelKey: 'calendarRepeatWeekdays' },
+  { id: 'weekly', labelKey: 'calendarRepeatWeekly' },
+  { id: 'daily', labelKey: 'calendarRepeatDaily' },
+];
 
 /**
  * The supporter's side: who shares with you, and what you can do about it.
@@ -98,6 +120,7 @@ export function FollowingCalendar() {
   const [person, setPerson] = useState<Membership | null | 'missing'>(null);
   const [activities, setActivities] = useState<ActivityRecord[]>([]);
   const [draft, setDraft] = useState({ title: '', startTime: '', date: today });
+  const [repeat, setRepeat] = useState<RecurrenceId | 'never'>('never');
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -135,14 +158,23 @@ export function FollowingCalendar() {
           date: draft.date,
           startTime: draft.startTime,
           withPerson: '',
-          recurrence: null,
+          /*
+           * D30's "suggest a week", and it needed no new concept: a
+           * suggestion that repeats is one offer the person accepts with one
+           * tap, and it then lands on every day it names. A batch of fourteen
+           * separate suggestions to accept one at a time is the tedium the
+           * decision was about, and this avoids it without touching the
+           * invariant — it is still an offer, and still theirs to accept.
+           */
+          recurrence: repeat === 'never' ? null : (RECURRENCES[repeat] as Activity['recurrence']),
         },
         user.uid,
-        // The only status the rules will accept from a supporter. An offer,
-        // never an entry.
+        // The only status the rules will accept from a supporter or a nurse.
+        // An offer, never an entry.
         'suggested',
       );
       setDraft({ title: '', startTime: '', date: today });
+      setRepeat('never');
       setSent(true);
     } finally {
       setBusy(false);
@@ -214,6 +246,22 @@ export function FollowingCalendar() {
         value={draft.date}
         onChange={(e) => setDraft({ ...draft, date: e.target.value })}
       />
+
+      <h3 className={styles.sectionTitle}>{t('calendarRepeat')}</h3>
+      <div className={styles.repeats} role="radiogroup" aria-label={t('calendarRepeat')}>
+        {SUGGEST_REPEATS.map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            role="radio"
+            aria-checked={repeat === option.id}
+            className={styles.repeat}
+            onClick={() => setRepeat(option.id)}
+          >
+            {t(option.labelKey)}
+          </button>
+        ))}
+      </div>
 
       {sent ? <p className={styles.quiet}>{t('followingSuggestSent')}</p> : null}
     </Screen>
