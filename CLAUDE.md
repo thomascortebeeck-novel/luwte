@@ -64,6 +64,7 @@ packages/ui/      design tokens, primitives, windline, chart — no Firebase
 functions/        Cloud Functions gen2 — written, never deployed
 firestore/        rules, indexes, rules tests
 docs/             PRD, BRAND, QA checklist, plain-language guide, per-phase plans
+scripts/          emulators.mjs (the Windows AF_UNIX wrapper), make-admin.mjs
 ```
 
 **There is no `apps/console`.** PLAN.md called for one; the console is routes
@@ -152,6 +153,9 @@ pnpm test          # vitest, whole workspace
 pnpm typecheck     # tsc, strict, whole repo
 pnpm lint          # eslint
 pnpm build         # turbo run build
+
+node scripts/make-admin.mjs <uid>   # the one thing no screen can do
+
 ```
 
 `pnpm test:rules` is **not** part of `pnpm verify`, because it needs Java and
@@ -194,33 +198,38 @@ tasks would be ceremony.
 
 ## Current state
 
-**Phases 0 to 7 complete.** A family can be invited and the permissions
-changed; the psychiatrist can open a patient and change what is prescribed;
-the calendar takes suggestions that never place themselves; finishing
-something planned shares it to the circle, who can only answer warmly.
+**Phases 0 to 7 complete, and most of 9.** A family can be invited and the
+permissions changed; the psychiatrist is verified by a person and can open a
+patient and change what is prescribed; the calendar takes suggestions that
+never place themselves; finishing something planned shares it to the circle,
+who can only answer warmly.
 
-**321 unit tests plus 133 security-rules tests.** `pnpm verify` green.
+**336 unit tests plus 171 security-rules tests.** `pnpm verify` green.
 
 The product produces the thing that changes an appointment: a chart with
 medication changes as vertical rules, adherence as a count, and the person's
 own diary lines, printable to A4.
 
-The phases were built **0–4, 6.2, 7, 5, 6.3** rather than in order, because
+The phases were built **0–4, 6.2, 7, 5, 6.3, 9** rather than in order, because
 Thomas wanted the psychiatrist's in-app overview early and that needs the
-circle. Everything is now built.
+circle, and because Phase 9 turned up two defects worth fixing before a pilot.
 
 Every screen, by who it is for:
 
 | For | Screens |
 |---|---|
-| Everyone | sign-in, four onboarding steps, GDPR Art. 9 consent, crisis |
-| The patient | Today (windline, check-in, medication, activities, practices), check-in with the weekly akathisia screen and the hopelessness path, medication with "ask for a change", the calendar and its suggestions tray, Overview and the diary archive, the printable report, the feed, settings, the circle screens |
+| Everyone | sign-in, onboarding (**three branches — see below**), consent (Art. 9 *or* confidentiality), crisis |
+| The patient | Today (windline, check-in, medication, activities, practices), check-in with the weekly akathisia screen and the hopelessness path, medication with "ask for a change" and "weer zelf beheren", the calendar and its suggestions tray, Overview and the diary archive, the printable report, the feed, settings, the circle screens, `/dokter` to add a doctor by code |
 | A supporter | `/following` — who shares with them, their feed, their calendar, and a suggest form |
-| A clinician | `/console` — patient list, per-patient overview, medication editor, and the approve/decline of what a patient asked for |
+| A clinician | `/console` — the verification application when unverified, otherwise their connection code, patient list, per-patient overview, medication editor, and the approve/decline of what a patient asked for |
+| An admin | `/admin` — the clinician verification queue. The **only** screen that writes `clinicians/` |
 | Nobody, but useful | `/styleguide` |
 
 **Next:** Phase 8 — hardening, the accessibility pass, GDPR export and
-deletion, and the family pilot.
+deletion, and the family pilot. Plus the one part of Phase 9 not built:
+**search by name** in the clinician directory. It is the weakest of the three
+ways in — it can only find clinicians already on luwte — and the connection
+code covers the pilot, so it was left rather than half-built.
 
 Nothing needs a Firebase project. `pnpm emulators` plus `pnpm dev` is the
 whole setup.
@@ -348,7 +357,7 @@ function would additionally guarantee single use under a race, where this
 relies on the client transaction. Revisit if invites become more than a family
 sharing a link.
 
-**Most of the 133 rules tests are written as the attacks someone would
+**Most of the 171 rules tests are written as the attacks someone would
 actually try**, and named that way. **Add to them rather than trimming them.**
 If one starts failing, the question is what broke, not whether the test is
 too strict.
