@@ -136,15 +136,23 @@ export async function readCompletions(
 /**
  * Not awaited by the UI. Ticking something off has to feel instant and work
  * with no signal; the keyed document id means a double sync records one.
+ *
+ * The returned promise does not settle until the server acknowledges the
+ * write, for the same reason `setDose` returns one rather than discarding it
+ * with `void` — a caller must not await it before the tap feels done, but can
+ * attach its own `.catch` to hear about a genuine refusal. `completionId` is a
+ * pure function of its inputs, so a caller no longer needs this function's
+ * return value just to learn which key it wrote: Today.tsx computes that
+ * independently and synchronously, so it has it before this promise has any
+ * chance to settle.
  */
-export function completeActivity(uid: string, activityId: string, date: string): string {
+export function completeActivity(uid: string, activityId: string, date: string): Promise<void> {
   const id = completionId(activityId, date);
-  void setDoc(
+  return setDoc(
     doc(db, paths.completion(uid, id)),
     { activityId, date, completedAt: serverTimestamp(), postedToFeed: false },
     { merge: true },
   );
-  return id;
 }
 
 /**
@@ -183,10 +191,11 @@ export function rateCompletion(
   void setDoc(doc(db, paths.completion(uid, completionKey)), ratings, { merge: true });
 }
 
-export function uncompleteActivity(uid: string, activityId: string, date: string): void {
+/** Returns its promise for the same reason `completeActivity` above does. */
+export function uncompleteActivity(uid: string, activityId: string, date: string): Promise<void> {
   // Unticking is not deletion: the record stays, marked as not done, because
   // a completion that can vanish makes the history untrustworthy.
-  void setDoc(
+  return setDoc(
     doc(db, paths.completion(uid, completionId(activityId, date))),
     { activityId, date, completedAt: null },
     { merge: true },

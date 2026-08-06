@@ -1,5 +1,5 @@
 import { dateKey, dictionaries, doseId } from '@luwte/core';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -16,11 +16,11 @@ const setDose = vi.fn<(...args: unknown[]) => Promise<void>>();
 const annotateDose = vi.fn<(...args: unknown[]) => Promise<void>>();
 const readActivities = vi.fn<() => Promise<unknown[]>>();
 const readCompletions = vi.fn<() => Promise<Record<string, unknown>>>();
-const completeActivity = vi.fn<(...args: unknown[]) => string>();
+const completeActivity = vi.fn<(...args: unknown[]) => Promise<void>>();
 const countCompletionsBefore = vi.fn<() => Promise<number>>();
-const uncompleteActivity = vi.fn();
+const uncompleteActivity = vi.fn<(...args: unknown[]) => Promise<void>>();
 const rateCompletion = vi.fn();
-const postCompletion = vi.fn();
+const postCompletion = vi.fn<(...args: unknown[]) => Promise<void>>();
 
 vi.mock('../firebase/checkins', () => ({
   readCheckin: () => readCheckin(),
@@ -96,6 +96,19 @@ const medication = {
   pendingChange: null,
 };
 
+const activity = {
+  id: 'act1',
+  title: 'wandelen',
+  date: TODAY_KEY,
+  startTime: '',
+  withPerson: '',
+  createdBy: 'uid-jonas',
+  status: 'accepted',
+  recurrence: null,
+  expectedPleasure: null,
+  expectedMastery: null,
+};
+
 const renderToday = () =>
   render(
     <LocaleProvider initialLocale="nl">
@@ -138,6 +151,9 @@ beforeEach(() => {
   annotateDose.mockResolvedValue();
   readActivities.mockResolvedValue([]);
   readCompletions.mockResolvedValue({});
+  completeActivity.mockResolvedValue();
+  uncompleteActivity.mockResolvedValue();
+  postCompletion.mockResolvedValue();
   countCompletionsBefore.mockResolvedValue(0);
 });
 
@@ -238,5 +254,74 @@ describe('a refused dose tick or dose note', () => {
     expect(await screen.findByText(nl.errorNotAllowed)).toBeInTheDocument();
     // Back to "iets anders genomen?" — not still showing "de helft" as saved.
     expect(await screen.findByRole('button', { name: nl.doseNoteAsk })).toBeInTheDocument();
+  });
+});
+
+describe('a refused activity tick', () => {
+  /*
+   * Gap: `completeActivity` and `uncompleteActivity` used to discard their
+   * promise internally (`void setDoc(...)`), so there was nothing for
+   * Today.tsx to catch — the same defect the dose tick above was fixed for
+   * one write earlier in this file.
+   */
+  it('reverts a refused tick instead of leaving the mark standing, and says so', async () => {
+    readActivities.mockResolvedValue([activity]);
+    completeActivity.mockRejectedValueOnce({ code: 'permission-denied' });
+    const user = userEvent.setup();
+    renderToday();
+
+    const item = await screen.findByRole('button', { name: /wandelen/ });
+    expect(item).toHaveAttribute('aria-pressed', 'false');
+
+    await user.click(item);
+
+    expect(completeActivity).toHaveBeenCalledWith('uid-jonas', 'act1', TODAY_KEY);
+    expect(await screen.findByText(nl.errorNotAllowed)).toBeInTheDocument();
+    // Reverted rather than left marked done.
+    expect(screen.getByRole('button', { name: /wandelen/ })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('reverts a refused untick the same way', async () => {
+    readActivities.mockResolvedValue([activity]);
+    readCompletions.mockResolvedValue({ act1: { completedAt: new Date() } });
+    uncompleteActivity.mockRejectedValueOnce({ code: 'permission-denied' });
+    const user = userEvent.setup();
+    renderToday();
+
+    const item = await screen.findByRole('button', { name: /wandelen/ });
+    expect(item).toHaveAttribute('aria-pressed', 'true');
+
+    await user.click(item);
+
+    expect(uncompleteActivity).toHaveBeenCalledWith('uid-jonas', 'act1', TODAY_KEY);
+    expect(await screen.findByText(nl.errorNotAllowed)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /wandelen/ })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  /*
+   * `postCompletion` gets different treatment on purpose: a feed post is a
+   * courtesy, not a record, so a failure is reported to the console and
+   * never put on screen — a message about somebody else's notification not
+   * arriving would be the app chasing the person about somebody else's
+   * alert.
+   */
+  it('reports a refused feed post to the console without ever putting a message on screen', async () => {
+    readActivities.mockResolvedValue([activity]);
+    postCompletion.mockRejectedValueOnce({ code: 'permission-denied' });
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const user = userEvent.setup();
+    renderToday();
+
+    await user.click(await screen.findByRole('button', { name: /wandelen/ }));
+
+    await waitFor(() =>
+      expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('postCompletion')),
+    );
+    expect(screen.queryByText(nl.errorNotAllowed)).not.toBeInTheDocument();
+    expect(screen.queryByText(nl.genericError)).not.toBeInTheDocument();
+    // The tick itself is unaffected — only the courtesy post failed.
+    expect(screen.getByRole('button', { name: /wandelen/ })).toHaveAttribute('aria-pressed', 'true');
+
+    consoleError.mockRestore();
   });
 });

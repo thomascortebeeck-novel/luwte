@@ -62,8 +62,11 @@ export function Suggestions() {
   const markDone = async (activity: ActivityRecord) => {
     if (!user) return;
     await setActivityStatus(user.uid, activity.id, 'accepted');
-    completeActivity(user.uid, activity.id, dateKey(new Date(), timezone));
-    postCompletion(user.uid, {
+    // Fire-and-forget, same as Today.tsx's tick — this tray is not the
+    // screen the error-handling sweep covers (see Today.tsx's toggleActivity
+    // for the revert-and-report version of this same write).
+    void completeActivity(user.uid, activity.id, dateKey(new Date(), timezone));
+    void postCompletion(user.uid, {
       sharingEnabled: patient?.share.shareCompletions !== false,
       activityId: activity.id,
       title: activity.title,

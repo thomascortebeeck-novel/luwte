@@ -35,7 +35,7 @@ import {
 } from '../firebase/activities';
 import { onDay, shouldAskRating } from '@luwte/core';
 import { postCompletion } from '../firebase/feed';
-import { doseId, hasAnnotation, type DoseAnnotation, type DoseStatus } from '@luwte/core';
+import { completionId, doseId, hasAnnotation, type DoseAnnotation, type DoseStatus } from '@luwte/core';
 import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
 import { useLocale } from '../providers/LocaleProvider';
@@ -95,6 +95,13 @@ export function Today() {
   const [doseMessage, setDoseMessage] = useState<string | null>(null);
   const [activities, setActivities] = useState<ActivityRecord[]>([]);
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
+  /**
+   * A refused activity tick or untick, reverted the same way `doseMessage`
+   * above reverts a refused dose — its own state rather than sharing that
+   * one, because `doseMessage`'s comment is specifically about the adherence
+   * count and would be misleading here.
+   */
+  const [activityMessage, setActivityMessage] = useState<string | null>(null);
   /** The activity just ticked, waiting to be asked about. Never blocks. */
   const [rating, setRating] = useState<{ activity: ActivityRecord; key: string } | null>(null);
 
@@ -200,24 +207,63 @@ export function Today() {
    */
   const toggleActivity = (activity: ActivityRecord, done: boolean) => {
     if (!user) return;
+    const previous = completed[activity.id];
+    // Optimistic, same reasoning as toggleDose above: the write may not
+    // reach the server for hours, and waiting would make a tap feel broken.
     setCompleted((prev) => ({ ...prev, [activity.id]: done }));
+    setActivityMessage(null);
+
+    const revert = () => {
+      setCompleted((prev) => {
+        const reverted = { ...prev };
+        if (previous === undefined) delete reverted[activity.id];
+        else reverted[activity.id] = previous;
+        return reverted;
+      });
+    };
 
     if (done) {
-      const key = completeActivity(user.uid, activity.id, today);
-      // Auto-shared, because a circle exists to be told things. Doses never
-      // reach here — `postCompletion` refuses anything without an activity.
-      postCompletion(user.uid, {
+      // Pure function of its inputs, so this does not need to wait for
+      // `completeActivity` to settle — nor even for it to succeed — to know
+      // which completion a rating would belong to.
+      const key = completionId(activity.id, today);
+
+      /*
+       * A feed post is a courtesy, not a record: the completion below is
+       * what this product keeps, and a post that never reached the circle
+       * costs nobody their data. Doses never reach here — `postCompletion`
+       * refuses anything without an activity id. Reported so a failure is
+       * not invisible in the console, but never put on screen — a message
+       * about somebody else's notification not arriving is the app chasing
+       * the person about somebody else's alert, which "never chase" already
+       * forbids.
+       */
+      void postCompletion(user.uid, {
         sharingEnabled: patient?.share.shareCompletions !== false,
         activityId: activity.id,
         title: activity.title,
+      }).catch((error: unknown) => reportError('postCompletion', error));
+
+      void completeActivity(user.uid, activity.id, today).catch((error: unknown) => {
+        reportError('completeActivity', error);
+        // Reverted, not left standing — same reasoning as toggleDose above:
+        // a tick that silently did not land is a record of a day that did
+        // not happen.
+        revert();
+        setActivityMessage(t(messageKeyFor(error)));
       });
+
       void countCompletionsBefore(user.uid, activity.id, today)
         .then((completedBefore) => {
           if (shouldAskRating({ completedBefore })) setRating({ activity, key });
         })
         .catch(() => undefined);
     } else {
-      uncompleteActivity(user.uid, activity.id, today);
+      void uncompleteActivity(user.uid, activity.id, today).catch((error: unknown) => {
+        reportError('uncompleteActivity', error);
+        revert();
+        setActivityMessage(t(messageKeyFor(error)));
+      });
       setRating((prev) => (prev?.activity.id === activity.id ? null : prev));
     }
   };
@@ -328,12 +374,31 @@ export function Today() {
         onToggle={toggleActivity}
       />
 
+      {/* Present even when empty, so a screen reader has the region before
+          a message from a refused activity tick lands in it. */}
+      <p className={styles.note} role="status" aria-live="polite">
+        {activityMessage}
+      </p>
+
       {rating ? (
         <ActivityRating
           title={rating.activity.title}
           expectedPleasure={rating.activity.expectedPleasure}
           expectedMastery={rating.activity.expectedMastery}
           onSave={(ratings) => {
+            /*
+             * Left fire-and-forget, unlike the tick above. `rateCompletion`
+             * writes onto a completion that is already saved, and there is
+             * no visible state on this screen to revert if it fails: the
+             * widget closes in this same tick regardless (`setRating(null)`,
+             * right below), and by the time any promise could settle, the
+             * pleasure and mastery it carried are already gone from memory
+             * — reopening it would mean holding that answer in new state
+             * just to undo a dismissal, a bigger change than the refusal it
+             * would guard against. The rating is optional by design (BRAND,
+             * PRD 6.2), and a lost one reads, from the person's side,
+             * exactly like one they chose to skip.
+             */
             if (user) rateCompletion(user.uid, rating.key, ratings);
             setRating(null);
           }}

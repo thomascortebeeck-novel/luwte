@@ -88,16 +88,22 @@ export async function createPost(
  * "small things like pill completions are not shared" is true in code rather
  * than by every caller remembering.
  *
- * Not awaited. Ticking something off must feel instant and work offline; the
- * post following a moment later is fine, and a failed post must never make
- * the tick look broken.
+ * Not awaited by design. Ticking something off must feel instant and work
+ * offline; the post following a moment later is fine, and a failed post must
+ * never make the tick look broken.
+ *
+ * The promise is still returned, not discarded here with `void`, so a caller
+ * can attach its own `.catch` — not to revert anything (there is nothing here
+ * to revert, unlike the completion itself) but to report a genuine failure to
+ * the console. See Today.tsx for why that stops at the console and never
+ * reaches the screen: a feed post is a courtesy, not a record.
  */
 export function postCompletion(
   patientId: string,
   options: { sharingEnabled: boolean; activityId: string | null; title: string },
-): void {
-  if (!shouldPostCompletion(options)) return;
-  void createPost(patientId, { activityId: options.activityId, title: options.title });
+): Promise<void> {
+  if (!shouldPostCompletion(options)) return Promise.resolve();
+  return createPost(patientId, { activityId: options.activityId, title: options.title });
 }
 
 /** One per person per post, keyed by uid: reacting again changes your mind. */
