@@ -246,6 +246,11 @@ export {
   type PersonalContact,
 } from './model/contacts';
 export {
+  SUPPORT_DAILY,
+  SUPPORT_TIPS,
+  supportTipFor,
+} from './model/supporting';
+export {
   CHECKIN_STEPS,
   HOPELESSNESS_CRISIS_THRESHOLD,
   isCheckinTime,

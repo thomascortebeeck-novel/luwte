@@ -618,4 +618,20 @@ export const nl = {
     'Wat je voorstelt komt apart te staan, niet meteen in de agenda. Die persoon beslist zelf.',
   followingSuggestSent: 'Voorgesteld. Die persoon beslist zelf.',
   followingCalendar: 'Wat gepland staat',
+
+  // Wat helpt, voor wie meekijkt. Algemeen, nooit over deze persoon.
+  supportTipAsk: 'Vragen hoe het gaat helpt meer dan raden. Ook als het antwoord kort is.',
+  supportTipListen:
+    'Luisteren zonder meteen op te lossen is vaak genoeg. Het hoeft niet beter te worden van jouw antwoord.',
+  supportTipSmall: 'Kleine dingen tellen. Samen koffie drinken is een bezoek.',
+  supportTipBlame: 'Het is geen kwestie van willen. Verwijten maken het zwaarder en helpen niet.',
+  supportTipPace: 'Herstel gaat met ups en downs. Een slechte week betekent niet dat het misloopt.',
+  supportTipYourself: 'Zorg ook voor jezelf. Je houdt dit alleen vol als je zelf overeind blijft.',
+  supportTipPresence: 'Er zijn telt. Je hoeft niets te zeggen dat het oplost.',
+  supportDailyOrdinary: 'Doe gewone dingen samen. Niet elk gesprek hoeft over ziek zijn te gaan.',
+  supportDailyOffer: 'Bied iets concreets aan in plaats van te vragen wat je kan doen.',
+  // Niet "werkt beter dan af en toe" — copy-lint's never-compare-regel
+  // verbiedt "beter dan" letterlijk, ongeacht waarover. Zelfde punt, zonder
+  // vergelijking: een vast moment in plaats van een toevallig moment.
+  supportDailyRoutine: 'Vaste momenten geven houvast. Bel bijvoorbeeld elke dinsdag in plaats van af en toe.',
 } as const satisfies Record<string, string>;

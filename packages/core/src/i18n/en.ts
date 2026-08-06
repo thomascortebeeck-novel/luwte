@@ -610,4 +610,20 @@ export const en: Dictionary = {
     'What you suggest sits on its own, not straight into the calendar. That person decides.',
   followingSuggestSent: 'Suggested. That person decides.',
   followingCalendar: 'What is planned',
+
+  // What helps, for whoever is looking on. General, never about this person.
+  supportTipAsk: 'Asking how things are helps more than guessing. Even when the answer is short.',
+  supportTipListen:
+    'Listening without fixing it is often enough. It does not have to get better from your answer.',
+  supportTipSmall: 'Small things count. Having coffee together is a visit.',
+  supportTipBlame: 'It is not a matter of wanting to. Blame makes it heavier and does not help.',
+  supportTipPace: 'Recovery goes in ups and downs. A bad week does not mean it is going wrong.',
+  supportTipYourself: 'Look after yourself too. You can only keep this up if you stay standing.',
+  supportTipPresence: 'Being there counts. You do not have to say anything that solves it.',
+  supportDailyOrdinary: 'Do ordinary things together. Not every conversation has to be about being ill.',
+  supportDailyOffer: 'Offer something concrete instead of asking what you can do.',
+  // Not "works better than now and then" — mirrors the nl.ts fix, same
+  // reason: copy-lint's never-compare rule refuses "better than" literally.
+  supportDailyRoutine:
+    'Fixed moments give something to hold on to. For example, call every Tuesday instead of now and then.',
 };
