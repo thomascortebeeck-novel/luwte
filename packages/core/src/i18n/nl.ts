@@ -48,6 +48,7 @@ export const nl = {
 
   genericError: 'Dat is niet gelukt. Probeer het straks nog eens.',
   offline: 'Geen verbinding. Wat je invult wordt bewaard en later verstuurd.',
+  errorNotAllowed: 'Dat mag je hier niet. Vraag het aan wie het deelde.',
 
   // BRAND 4.4 — the one surface where the voice is direct. No metaphor, no softness.
   crisisTitle: 'Als het nu te zwaar is, bel iemand.',

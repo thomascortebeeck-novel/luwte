@@ -47,6 +47,7 @@ export const en: Dictionary = {
 
   genericError: "That didn't work. Try again later.",
   offline: 'No connection. What you fill in is saved and sent later.',
+  errorNotAllowed: 'You are not allowed to do that here. Ask whoever shared it.',
 
   crisisTitle: "If it's too much right now, call someone.",
   crisisZelfmoordlijn: 'Suicide helpline (Zelfmoordlijn)',
