@@ -111,6 +111,22 @@ export function CheckIn() {
        * once, calmly. No alarm language, and no notification to anyone.
        * Automatic escalation to family would make people stop answering
        * honestly, which costs more than it gains.
+       *
+       * Navigating away here is a decision, not an oversight worth revisiting.
+       * `saveCheckin` and `saveWeekly` above are not awaited, so this runs
+       * before either settles; neither `setSaved(true)` nor the live region
+       * that only exists inside `if (saved)` below it ever mounts, so a
+       * refusal that lands after this point has nowhere to go but the
+       * console. That is deliberately left as is: getting to the crisis
+       * screen is what matters at this moment, and both waiting on a write
+       * and following the person there with a message about a save would be
+       * wrong — Crisis.tsx argues the same for its own read failing quietly.
+       * What keeps this honest rather than merely convenient is that nothing
+       * claims success either: no acknowledgement is shown, so nothing lies
+       * about whether it saved, and if the record genuinely does not exist,
+       * Today offers the check-in again rather than hiding that a day was
+       * missed. `reportError` above still runs, so a refusal is not
+       * invisible — only unmentioned to the person, on this one screen.
        */
       if (shouldOfferCrisis(weekly)) {
         navigate('/crisis');
