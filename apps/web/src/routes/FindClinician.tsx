@@ -2,6 +2,7 @@ import { DEFAULT_CLINICIAN_PERMISSIONS, type CopyKey } from '@luwte/core';
 import { Button, Field, Hairline, Screen } from '@luwte/ui';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import { messageKeyFor, reportError } from '../errors';
 import { createInvite } from '../firebase/circle';
 import {
   connectClinician,
@@ -56,11 +57,13 @@ export function FindClinician() {
   const [relation, setRelation] = useState('');
   const [done, setDone] = useState<'added' | 'asked' | null>(null);
   const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
   const look = async () => {
     if (busy || code.trim().length === 0) return;
     setBusy(true);
     setMissing(false);
+    setMessage(null);
     try {
       const entry = await readClinicianByCode(code);
       setFound(entry ? { entry, byCode: true } : null);
@@ -83,6 +86,7 @@ export function FindClinician() {
   const confirm = async () => {
     if (!user || !found || busy) return;
     setBusy(true);
+    setMessage(null);
     try {
       if (found.byCode) {
         await connectClinician(user.uid, found.entry, relation.trim());
@@ -107,6 +111,9 @@ export function FindClinician() {
         forUid: found.entry.uid,
       });
       setDone('asked');
+    } catch (error: unknown) {
+      reportError(found.byCode ? 'connectClinician' : 'createInvite', error);
+      setMessage(t(messageKeyFor(error)));
     } finally {
       setBusy(false);
     }
@@ -158,6 +165,12 @@ export function FindClinician() {
           value={relation}
           onChange={(e) => setRelation(e.target.value)}
         />
+
+        {/* Present even when empty, so a screen reader has the region
+            before a message ever lands in it. */}
+        <p className={styles.note} role="status" aria-live="polite">
+          {message}
+        </p>
       </Screen>
     );
   }
@@ -215,7 +228,13 @@ export function FindClinician() {
               <span className={styles.name}>{entry.displayName}</span>
               <span className={styles.quiet}>{t(DISCIPLINE_COPY[entry.discipline]!)}</span>
               {entry.practice ? <span className={styles.quiet}>{entry.practice}</span> : null}
-              <Button variant="quiet" onClick={() => setFound({ entry, byCode: false })}>
+              <Button
+                variant="quiet"
+                onClick={() => {
+                  setMessage(null);
+                  setFound({ entry, byCode: false });
+                }}
+              >
                 {t('findAsk')}
               </Button>
               <Hairline />
