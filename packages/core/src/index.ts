@@ -241,6 +241,11 @@ export {
   type PlanSection,
 } from './model/plan';
 export {
+  personalContacts,
+  toDial,
+  type PersonalContact,
+} from './model/contacts';
+export {
   CHECKIN_STEPS,
   HOPELESSNESS_CRISIS_THRESHOLD,
   isCheckinTime,
