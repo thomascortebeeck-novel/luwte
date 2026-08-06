@@ -8,6 +8,7 @@ import {
 import { Button, Field, Hairline, Screen } from '@luwte/ui';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
+import { messageKeyFor, reportError } from '../errors';
 import {
   addPlanEntry,
   readPlan,
@@ -216,6 +217,7 @@ export function Plan() {
   const mine = !patientId;
 
   const [entries, setEntries] = useState<PlanEntryRecord[] | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   const load = () => {
     if (!uid) return;
@@ -225,6 +227,18 @@ export function Plan() {
   };
 
   useEffect(load, [uid]);
+
+  /**
+   * Reports and shows a message, then re-throws — `PlanRow` and `PlanAdd`
+   * both key their own behaviour (stay in edit mode, keep what was typed) off
+   * whether the promise they were handed rejects, so swallowing the error
+   * here would silently undo the fix that made that behaviour possible.
+   */
+  const reportAndRethrow = (where: string) => (error: unknown) => {
+    reportError(where, error);
+    setMessage(t(messageKeyFor(error)));
+    throw error;
+  };
 
   return (
     <Screen
@@ -238,6 +252,12 @@ export function Plan() {
       {/* The MDR line, once, near the top — the sentence that makes this
           visible to the person rather than only to a reviewer. */}
       <p className={styles.intro}>{t(mine ? 'planIntro' : 'planShared')}</p>
+
+      {/* One region for all six sections — present even when empty, so a
+          screen reader has it before a message from any section lands. */}
+      <p className={styles.note} role="status" aria-live="polite">
+        {message}
+      </p>
 
       {entries === null
         ? null
@@ -276,8 +296,21 @@ export function Plan() {
                             sectionTitle={sectionTitle}
                             labelLabel={labelLabel}
                             detailLabel={detailLabel}
-                            onSave={(values) => updatePlanEntry(uid, row.id, values).then(load)}
-                            onRemove={() => void removePlanEntry(uid, row.id).then(load)}
+                            onSave={(values) => {
+                              setMessage(null);
+                              return updatePlanEntry(uid, row.id, values)
+                                .then(load)
+                                .catch(reportAndRethrow('updatePlanEntry'));
+                            }}
+                            onRemove={() => {
+                              setMessage(null);
+                              void removePlanEntry(uid, row.id)
+                                .then(load)
+                                .catch((error: unknown) => {
+                                  reportError('removePlanEntry', error);
+                                  setMessage(t(messageKeyFor(error)));
+                                });
+                            }}
                           />
                         ) : (
                           <>
@@ -316,7 +349,12 @@ export function Plan() {
                     sectionTitle={sectionTitle}
                     labelLabel={labelLabel}
                     detailLabel={detailLabel}
-                    onAdd={(values) => addPlanEntry(uid, { section, ...values }).then(load)}
+                    onAdd={(values) => {
+                      setMessage(null);
+                      return addPlanEntry(uid, { section, ...values })
+                        .then(load)
+                        .catch(reportAndRethrow('addPlanEntry'));
+                    }}
                   />
                 ) : null}
               </section>

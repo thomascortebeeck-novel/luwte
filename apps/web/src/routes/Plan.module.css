@@ -5,6 +5,13 @@
   margin: 0;
 }
 
+.note {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
 /* One step of the plan: its heading, its intro, its entries, its add form. */
 .section {
   display: flex;
