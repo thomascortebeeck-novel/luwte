@@ -59,16 +59,16 @@
 }
 
 /*
- * The plan's `help` and `professional` steps, surfaced here. `order: -1`
- * moves this section above the national `.list` without moving it in the
- * DOM — see the comment in Crisis.tsx on why the source order stays
- * national-first regardless. `.row`, `.list`, `.name` and `.number` above
- * are reused rather than redeclared, which is what carries the 320px
- * wrapping fix over for free: a long name beside a long number wraps here
- * exactly as it does in the national list, because it is the same rule.
+ * The plan's `help` and `professional` steps, surfaced here — first in the
+ * DOM now, and visually first too, so no `order` is needed to fake it: see
+ * the comment in Crisis.tsx on why source order was moved to match rather
+ * than staying national-first behind `order: -1`. `.row`, `.list`, `.name`
+ * and `.number` above are reused rather than redeclared, which is what
+ * carries the 320px wrapping fix over for free: a long name beside a long
+ * number wraps here exactly as it does in the national list, because it is
+ * the same rule.
  */
 .personal {
-  order: -1;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
