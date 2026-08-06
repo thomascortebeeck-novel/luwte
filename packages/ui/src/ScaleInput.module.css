@@ -24,7 +24,23 @@
   flex: 1 1 0;
   /* BRAND 5 — sedating medication affects fine motor control. */
   min-height: var(--tap-min);
-  min-width: 40px;
+  /*
+   * 32px, not 40px, and the arithmetic is the reason.
+   *
+   * At the narrowest width WCAG 1.4.10 requires — 320px, minus Screen's 24px
+   * of padding each side — there are 272px for seven targets and six 4px gaps.
+   * 40px each needs 304px, so the check-in scrolled sideways by 8px: the most
+   * important screen in the product, failing reflow on the smallest phone.
+   *
+   * **The height is what a thumb needs on a horizontal row, and it stays 48px.**
+   * `flex: 1 1 0` still shares out whatever is going, so this floor only binds
+   * at the very bottom: at 320px each option renders 35px wide, and anywhere
+   * wider they are larger again. 35x48 clears WCAG 2.5.8's 24x24 comfortably.
+   *
+   * `ScaleInput.reflow.test.ts` asserts the sum still fits, so changing either
+   * this or the gap fails rather than silently reintroducing the scroll.
+   */
+  min-width: 32px;
   display: flex;
   align-items: center;
   justify-content: center;

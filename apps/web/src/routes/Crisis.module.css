@@ -19,6 +19,20 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  /*
+   * WCAG 1.4.10 — wraps rather than overflowing.
+   *
+   * At 320px the row has 224px inside its padding. "Centre de Prévention du
+   * Suicide" beside a 186px `nowrap` number does not fit, so this screen
+   * scrolled sideways by 4px — on the one screen somebody opens when they are
+   * in trouble, on the smallest phone they might own.
+   *
+   * Wrapping rather than shrinking the number, because the number is the
+   * whole point: it has to be readable and unmistakable at a glance. When
+   * both fit they stay on one line; when they do not, the name sits above and
+   * the number keeps its size.
+   */
+  flex-wrap: wrap;
   gap: var(--space-2);
   /* Deliberately larger than the 48px floor. Fine motor control is affected
      by sedating medication, and this is the screen where a mis-tap costs most. */

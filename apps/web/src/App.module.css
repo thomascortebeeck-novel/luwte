@@ -17,7 +17,23 @@
   width: 100%;
 }
 
+/*
+ * The way back to Today, and it is a control like any other.
+ *
+ * It rendered 24px tall while `.crisisLink` beside it in the same bar carried
+ * `--tap-min` — two links, one sized for a thumb and one not, which is the
+ * kind of thing that survives because nobody looks at the small one. BRAND 5
+ * is a functional requirement here rather than a compliance box: sedating
+ * medication affects fine motor control.
+ *
+ * No horizontal padding, so the wordmark stays optically aligned with the
+ * screen edge. The width is the word itself at 40px, comfortably past the
+ * 24px WCAG 2.5.8 floor; the height is what a thumb actually needs.
+ */
 .wordmark {
+  min-height: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
   font-size: var(--text-sm);
   line-height: var(--leading-sm);
   color: var(--text-quiet);
