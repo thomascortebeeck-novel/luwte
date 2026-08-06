@@ -31,4 +31,50 @@ describe('what gets logged', () => {
     expect(logged).toContain('permission-denied');
     expect(logged).not.toContain('ik voelde me rot');
   });
+
+  it('refuses a code that only looks like one — the exact bypass this was written against', () => {
+    /*
+     * `error.code` is `unknown` at the type level. `(error as
+     * {code?:string})?.code` is a compile-time cast, not a runtime check, so
+     * a getter that returns a crafted string sailed straight through it: a
+     * console line ending in "permission-denied: ik voelde me rot" is a
+     * diary entry in the log, not a code. A real Firebase code never
+     * contains a colon or a space, so matching the shape closes this rather
+     * than trying to enumerate every bad string.
+     */
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    reportError('saveCheckin', {
+      get code() {
+        return 'permission-denied: ik voelde me rot';
+      },
+    });
+    const logged = JSON.stringify(spy.mock.calls);
+    expect(logged).not.toContain('ik voelde me rot');
+    expect(logged).toContain('unknown');
+  });
+
+  it('treats the same crafted code as unknown when choosing what to say, not as a real permission refusal', () => {
+    expect(messageKeyFor({ code: 'permission-denied: ik voelde me rot' })).toBe('genericError');
+    expect(messageKeyFor({ code: 'unavailable and then some' })).toBe('genericError');
+  });
+
+  it('does not itself become a second crash when reading the code throws', () => {
+    const poison = {
+      get code(): string {
+        throw new Error('boom');
+      },
+    };
+    expect(() => messageKeyFor(poison)).not.toThrow();
+    expect(messageKeyFor(poison)).toBe('genericError');
+
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    expect(() => reportError('saveCheckin', poison)).not.toThrow();
+    expect(JSON.stringify(spy.mock.calls)).toContain('unknown');
+  });
+
+  it('still logs the shapes a real Firebase code actually takes', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    reportError('signIn', { code: 'auth/invalid-credential' });
+    expect(JSON.stringify(spy.mock.calls)).toContain('auth/invalid-credential');
+  });
 });
