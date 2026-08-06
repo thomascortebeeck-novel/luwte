@@ -57,3 +57,46 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
+/*
+ * The plan's `help` and `professional` steps, surfaced here. `order: -1`
+ * moves this section above the national `.list` without moving it in the
+ * DOM — see the comment in Crisis.tsx on why the source order stays
+ * national-first regardless. `.row`, `.list`, `.name` and `.number` above
+ * are reused rather than redeclared, which is what carries the 320px
+ * wrapping fix over for free: a long name beside a long number wraps here
+ * exactly as it does in the national list, because it is the same rule.
+ */
+.personal {
+  order: -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.personalTitle {
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
+  font-weight: 500;
+  color: var(--text);
+}
+
+/*
+ * BRAND 3.4 — sans for what the app says, serif for what a person wrote.
+ * `.name` here holds the label the person typed for this contact ("mijn
+ * zus", "dokter Peeters"): their own word for who this is, the same field
+ * Plan.module.css's `.sign` already renders in the serif. Scoped to
+ * `.personal` rather than added to the bare `.name` rule above, because
+ * that rule is shared with the national list, where it holds translated
+ * system copy ("Zelfmoordlijn", "Noodgeval") that must stay in the sans.
+ *
+ * `.number` is deliberately left alone: a phone number is a quantity to
+ * dial, not prose, and this is "the screen where a mis-tap costs most" (see
+ * the comment on `.row` above) — every number on it, national or personal,
+ * stays in the tabular sans that makes it fast to read and hard to
+ * mis-tap. See packages/ui/src/typeface.test.ts for the allowlist this
+ * selector was added to.
+ */
+.personal .name {
+  font-family: var(--font-human);
+}

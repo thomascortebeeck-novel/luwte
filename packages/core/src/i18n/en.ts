@@ -53,6 +53,7 @@ export const en: Dictionary = {
   crisisCps: 'Centre de Prévention du Suicide',
   crisisEmergency: 'Emergency',
   crisisCallAction: 'Call',
+  crisisYourPeople: 'People you chose yourself',
 
   navToday: 'Today',
   navSections: 'Navigation',

@@ -55,6 +55,7 @@ export const nl = {
   crisisCps: 'Centre de Prévention du Suicide',
   crisisEmergency: 'Noodgeval',
   crisisCallAction: 'Bellen',
+  crisisYourPeople: 'Mensen die je zelf koos',
 
   navToday: 'Vandaag',
   navSections: 'Navigatie',

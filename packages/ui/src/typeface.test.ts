@@ -59,6 +59,10 @@ const ALLOWED = new Set<string>([
   'apps/web/src/routes/Plan.module.css::.sign',
   // The plan's "what I do about it" — also the person's own words.
   'apps/web/src/routes/Plan.module.css::.action',
+  // The crisis screen's personal contacts — the name the person typed for
+  // who this is ("mijn zus", "dokter Peeters"), not the translated system
+  // copy the bare `.name` rule also serves.
+  'apps/web/src/routes/Crisis.module.css::.personal .name',
 ]);
 
 /** `font-family` or the `font` shorthand, wherever either reaches for the serif token. */

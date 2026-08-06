@@ -42,6 +42,26 @@ describe('which of the plan becomes a crisis contact', () => {
     expect(contacts).toEqual([]);
   });
 
+  it('leaves out an entry with a real number but no name', () => {
+    // A blank or whitespace-only label would show as an empty row above a
+    // dialable number — tappable, but naming nobody.
+    const contacts = personalContacts([
+      { section: 'help', label: '', detail: '0470 12 34 56', createdAt: at },
+      { section: 'help', label: '   ', detail: '0471 98 76 54', createdAt: at },
+    ]);
+    expect(contacts).toEqual([]);
+  });
+
+  it('excludes a section that is neither help nor professional, even with a real number', () => {
+    // The only other fixture for an excluded section had no number either,
+    // so it was dropped by the no-number path — this proves the section
+    // filter itself does the work, not a coincidence of that fixture.
+    const contacts = personalContacts([
+      { section: 'coping', label: 'ademhalen', detail: '0470 12 34 56', createdAt: at },
+    ]);
+    expect(contacts).toEqual([]);
+  });
+
   it('keeps what was typed as the thing on screen', () => {
     // The dial string is stripped for the dialer; the display keeps the
     // spacing somebody recognises.
