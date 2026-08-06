@@ -12,6 +12,7 @@ import {
 import { Button, Choice, Hairline, Screen } from '@luwte/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { messageKeyFor, reportError } from '../errors';
 import {
   saveNotificationSettings,
   saveReminderHour,
@@ -48,7 +49,7 @@ export function Settings() {
   /** Art. 15 / Art. 17. One at a time, so neither can be started twice. */
   const [busy, setBusy] = useState<'export' | 'delete' | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [dataMessage, setDataMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>(() =>
     typeof Notification === 'undefined' ? 'unsupported' : Notification.permission,
   );
@@ -86,16 +87,41 @@ export function Settings() {
   const toggle = (id: keyof NotificationSettings, value: boolean) => {
     const next = { ...settings, [id]: value };
     setSettings(next);
-    if (user) void saveNotificationSettings(user.uid, next).then(reload);
+    setMessage(null);
+    if (user) {
+      void saveNotificationSettings(user.uid, next)
+        .then(reload)
+        .catch((error: unknown) => {
+          reportError('saveNotificationSettings', error);
+          setMessage(t(messageKeyFor(error)));
+        });
+    }
   };
 
   const changeHour = (next: number) => {
     setHour(next);
-    if (user) void saveReminderHour(user.uid, next).then(reload);
+    setMessage(null);
+    if (user) {
+      void saveReminderHour(user.uid, next)
+        .then(reload)
+        .catch((error: unknown) => {
+          reportError('saveReminderHour', error);
+          setMessage(t(messageKeyFor(error)));
+        });
+    }
   };
 
   return (
     <Screen title={t('settingsTitle')}>
+      {/* One region for every write on this long screen — present even when
+          empty, so a screen reader has it before a message from any section
+          lands. Near the top rather than beside whichever control was used,
+          because this page has too many sections for the message to always
+          land near what triggered it. */}
+      <p className={styles.note} role="status" aria-live="polite">
+        {message}
+      </p>
+
       {/* Above notifications on purpose: who can see what a person wrote
           matters more than which alerts they get, and PRD 6.4 puts the
           decision within easy reach rather than buried. */}
@@ -201,7 +227,15 @@ export function Settings() {
             onChange={(checked) => {
               const next = { shareCompletions: checked };
               setShare(next);
-              if (user) void saveShareSettings(user.uid, next).then(reload);
+              setMessage(null);
+              if (user) {
+                void saveShareSettings(user.uid, next)
+                  .then(reload)
+                  .catch((error: unknown) => {
+                    reportError('saveShareSettings', error);
+                    setMessage(t(messageKeyFor(error)));
+                  });
+              }
             }}
           />
         </div>
@@ -291,7 +325,7 @@ export function Settings() {
               onClick={() => {
                 if (!user) return;
                 setBusy('export');
-                setDataMessage(null);
+                setMessage(null);
                 void exportEverything(user.uid)
                   .then((payload) => {
                     const url = URL.createObjectURL(
@@ -303,7 +337,10 @@ export function Settings() {
                     link.click();
                     URL.revokeObjectURL(url);
                   })
-                  .catch(() => setDataMessage(t('genericError')))
+                  .catch((error: unknown) => {
+                    reportError('exportEverything', error);
+                    setMessage(t('genericError'));
+                  })
                   .finally(() => setBusy(null));
               }}
             >
@@ -324,10 +361,11 @@ export function Settings() {
                     onClick={() => {
                       if (!user) return;
                       setBusy('delete');
-                      setDataMessage(null);
+                      setMessage(null);
                       void eraseEverything(user.uid)
                         .then(() => navigate('/'))
                         .catch((error: unknown) => {
+                          reportError('eraseEverything', error);
                           /*
                            * The data is already gone by the time this can
                            * fail — only the sign-in itself is left, and
@@ -336,7 +374,7 @@ export function Settings() {
                            * "nothing happened".
                            */
                           const code = (error as { code?: string })?.code;
-                          setDataMessage(
+                          setMessage(
                             code === 'auth/requires-recent-login'
                               ? t('settingsDeleteSignInAgain')
                               : t('genericError'),
@@ -370,12 +408,6 @@ export function Settings() {
             )}
           </div>
         </div>
-
-        {dataMessage ? (
-          <p className={styles.note} role="status">
-            {dataMessage}
-          </p>
-        ) : null}
       </section>
     </Screen>
   );
