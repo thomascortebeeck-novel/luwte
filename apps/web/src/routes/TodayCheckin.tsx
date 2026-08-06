@@ -7,6 +7,7 @@ import {
 } from '@luwte/core';
 import { Button, ScaleInput, type ScaleValue } from '@luwte/ui';
 import { useMemo, useState } from 'react';
+import { messageKeyFor, reportError } from '../errors';
 import { saveCheckin } from '../firebase/checkins';
 import { useLocale } from '../providers/LocaleProvider';
 import styles from './TodayCheckin.module.css';
@@ -43,6 +44,16 @@ export function TodayCheckin({ uid, today, onSaved }: TodayCheckinProps) {
   const { t } = useLocale();
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [note, setNote] = useState('');
+  /*
+   * `onSaved` below fires in the same tick as the write, before any
+   * rejection could ever arrive — Today.tsx swaps this component out for
+   * "Vandaag ingevuld" the instant it runs. So this message is logged via
+   * `reportError` reliably, but can only ever be seen on screen in the rare
+   * case this component is still mounted when a fast failure lands. Kept
+   * anyway, present and empty, rather than dropped: the region is cheap and
+   * correct, and the log line is not.
+   */
+  const [message, setMessage] = useState<string | null>(null);
 
   const scaleLabels = useMemo(
     () => [1, 2, 3, 4, 5, 6, 7].map((n) => t(`scaleStep${n}` as CopyKey)),
@@ -58,7 +69,7 @@ export function TodayCheckin({ uid, today, onSaved }: TodayCheckinProps) {
     Number.isFinite(answers.sleepHours);
 
   const save = () => {
-    saveCheckin(uid, today, {
+    void saveCheckin(uid, today, {
       date: today,
       mood: answers.mood as Scale,
       arousal: answers.arousal as Scale,
@@ -66,6 +77,9 @@ export function TodayCheckin({ uid, today, onSaved }: TodayCheckinProps) {
       flatness: answers.flatness as Scale,
       ...(note.trim() ? { note: note.trim() } : {}),
       source: 'manual',
+    }).catch((error: unknown) => {
+      reportError('saveCheckin', error);
+      setMessage(t(messageKeyFor(error)));
     });
     // Nothing waits on the network: the write goes to the local cache and
     // syncs later, which is the whole point of PRD 5.6.
@@ -133,6 +147,12 @@ export function TodayCheckin({ uid, today, onSaved }: TodayCheckinProps) {
       <Button full disabled={!complete} onClick={save}>
         {t('checkinSave')}
       </Button>
+
+      {/* Present even when empty, so a screen reader has the region before
+          any message lands in it. */}
+      <p className={styles.message} role="status" aria-live="polite">
+        {message}
+      </p>
     </section>
   );
 }

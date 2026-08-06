@@ -67,6 +67,15 @@
   color: var(--text-quiet);
 }
 
+/* A write failure, sans and quiet — not `.note` above, which is the diary
+   textarea and carries the serif for what a person wrote. */
+.message {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
 /* BRAND 3.4 — the serif is for what a person wrote, and this is that. */
 .note {
   width: 100%;
