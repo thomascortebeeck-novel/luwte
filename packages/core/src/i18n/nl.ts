@@ -48,7 +48,19 @@ export const nl = {
 
   genericError: 'Dat is niet gelukt. Probeer het straks nog eens.',
   offline: 'Geen verbinding. Wat je invult wordt bewaard en later verstuurd.',
-  errorNotAllowed: 'Dat mag je hier niet. Vraag het aan wie het deelde.',
+  /*
+   * Written for the shared-data screens (Console, ConsolePatient, a
+   * supporter's view) and then reused unexamined on screens where somebody
+   * writes their own record and nobody shared anything with them — CheckIn,
+   * Medication, Plan, Calendar, Circle, Invite, Settings. "Vraag het aan wie
+   * het deelde" is false there and implies the person needs somebody else's
+   * permission for their own data, against the principle that they are in
+   * full control. Reworded to hold on both kinds of screen: no claim about
+   * who to ask, just that it was refused and trying again will not change
+   * that — which is also the fact `genericError`'s "probeer het straks nog
+   * eens" gets wrong for a permission refusal.
+   */
+  errorNotAllowed: 'Dat mag hier niet. Opnieuw proberen verandert dat niet.',
 
   // BRAND 4.4 — the one surface where the voice is direct. No metaphor, no softness.
   crisisTitle: 'Als het nu te zwaar is, bel iemand.',

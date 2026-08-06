@@ -47,7 +47,12 @@ export const en: Dictionary = {
 
   genericError: "That didn't work. Try again later.",
   offline: 'No connection. What you fill in is saved and sent later.',
-  errorNotAllowed: 'You are not allowed to do that here. Ask whoever shared it.',
+  // See the comment beside this key in nl.ts: reworded to hold on both the
+  // shared-data screens it was written for and the person's-own-record
+  // screens it got reused on unexamined, where "ask whoever shared it" was
+  // false and implied they needed someone else's permission for their own
+  // data.
+  errorNotAllowed: "That's not allowed here. Trying again won't change that.",
 
   crisisTitle: "If it's too much right now, call someone.",
   crisisZelfmoordlijn: 'Suicide helpline (Zelfmoordlijn)',

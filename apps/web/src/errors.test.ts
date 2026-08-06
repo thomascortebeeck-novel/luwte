@@ -1,3 +1,4 @@
+import { dictionaries } from '@luwte/core';
 import { describe, expect, it, vi } from 'vitest';
 import { messageKeyFor, reportError } from './errors';
 
@@ -14,6 +15,23 @@ describe('what a failure says to somebody', () => {
   it('falls back to the plain message for anything else', () => {
     expect(messageKeyFor(new Error('boom'))).toBe('genericError');
     expect(messageKeyFor(undefined)).toBe('genericError');
+  });
+
+  it('reads true on a screen showing only your own record, not just a shared one', () => {
+    /*
+     * Regression: errorNotAllowed used to say "Vraag het aan wie het
+     * deelde" / "Ask whoever shared it" — written for Console,
+     * ConsolePatient and a supporter's view, then reused unexamined on
+     * CheckIn, Medication, Plan, Calendar, Circle, Invite and Settings,
+     * where the person is writing their own record and nobody shared
+     * anything with them. False there, and it implied they needed someone
+     * else's permission for their own data — against "the person is in
+     * full control". permission-denied fires the same message everywhere
+     * messageKeyFor is used, so the copy itself has to hold regardless of
+     * which of those screens it appears on.
+     */
+    expect(dictionaries.nl.errorNotAllowed).not.toMatch(/wie|deelde|gedeeld/i);
+    expect(dictionaries.en.errorNotAllowed).not.toMatch(/whoever|shared/i);
   });
 });
 
