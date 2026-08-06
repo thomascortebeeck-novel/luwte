@@ -182,6 +182,10 @@ export const en: Dictionary = {
   inboxAccept: 'Accept',
   inboxLeave:
     'Do nothing and the request expires after a week. Nobody is told either way.',
+  // Not the general `offline` copy — accepting runs as a transaction, which
+  // fails outright when offline rather than queuing, so the promise that
+  // what you did is saved and sent later would not be true here.
+  inboxAcceptFailed: "Accepting didn't work. Try again.",
   grantCheckins: 'How things are going, day by day',
   grantMedication: 'Which medication is being taken',
   grantDoses: 'Whether the medication was taken',

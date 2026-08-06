@@ -184,6 +184,14 @@ export const nl = {
   inboxAccept: 'Aannemen',
   inboxLeave:
     'Doe je niets, dan vervalt de vraag na een week. Er wordt niemand iets gezegd.',
+  /*
+   * Not the general `offline` copy. Accepting runs as a transaction, and a
+   * transaction fails outright when offline rather than queuing — so
+   * `offline`'s promise that "wat je invult wordt bewaard en later
+   * verstuurd" would be untrue here. Said plainly instead: it did not go
+   * through, try again.
+   */
+  inboxAcceptFailed: 'Aannemen lukte niet. Probeer het opnieuw.',
   grantCheckins: 'Hoe het gaat, dag per dag',
   grantMedication: 'Welke medicatie er genomen wordt',
   grantDoses: 'Of de medicatie genomen is',

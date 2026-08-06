@@ -5,6 +5,15 @@
   margin: 0;
 }
 
+/* A write failure, shared with ConsolePatient.tsx, which imports this
+   stylesheet too. */
+.note {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
 .sectionTitle {
   font-size: var(--text-lg);
   line-height: var(--leading-lg);

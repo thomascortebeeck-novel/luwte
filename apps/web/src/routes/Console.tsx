@@ -9,6 +9,7 @@ import {
 import { Button, Field, Hairline, Screen } from '@luwte/ui';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { messageKeyFor, reportError } from '../errors';
 import {
   readAddressedInvites,
   readMemberships,
@@ -60,6 +61,7 @@ export function Console() {
     practice: '',
   });
   const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
   const load = () => {
     if (!user) return;
@@ -89,9 +91,19 @@ export function Console() {
   const accept = async (invite: AddressedInvite) => {
     if (!user || busy) return;
     setBusy(true);
+    setMessage(null);
     try {
       await redeemInvite(invite.code, user.uid);
       load();
+    } catch (error: unknown) {
+      reportError('redeemInvite', error);
+      /*
+       * Not messageKeyFor's `offline` branch. redeemInvite runs as a
+       * runTransaction, and a transaction fails outright when the client is
+       * offline rather than queuing like a plain write — `offline`'s promise
+       * that what you did is saved and sent later would be untrue here.
+       */
+      setMessage(t('inboxAcceptFailed'));
     } finally {
       setBusy(false);
     }
@@ -103,6 +115,7 @@ export function Console() {
   const send = async () => {
     if (!user || !canSend) return;
     setBusy(true);
+    setMessage(null);
     try {
       await applyForVerification(user.uid, {
         displayName: form.displayName.trim(),
@@ -111,6 +124,9 @@ export function Console() {
         practice: form.practice.trim(),
       });
       setRequest(await readMyRequest(user.uid));
+    } catch (error: unknown) {
+      reportError('applyForVerification', error);
+      setMessage(t(messageKeyFor(error)));
     } finally {
       setBusy(false);
     }
@@ -179,6 +195,12 @@ export function Console() {
           value={form.practice}
           onChange={(e) => setForm({ ...form, practice: e.target.value })}
         />
+
+        {/* Present even when empty, so a screen reader has the region
+            before a message ever lands in it. */}
+        <p className={styles.note} role="status" aria-live="polite">
+          {message}
+        </p>
       </Screen>
     );
   }
@@ -250,6 +272,12 @@ export function Console() {
           ))}
         </ul>
       )}
+
+      {/* Present even when empty, so a screen reader has the region before
+          a message ever lands in it. */}
+      <p className={styles.note} role="status" aria-live="polite">
+        {message}
+      </p>
     </Screen>
   );
 }
