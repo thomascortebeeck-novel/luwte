@@ -8,6 +8,7 @@ import {
 import { Button, Field, Hairline, HumanText, Screen } from '@luwte/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
+import { messageKeyFor, reportError } from '../errors';
 import { readMemberships, type Membership } from '../firebase/circle';
 import {
   createMedication,
@@ -44,6 +45,7 @@ export function ConsolePatient() {
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState({ name: '', dose: '', times: '', purpose: '' });
   const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
   const today = useMemo(() => dateKey(new Date(), DEFAULT_TIMEZONE), []);
 
@@ -91,6 +93,7 @@ export function ConsolePatient() {
     draft.name.trim().length > 0 && draft.dose.trim().length > 0 && timesValid && !busy;
 
   const startEditing = (medication: MedicationRecord | null) => {
+    setMessage(null);
     setEditing(medication?.id ?? 'new');
     setDraft({
       name: medication?.name ?? '',
@@ -102,13 +105,20 @@ export function ConsolePatient() {
 
   const resolve = async (medication: MedicationRecord, approve: boolean) => {
     if (!user) return;
-    await resolvePendingChange(patientId, medication, user.uid, approve);
-    loadMedications();
+    setMessage(null);
+    try {
+      await resolvePendingChange(patientId, medication, user.uid, approve);
+      loadMedications();
+    } catch (error: unknown) {
+      reportError('resolvePendingChange', error);
+      setMessage(t(messageKeyFor(error)));
+    }
   };
 
   const save = async () => {
     if (!user || !canSave) return;
     setBusy(true);
+    setMessage(null);
     try {
       const values = {
         name: draft.name.trim(),
@@ -130,6 +140,9 @@ export function ConsolePatient() {
 
       setEditing(null);
       loadMedications();
+    } catch (error: unknown) {
+      reportError('updateMedication', error);
+      setMessage(t(messageKeyFor(error)));
     } finally {
       setBusy(false);
     }
@@ -251,6 +264,12 @@ export function ConsolePatient() {
           ) : null}
         </>
       )}
+
+      {/* Present even when empty, so a screen reader has the region before
+          a message from resolve() or save() ever lands in it. */}
+      <p className={styles.note} role="status" aria-live="polite">
+        {message}
+      </p>
     </Screen>
   );
 }
