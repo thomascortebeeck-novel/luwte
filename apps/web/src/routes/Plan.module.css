@@ -1,9 +1,15 @@
-.intro,
-.quiet {
+.intro {
   font-size: var(--text-base);
   line-height: var(--leading-base);
   color: var(--text-quiet);
   margin: 0;
+}
+
+/* One step of the plan: its heading, its intro, its entries, its add form. */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .sectionTitle {
@@ -13,8 +19,7 @@
   color: var(--text);
 }
 
-.list,
-.examples {
+.list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -27,7 +32,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  align-items: flex-start;
 }
 
 /*
@@ -50,10 +54,21 @@
   color: var(--text-quiet);
 }
 
-.examples {
+/* Save / Weghalen / Terug while a row is being edited. Wraps rather than
+   scrolling — WCAG 1.4.10 at 320px; three short Dutch words never need it,
+   but nothing here depends on that staying true. */
+.rowActions {
+  display: flex;
   gap: var(--space-1);
-  font-family: var(--font-human);
-  font-size: var(--text-sm);
-  line-height: var(--leading-sm);
-  color: var(--text-quiet);
+  flex-wrap: wrap;
+}
+
+/* The always-open add form at the foot of each section — set apart from the
+   entries above it. `--line` because it is decoration, never a control. */
+.add {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--line);
 }

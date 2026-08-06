@@ -1,4 +1,4 @@
-import { paths, type PlanEntry, type PlanSection } from '@luwte/core';
+import { PLAN_SECTIONS, paths, type PlanEntry, type PlanSection } from '@luwte/core';
 import {
   collection,
   deleteDoc,
@@ -13,13 +13,30 @@ import { db } from './client';
 export type PlanEntryRecord = PlanEntry & { id: string };
 
 /**
- * The early-warning-signs plan.
+ * Guards the `section` read back from a document nothing validates —
+ * `/plan/{entryId}` has no shape rule for it (see firestore.rules), and this
+ * module is what starts writing a real value onto every new entry. A value
+ * outside `PLAN_SECTIONS` would otherwise type as valid via an unchecked
+ * cast and then silently disappear from every `entriesInSection` grouping:
+ * no crash, no error, just an entry that never appears again. On a safety
+ * plan that is the wrong failure mode, so anything unrecognised — absent,
+ * malformed, or simply wrong — falls back to `warning`, the same default the
+ * schema itself applies to an entry written before the other five steps
+ * existed.
+ */
+export function toPlanSection(value: unknown): PlanSection {
+  return typeof value === 'string' && (PLAN_SECTIONS as readonly string[]).includes(value)
+    ? (value as PlanSection)
+    : 'warning';
+}
+
+/**
+ * The safety plan.
  *
- * **luwte never reads this to decide anything.** It is stored and handed back,
- * the way the diary is. Matching a check-in against somebody's own list of
- * warning signs would be generating a conclusion about their mental state —
- * clinical monitoring, Class IIa under EU MDR, and the one thing this product
- * may never do.
+ * **luwte never reads this to decide anything.** It is stored and handed
+ * back, the way the diary is. Matching a check-in against somebody's warning
+ * signs would be generating a conclusion about their mental state — clinical
+ * monitoring, Class IIa under EU MDR, the one thing this product may never do.
  */
 export async function readPlan(uid: string): Promise<PlanEntryRecord[]> {
   const snapshot = await getDocs(collection(db, paths.plan(uid)));
@@ -28,9 +45,7 @@ export async function readPlan(uid: string): Promise<PlanEntryRecord[]> {
       const data = document.data();
       return {
         id: document.id,
-        // Absent on every entry written before the other five steps existed
-        // — same default the schema itself applies, not a guess made here.
-        section: (data.section ?? 'warning') as PlanSection,
+        section: toPlanSection(data.section),
         label: (data.label ?? '') as string,
         detail: (data.detail ?? '') as string,
         createdAt: data.createdAt?.toDate?.() ?? new Date(0),
@@ -41,7 +56,7 @@ export async function readPlan(uid: string): Promise<PlanEntryRecord[]> {
 
 export async function addPlanEntry(
   uid: string,
-  values: { label: string; detail: string },
+  values: { section: PlanSection; label: string; detail: string },
 ): Promise<void> {
   const id = doc(collection(db, paths.plan(uid))).id;
   await setDoc(doc(db, paths.planEntry(uid, id)), { ...values, createdAt: serverTimestamp() });

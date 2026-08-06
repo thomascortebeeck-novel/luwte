@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { PLAN_SECTIONS, PLAN_SECTION_COPY, dictionaries } from '@luwte/core';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -8,18 +9,21 @@ import type { PlanEntryRecord } from '../firebase/plan';
 
 const readPlan = vi.fn<() => Promise<PlanEntryRecord[]>>();
 const addPlanEntry = vi.fn<(...args: unknown[]) => Promise<void>>();
+const updatePlanEntry = vi.fn<(...args: unknown[]) => Promise<void>>();
 const removePlanEntry = vi.fn<(...args: unknown[]) => Promise<void>>();
 
 vi.mock('../firebase/plan', () => ({
   readPlan: () => readPlan(),
   addPlanEntry: (...args: unknown[]) => addPlanEntry(...args),
-  updatePlanEntry: vi.fn(),
+  updatePlanEntry: (...args: unknown[]) => updatePlanEntry(...args),
   removePlanEntry: (...args: unknown[]) => removePlanEntry(...args),
 }));
 
 vi.mock('../providers/AuthProvider', () => ({
   useAuth: () => ({ user: { uid: 'uid-jonas' }, status: 'signed-in' }),
 }));
+
+const nl = dictionaries.nl;
 
 const entry = (overrides: Partial<PlanEntryRecord> = {}): PlanEntryRecord => ({
   id: 'p1',
@@ -42,69 +46,222 @@ const renderPlan = (path = '/plan') =>
     </LocaleProvider>,
   );
 
+/** The `<section>` for one step, found by the heading text it is named after. */
+const sectionFor = async (titleKey: (typeof PLAN_SECTION_COPY)[keyof typeof PLAN_SECTION_COPY]['titleKey']) =>
+  within(await screen.findByRole('region', { name: nl[titleKey] }));
+
 beforeEach(() => {
   readPlan.mockResolvedValue([]);
   addPlanEntry.mockResolvedValue();
+  updatePlanEntry.mockResolvedValue();
   removePlanEntry.mockResolvedValue();
 });
 
-describe('the early-warning-signs plan', () => {
+describe('the safety plan', () => {
   it('says plainly that luwte checks nothing against it', async () => {
     /*
      * The regulatory line, stated to the person rather than only in a
-     * comment: matching a check-in against somebody's own warning signs would
-     * be clinical monitoring, Class IIa, and the one thing this product may
+     * comment: matching a check-in against somebody's own plan would be
+     * clinical monitoring, Class IIa, and the one thing this product may
      * never do. Somebody writing this list deserves to know that.
      */
     renderPlan();
     expect(await screen.findByText(/luwte kijkt hier niets mee na/)).toBeInTheDocument();
   });
 
-  it('says nothing is written down yet rather than showing an empty frame', async () => {
+  it('shows all six steps of the safety plan', async () => {
     renderPlan();
-    expect(await screen.findByText('Je hebt hier nog niets staan.')).toBeInTheDocument();
+    for (const section of PLAN_SECTIONS) {
+      const copy = PLAN_SECTION_COPY[section];
+      // A heading, not just text: in the `warning` section the title and
+      // the label field share the exact same copy ("Wat je merkt"), so a
+      // plain findByText would find both and fail on "multiple elements".
+      expect(await screen.findByRole('heading', { name: nl[copy.titleKey], level: 2 })).toBeTruthy();
+      expect(screen.getByText(nl[copy.introKey])).toBeTruthy();
+    }
   });
 
-  it('shows a sign and what the person does about it', async () => {
+  it('shows a sign and what the person does about it, under its own step', async () => {
     readPlan.mockResolvedValue([entry()]);
     renderPlan();
-    expect(await screen.findByText('Ik slaap minder dan vijf uur.')).toBeInTheDocument();
-    expect(screen.getByText('Ik bel mijn zus.')).toBeInTheDocument();
+    const warning = await sectionFor('planWarningTitle');
+    expect(warning.getByText('Ik slaap minder dan vijf uur.')).toBeInTheDocument();
+    expect(warning.getByText('Ik bel mijn zus.')).toBeInTheDocument();
   });
 
-  it('offers examples to read, never boxes to tick', async () => {
-    /*
-     * A ready-made list would have somebody agreeing to symptoms they do not
-     * have, and the plan only works in their own words.
-     */
-    const user = userEvent.setup();
+  it('keeps an entry inside the section it was written for, not another one', async () => {
+    readPlan.mockResolvedValue([entry({ id: 'c1', section: 'coping', label: 'Douchen', detail: '' })]);
     renderPlan();
-    await user.click(await screen.findByRole('button', { name: 'Iets toevoegen' }));
+    const coping = await sectionFor('planCopingTitle');
+    expect(coping.getByText('Douchen')).toBeInTheDocument();
 
-    expect(screen.getByText('Ik neem de telefoon niet meer op.')).toBeInTheDocument();
+    const warning = await sectionFor('planWarningTitle');
+    expect(warning.queryByText('Douchen')).not.toBeInTheDocument();
+  });
+
+  it('never renders a checkbox — this is freeform, never a checklist', async () => {
+    readPlan.mockResolvedValue([entry()]);
+    renderPlan();
+    await screen.findByText('Ik slaap minder dan vijf uur.');
     expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
   });
 
-  it('takes a sign with no response yet', async () => {
-    // Naming something and not yet knowing what to do about it is a real
-    // state, and refusing it would lose the half they do have.
-    const user = userEvent.setup();
-    renderPlan();
-    await user.click(await screen.findByRole('button', { name: 'Iets toevoegen' }));
-    await user.type(screen.getByLabelText('Wat merk je?'), 'Ik ga niet meer buiten');
-    await user.click(screen.getByRole('button', { name: 'Bewaren' }));
+  describe('telling six identical-looking controls apart', () => {
+    /*
+     * `help` and `professional` both ask "Wie" and both ask for a "Nummer" —
+     * the same visible word, in two different sections. Six "Iets toevoegen"
+     * buttons collide the same way. A screen reader user tabbing through
+     * fields hears only the accessible name, not the heading two sections
+     * back, so each control's name has to carry the section itself.
+     */
+    it('gives the two "Wie" fields distinct accessible names', async () => {
+      renderPlan();
+      const help = nl.planHelpTitle;
+      const professional = nl.planProfessionalTitle;
 
-    expect(addPlanEntry).toHaveBeenCalledWith('uid-jonas', {
-      label: 'Ik ga niet meer buiten',
-      detail: '',
+      const helpWho = await screen.findByRole('textbox', { name: `${nl.planHelpLabel} – ${help}` });
+      const professionalWho = screen.getByRole('textbox', {
+        name: `${nl.planProfessionalLabel} – ${professional}`,
+      });
+      expect(helpWho).not.toBe(professionalWho);
+    });
+
+    it('gives the two "Nummer" fields distinct accessible names', async () => {
+      renderPlan();
+      const help = nl.planHelpTitle;
+      const professional = nl.planProfessionalTitle;
+
+      const helpNumber = await screen.findByRole('textbox', {
+        name: `${nl.planHelpDetail} – ${help}`,
+      });
+      const professionalNumber = screen.getByRole('textbox', {
+        name: `${nl.planProfessionalDetail} – ${professional}`,
+      });
+      expect(helpNumber).not.toBe(professionalNumber);
+    });
+
+    it('gives every "Iets toevoegen" button its own accessible name', async () => {
+      renderPlan();
+      const buttons = await screen.findAllByRole('button', { name: new RegExp(`^${nl.planAdd} – `) });
+      expect(buttons).toHaveLength(PLAN_SECTIONS.length);
+      const names = buttons.map((button) => button.getAttribute('aria-label'));
+      expect(new Set(names).size).toBe(PLAN_SECTIONS.length);
+    });
+
+    it('still shows the plain word visibly, for the sighted reader in the room', async () => {
+      // The fix must not make the visible field say anything different —
+      // only the accessible name gains the section.
+      renderPlan();
+      const help = await sectionFor('planHelpTitle');
+      expect(help.getByText(nl.planHelpLabel)).toBeInTheDocument();
     });
   });
 
-  it('refuses to save an entry with nothing noticed', async () => {
-    const user = userEvent.setup();
-    renderPlan();
-    await user.click(await screen.findByRole('button', { name: 'Iets toevoegen' }));
-    expect(screen.getByRole('button', { name: 'Bewaren' })).toBeDisabled();
+  describe('adding something', () => {
+    it('adds an entry to the section it was typed into', async () => {
+      const user = userEvent.setup();
+      renderPlan();
+      const warning = await sectionFor('planWarningTitle');
+
+      await user.type(warning.getByLabelText(`${nl.planWarningLabel} – ${nl.planWarningTitle}`), 'Ik ga niet meer buiten');
+      await user.click(warning.getByRole('button', { name: `${nl.planAdd} – ${nl.planWarningTitle}` }));
+
+      expect(addPlanEntry).toHaveBeenCalledWith('uid-jonas', {
+        section: 'warning',
+        label: 'Ik ga niet meer buiten',
+        detail: '',
+      });
+    });
+
+    it('adds to a different section without touching the first', async () => {
+      const user = userEvent.setup();
+      renderPlan();
+      const help = await sectionFor('planHelpTitle');
+
+      await user.type(help.getByLabelText(`${nl.planHelpLabel} – ${nl.planHelpTitle}`), 'mijn zus');
+      await user.type(help.getByLabelText(`${nl.planHelpDetail} – ${nl.planHelpTitle}`), '0470 12 34 56');
+      await user.click(help.getByRole('button', { name: `${nl.planAdd} – ${nl.planHelpTitle}` }));
+
+      expect(addPlanEntry).toHaveBeenCalledWith('uid-jonas', {
+        section: 'help',
+        label: 'mijn zus',
+        detail: '0470 12 34 56',
+      });
+    });
+
+    it('refuses to add an entry with nothing written', async () => {
+      renderPlan();
+      const warning = await sectionFor('planWarningTitle');
+      expect(
+        warning.getByRole('button', { name: `${nl.planAdd} – ${nl.planWarningTitle}` }),
+      ).toBeDisabled();
+    });
+  });
+
+  describe('changing or removing an existing entry', () => {
+    it('saves an edited entry back through updatePlanEntry', async () => {
+      const user = userEvent.setup();
+      readPlan.mockResolvedValue([entry()]);
+      renderPlan();
+      const warning = await sectionFor('planWarningTitle');
+
+      // The row's own text, not the section title, is what names its
+      // controls — see the comment on `rowName` in Plan.tsx.
+      const rowContext = `${entry().label} – ${nl.planWarningTitle}`;
+
+      await user.click(warning.getByRole('button', { name: `${nl.circleChange} – ${rowContext}` }));
+      const labelField = warning.getByLabelText(`${nl.planWarningLabel} – ${rowContext}`);
+      await user.clear(labelField);
+      await user.type(labelField, 'Ik slaap minder dan vier uur.');
+      await user.click(warning.getByRole('button', { name: `${nl.planSave} – ${rowContext}` }));
+
+      expect(updatePlanEntry).toHaveBeenCalledWith('uid-jonas', 'p1', {
+        label: 'Ik slaap minder dan vier uur.',
+        detail: 'Ik bel mijn zus.',
+      });
+    });
+
+    it('removes an entry through removePlanEntry', async () => {
+      const user = userEvent.setup();
+      readPlan.mockResolvedValue([entry()]);
+      renderPlan();
+      const warning = await sectionFor('planWarningTitle');
+      const rowContext = `${entry().label} – ${nl.planWarningTitle}`;
+
+      await user.click(warning.getByRole('button', { name: `${nl.circleChange} – ${rowContext}` }));
+      await user.click(warning.getByRole('button', { name: `${nl.planRemove} – ${rowContext}` }));
+
+      expect(removePlanEntry).toHaveBeenCalledWith('uid-jonas', 'p1');
+    });
+
+    it('keeps the add form and an editing row addressable as two different controls', async () => {
+      /*
+       * The regression this guards: in the `warning` section the field label
+       * ("Wat je merkt") and the section title ("Wat je merkt") are the same
+       * string, so naming every control only `${visible} – ${sectionTitle}`
+       * made the add form's label field and an editing row's label field
+       * collide exactly. Caught by this test before it ever reached a screen
+       * reader user.
+       */
+      const user = userEvent.setup();
+      readPlan.mockResolvedValue([entry()]);
+      renderPlan();
+      const warning = await sectionFor('planWarningTitle');
+
+      await user.click(
+        warning.getByRole('button', {
+          name: `${nl.circleChange} – ${entry().label} – ${nl.planWarningTitle}`,
+        }),
+      );
+
+      // Each resolves on its own — if the two collided, either query would
+      // throw "multiple elements found" instead of returning one.
+      const addField = warning.getByLabelText(`${nl.planWarningLabel} – ${nl.planWarningTitle}`);
+      const editField = warning.getByLabelText(
+        `${nl.planWarningLabel} – ${entry().label} – ${nl.planWarningTitle}`,
+      );
+      expect(addField).not.toBe(editField);
+    });
   });
 
   it('is read-only when it is somebody else’s', async () => {
@@ -116,8 +273,9 @@ describe('the early-warning-signs plan', () => {
     readPlan.mockResolvedValue([entry()]);
     renderPlan('/plan/uid-someone');
 
-    expect(await screen.findByText('Ik slaap minder dan vijf uur.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Iets toevoegen' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Aanpassen' })).not.toBeInTheDocument();
+    const warning = await sectionFor('planWarningTitle');
+    expect(warning.getByText('Ik slaap minder dan vijf uur.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: new RegExp(`^${nl.planAdd} –`) })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: new RegExp(`^${nl.circleChange} –`) })).not.toBeInTheDocument();
   });
 });
