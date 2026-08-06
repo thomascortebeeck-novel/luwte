@@ -72,3 +72,36 @@
   padding-top: var(--space-2);
   border-top: 1px solid var(--line);
 }
+
+/* Worked examples, offered under `warning` only — the one open-ended
+   question of the six. Grouped tightly so the "Bijvoorbeeld" label reads
+   with its own list rather than as another child of the section. */
+.examplesBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.examplesLabel {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
+/* Phrased the way a person would think it, so the serif — same reasoning as
+   `.sign` — even though nobody wrote these. Quieter and smaller than a real
+   entry so they never read as one. Never a checklist: no list-style, because
+   there is nothing here to tick. */
+.examples {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-family: var(--font-human);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+}

@@ -195,9 +195,6 @@ export const nl = {
   planLink: 'Als het minder gaat',
   planIntro:
     'Waar merk je zelf het eerst aan dat het minder gaat en wat doe je dan? Je eigen woorden. luwte kijkt hier niets mee na.',
-  planEmpty: 'Je hebt hier nog niets staan.',
-  planSign: 'Wat merk je?',
-  planAction: 'Wat doe je dan?',
   planActionHint: 'Mag je later invullen.',
   planAdd: 'Iets toevoegen',
   planSave: 'Bewaren',

@@ -193,9 +193,6 @@ export const en: Dictionary = {
   planLink: 'When things get harder',
   planIntro:
     'What do you notice first when things start going downhill, and what do you do then? Your own words. luwte does not check anything against this.',
-  planEmpty: 'You have nothing here yet.',
-  planSign: 'What do you notice?',
-  planAction: 'What do you do then?',
   planActionHint: 'You can fill this in later.',
   planAdd: 'Add something',
   planSave: 'Save',

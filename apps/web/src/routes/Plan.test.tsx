@@ -106,6 +106,38 @@ describe('the safety plan', () => {
     expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
   });
 
+  describe('the worked examples', () => {
+    /*
+     * Only `warning` is open-ended enough to need them — the other five are
+     * already scoped by their own field structure (a name plus a number, an
+     * arrangement plus who).
+     */
+    it('shows the examples under the warning section and nowhere else', async () => {
+      renderPlan();
+      const warning = await sectionFor('planWarningTitle');
+      expect(warning.getByText(nl.planExamples)).toBeInTheDocument();
+      expect(warning.getByText(nl.planExampleSleep)).toBeInTheDocument();
+
+      const coping = await sectionFor('planCopingTitle');
+      expect(coping.queryByText(nl.planExamples)).not.toBeInTheDocument();
+    });
+
+    it('hides the examples from a read-only viewer', async () => {
+      // They exist to help someone write their own — not useful, and not
+      // theirs to see, on somebody else's plan.
+      readPlan.mockResolvedValue([entry()]);
+      renderPlan('/plan/uid-someone');
+      const warning = await sectionFor('planWarningTitle');
+      expect(warning.queryByText(nl.planExamples)).not.toBeInTheDocument();
+    });
+  });
+
+  it('tells the person the detail field is optional', async () => {
+    renderPlan();
+    const warning = await sectionFor('planWarningTitle');
+    expect(warning.getByText(nl.planActionHint)).toBeInTheDocument();
+  });
+
   describe('telling six identical-looking controls apart', () => {
     /*
      * `help` and `professional` both ask "Wie" and both ask for a "Nummer" —
@@ -155,6 +187,48 @@ describe('the safety plan', () => {
       const help = await sectionFor('planHelpTitle');
       expect(help.getByText(nl.planHelpLabel)).toBeInTheDocument();
     });
+
+    it('gives two entries with the same label in one section distinct accessible names', async () => {
+      /*
+       * The case `sectionTitle` and `entry.label` together still miss: two
+       * `help` contacts both named "mijn zus", with different numbers —
+       * exactly the shape a later phase expects, keying contacts on
+       * name-plus-number rather than name alone. Before the row's position
+       * was folded into `rowName`, both rows' Aanpassen buttons carried
+       * byte-identical accessible names, and once both were open for
+       * editing, so did their Wie fields and their Bewaren buttons. Each
+       * query below resolves on the exact expected name — as the existing
+       * add-form-versus-row test above does — so a collision would fail the
+       * query itself ("multiple elements found") rather than need counting.
+       */
+      const user = userEvent.setup();
+      readPlan.mockResolvedValue([
+        entry({ id: 'h1', section: 'help', label: 'mijn zus', detail: '0470 12 34 56' }),
+        entry({ id: 'h2', section: 'help', label: 'mijn zus', detail: '0471 98 76 54' }),
+      ]);
+      renderPlan();
+      const help = await sectionFor('planHelpTitle');
+
+      const firstRow = `mijn zus (1) – ${nl.planHelpTitle}`;
+      const secondRow = `mijn zus (2) – ${nl.planHelpTitle}`;
+
+      const firstEdit = await help.findByRole('button', { name: `${nl.circleChange} – ${firstRow}` });
+      const secondEdit = help.getByRole('button', { name: `${nl.circleChange} – ${secondRow}` });
+      expect(firstEdit).not.toBe(secondEdit);
+
+      // Open both rows at once — the collision this guards against only
+      // shows up on Bewaren and the fields once both are mid-edit together.
+      await user.click(firstEdit);
+      await user.click(secondEdit);
+
+      const firstWho = help.getByLabelText(`${nl.planHelpLabel} – ${firstRow}`);
+      const secondWho = help.getByLabelText(`${nl.planHelpLabel} – ${secondRow}`);
+      expect(firstWho).not.toBe(secondWho);
+
+      const firstSave = help.getByRole('button', { name: `${nl.planSave} – ${firstRow}` });
+      const secondSave = help.getByRole('button', { name: `${nl.planSave} – ${secondRow}` });
+      expect(firstSave).not.toBe(secondSave);
+    });
   });
 
   describe('adding something', () => {
@@ -196,6 +270,23 @@ describe('the safety plan', () => {
         warning.getByRole('button', { name: `${nl.planAdd} – ${nl.planWarningTitle}` }),
       ).toBeDisabled();
     });
+
+    it('keeps what was typed on screen when the write fails, instead of wiping it', async () => {
+      // Regression: the add form used to clear its fields the moment `add()`
+      // ran, before `addPlanEntry` had even resolved — so a failed write
+      // wiped a just-typed crisis contact with nothing to show for it.
+      const user = userEvent.setup();
+      addPlanEntry.mockRejectedValueOnce(new Error('offline'));
+      renderPlan();
+      const warning = await sectionFor('planWarningTitle');
+
+      const field = warning.getByLabelText(`${nl.planWarningLabel} – ${nl.planWarningTitle}`);
+      await user.type(field, 'Ik ga niet meer buiten');
+      await user.click(warning.getByRole('button', { name: `${nl.planAdd} – ${nl.planWarningTitle}` }));
+
+      expect(addPlanEntry).toHaveBeenCalled();
+      expect(await warning.findByDisplayValue('Ik ga niet meer buiten')).toBeInTheDocument();
+    });
   });
 
   describe('changing or removing an existing entry', () => {
@@ -207,7 +298,7 @@ describe('the safety plan', () => {
 
       // The row's own text, not the section title, is what names its
       // controls — see the comment on `rowName` in Plan.tsx.
-      const rowContext = `${entry().label} – ${nl.planWarningTitle}`;
+      const rowContext = `${entry().label} (1) – ${nl.planWarningTitle}`;
 
       await user.click(warning.getByRole('button', { name: `${nl.circleChange} – ${rowContext}` }));
       const labelField = warning.getByLabelText(`${nl.planWarningLabel} – ${rowContext}`);
@@ -226,7 +317,7 @@ describe('the safety plan', () => {
       readPlan.mockResolvedValue([entry()]);
       renderPlan();
       const warning = await sectionFor('planWarningTitle');
-      const rowContext = `${entry().label} – ${nl.planWarningTitle}`;
+      const rowContext = `${entry().label} (1) – ${nl.planWarningTitle}`;
 
       await user.click(warning.getByRole('button', { name: `${nl.circleChange} – ${rowContext}` }));
       await user.click(warning.getByRole('button', { name: `${nl.planRemove} – ${rowContext}` }));
@@ -250,7 +341,7 @@ describe('the safety plan', () => {
 
       await user.click(
         warning.getByRole('button', {
-          name: `${nl.circleChange} – ${entry().label} – ${nl.planWarningTitle}`,
+          name: `${nl.circleChange} – ${entry().label} (1) – ${nl.planWarningTitle}`,
         }),
       );
 
@@ -258,9 +349,34 @@ describe('the safety plan', () => {
       // throw "multiple elements found" instead of returning one.
       const addField = warning.getByLabelText(`${nl.planWarningLabel} – ${nl.planWarningTitle}`);
       const editField = warning.getByLabelText(
-        `${nl.planWarningLabel} – ${entry().label} – ${nl.planWarningTitle}`,
+        `${nl.planWarningLabel} – ${entry().label} (1) – ${nl.planWarningTitle}`,
       );
       expect(addField).not.toBe(editField);
+    });
+
+    it('stays in edit mode with the typed value when the write fails, instead of reverting', async () => {
+      // Regression: `PlanRow`'s save used to call `setEditing(false)`
+      // immediately, before `updatePlanEntry` had even resolved — so a
+      // failed save silently reverted the row to its stale value with
+      // nothing to show anything had gone wrong.
+      const user = userEvent.setup();
+      updatePlanEntry.mockRejectedValueOnce(new Error('offline'));
+      readPlan.mockResolvedValue([entry()]);
+      renderPlan();
+      const warning = await sectionFor('planWarningTitle');
+      const rowContext = `${entry().label} (1) – ${nl.planWarningTitle}`;
+
+      await user.click(warning.getByRole('button', { name: `${nl.circleChange} – ${rowContext}` }));
+      const labelField = warning.getByLabelText(`${nl.planWarningLabel} – ${rowContext}`);
+      await user.clear(labelField);
+      await user.type(labelField, 'Ik slaap minder dan vier uur.');
+      await user.click(warning.getByRole('button', { name: `${nl.planSave} – ${rowContext}` }));
+
+      expect(updatePlanEntry).toHaveBeenCalled();
+      // Still mid-edit, holding the typed value — not reverted to the stale
+      // "Ik slaap minder dan vijf uur." and not silently closed.
+      expect(await warning.findByDisplayValue('Ik slaap minder dan vier uur.')).toBeInTheDocument();
+      expect(warning.queryByText('Ik slaap minder dan vijf uur.')).not.toBeInTheDocument();
     });
   });
 

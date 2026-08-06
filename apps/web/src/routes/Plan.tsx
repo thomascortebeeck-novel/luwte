@@ -1,4 +1,5 @@
 import {
+  PLAN_EXAMPLE_KEYS,
   PLAN_SECTIONS,
   PLAN_SECTION_COPY,
   entriesInSection,
@@ -29,15 +30,25 @@ const nameFor = (visible: string, sectionTitle: string) => `${visible} – ${sec
 
 type PlanRowProps = {
   entry: PlanEntryRecord;
+  /** This row's position within its section — see the comment on `rowName`. */
+  index: number;
   sectionTitle: string;
   labelLabel: string;
   detailLabel: string;
-  onSave: (values: { label: string; detail: string }) => void;
+  onSave: (values: { label: string; detail: string }) => Promise<void>;
   onRemove: () => void;
 };
 
 /** One entry already on the plan: read by default, editable in place. */
-function PlanRow({ entry, sectionTitle, labelLabel, detailLabel, onSave, onRemove }: PlanRowProps) {
+function PlanRow({
+  entry,
+  index,
+  sectionTitle,
+  labelLabel,
+  detailLabel,
+  onSave,
+  onRemove,
+}: PlanRowProps) {
   const { t } = useLocale();
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(entry.label);
@@ -48,11 +59,14 @@ function PlanRow({ entry, sectionTitle, labelLabel, detailLabel, onSave, onRemov
    * the same as the section title itself (`planWarningLabel` and
    * `planWarningTitle` are both "Wat je merkt") — so `sectionTitle` alone
    * does not tell two controls apart, either from each other or from this
-   * same section's always-open add form. What the person already wrote is
-   * unique to this row and never changes while it is being edited, so it is
-   * what names every control on it.
+   * same section's always-open add form. What the person already wrote
+   * usually tells two rows apart too, but nothing stops two entries in one
+   * section sharing a label — two `help` contacts both called "mijn zus",
+   * the next phase of this plan expects exactly that — so the row's own
+   * position in the section is folded in as well. Content can repeat; a
+   * position within a list cannot.
    */
-  const rowName = (visible: string) => `${visible} – ${entry.label} – ${sectionTitle}`;
+  const rowName = (visible: string) => `${visible} – ${entry.label} (${index + 1}) – ${sectionTitle}`;
 
   if (!editing) {
     return (
@@ -79,6 +93,7 @@ function PlanRow({ entry, sectionTitle, labelLabel, detailLabel, onSave, onRemov
       <Field
         label={detailLabel}
         aria-label={rowName(detailLabel)}
+        message={t('planActionHint')}
         value={detail}
         onChange={(e) => setDetail(e.target.value)}
       />
@@ -87,8 +102,14 @@ function PlanRow({ entry, sectionTitle, labelLabel, detailLabel, onSave, onRemov
           disabled={label.trim().length === 0}
           aria-label={rowName(t('planSave'))}
           onClick={() => {
-            onSave({ label: label.trim(), detail: detail.trim() });
-            setEditing(false);
+            // Stay in edit mode with what was typed until the write actually
+            // resolves — a failed save must never silently revert the field
+            // to the value it had before this edit. No visible failure
+            // message here: that is P8.4's job, across every screen at once.
+            onSave({ label: label.trim(), detail: detail.trim() }).then(
+              () => setEditing(false),
+              () => {},
+            );
           }}
         >
           {t('planSave')}
@@ -116,7 +137,7 @@ type PlanAddProps = {
   sectionTitle: string;
   labelLabel: string;
   detailLabel: string;
-  onAdd: (values: { label: string; detail: string }) => void;
+  onAdd: (values: { label: string; detail: string }) => Promise<void>;
 };
 
 /** One small, always-open form per section — nothing to navigate to first. */
@@ -127,9 +148,17 @@ function PlanAdd({ sectionTitle, labelLabel, detailLabel, onAdd }: PlanAddProps)
 
   const add = () => {
     if (label.trim().length === 0) return;
-    onAdd({ label: label.trim(), detail: detail.trim() });
-    setLabel('');
-    setDetail('');
+    // Only clear what was typed once the write actually resolves — clearing
+    // it unconditionally, as this once did, wipes a just-typed crisis
+    // contact off the screen the moment a write fails, with nothing to show
+    // it. No visible failure message here: that is P8.4's job.
+    onAdd({ label: label.trim(), detail: detail.trim() }).then(
+      () => {
+        setLabel('');
+        setDetail('');
+      },
+      () => {},
+    );
   };
 
   return (
@@ -143,6 +172,7 @@ function PlanAdd({ sectionTitle, labelLabel, detailLabel, onAdd }: PlanAddProps)
       <Field
         label={detailLabel}
         aria-label={nameFor(detailLabel, sectionTitle)}
+        message={t('planActionHint')}
         value={detail}
         onChange={(e) => setDetail(e.target.value)}
       />
@@ -237,15 +267,16 @@ export function Plan() {
 
                 {rows.length > 0 ? (
                   <ul className={styles.list}>
-                    {rows.map((row) => (
+                    {rows.map((row, index) => (
                       <li key={row.id} className={styles.item}>
                         {mine ? (
                           <PlanRow
                             entry={row}
+                            index={index}
                             sectionTitle={sectionTitle}
                             labelLabel={labelLabel}
                             detailLabel={detailLabel}
-                            onSave={(values) => void updatePlanEntry(uid, row.id, values).then(load)}
+                            onSave={(values) => updatePlanEntry(uid, row.id, values).then(load)}
                             onRemove={() => void removePlanEntry(uid, row.id).then(load)}
                           />
                         ) : (
@@ -260,12 +291,32 @@ export function Plan() {
                   </ul>
                 ) : null}
 
+                {/* Worked examples, offered under the one open-ended question
+                    only — the other five are already scoped by their own
+                    field structure (a name plus a number, an arrangement plus
+                    who). Never a checklist: no checkboxes, no tap-to-fill
+                    that would have somebody agreeing to a sign they do not
+                    have. Hidden from a read-only viewer, like the add form
+                    beside it — they exist to help someone write their own. */}
+                {mine && section === 'warning' ? (
+                  <div className={styles.examplesBlock}>
+                    <p className={styles.examplesLabel} id={`${titleId}-examples`}>
+                      {t('planExamples')}
+                    </p>
+                    <ul className={styles.examples} aria-labelledby={`${titleId}-examples`}>
+                      {PLAN_EXAMPLE_KEYS.map((key) => (
+                        <li key={key}>{t(key)}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
                 {mine ? (
                   <PlanAdd
                     sectionTitle={sectionTitle}
                     labelLabel={labelLabel}
                     detailLabel={detailLabel}
-                    onAdd={(values) => void addPlanEntry(uid, { section, ...values }).then(load)}
+                    onAdd={(values) => addPlanEntry(uid, { section, ...values }).then(load)}
                   />
                 ) : null}
               </section>
