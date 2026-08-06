@@ -191,6 +191,15 @@ export {
 } from './model/patient';
 export { paths } from './model/paths';
 export {
+  MIN_PASSWORD_LENGTH,
+  PASSWORD_PROBLEM_COPY,
+  authErrorKey,
+  isSilentAuthError,
+  passwordProblem,
+  type AuthMode,
+  type PasswordProblem,
+} from './model/auth';
+export {
   CHARTS_RESTING_HEART_RATE_BY_DEFAULT,
   HEALTH_CONNECT_TYPES,
   buildHealthDays,

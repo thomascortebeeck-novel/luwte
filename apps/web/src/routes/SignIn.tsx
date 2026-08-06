@@ -1,109 +1,153 @@
-import { Button, Field, Screen } from '@luwte/ui';
-import { useEffect, useState } from 'react';
 import {
-  completeLinkSignIn,
-  isLinkSignIn,
+  MIN_PASSWORD_LENGTH,
+  PASSWORD_PROBLEM_COPY,
+  authErrorKey,
+  passwordProblem,
+  type AuthMode,
+} from '@luwte/core';
+import { Button, Field, Screen } from '@luwte/ui';
+import { useState } from 'react';
+import {
   looksLikeEmail,
-  pendingEmail,
-  sendLink,
-  signInOrRegister,
+  register,
+  resetPassword,
+  signIn,
   signInWithGoogle,
 } from '../firebase/auth';
 import { useLocale } from '../providers/LocaleProvider';
 import styles from './SignIn.module.css';
 
-type Mode = 'link' | 'password';
+type Mode = AuthMode | 'reset';
 
 /**
- * PRD 7 — the email link is preferred, with a password as the fallback for
- * anyone who finds mail links awkward. Both land in the same place.
+ * Two ways in: a password, or a Google account.
+ *
+ * **The emailed sign-in link is gone**, and removing a way in was the
+ * improvement. It asked somebody to leave the app, find a mail client, and
+ * come back — three steps that each fail differently, on a screen reached by
+ * a person who is unwell. It also broke in the ways mail links always break:
+ * opened on a different device, rewritten by a corporate scanner, expired
+ * after an hour.
+ *
+ * **Signing in and creating an account are separate**, which is the other
+ * half of the change. The previous screen guessed: it tried to sign in and
+ * created an account if that failed. Since Firebase answers a wrong password
+ * and an unknown address with the same code, mistyping your own password
+ * tried to register you, failed, and said "signing in didn't work" — never
+ * "your password is wrong". Asking which one somebody means costs one tap and
+ * removes a whole class of that.
+ *
+ * What the screen never does is say whether an address has an account. That
+ * would disclose that a named person keeps a logbook for psychosis and
+ * depression, and anyone could ask from here without a password. See
+ * `authErrorKey`.
  */
 export function SignIn() {
   const { t } = useLocale();
-  const [mode, setMode] = useState<Mode>('link');
-  const [email, setEmail] = useState(() => pendingEmail() ?? '');
+  const [mode, setMode] = useState<Mode>('signIn');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [revealed, setRevealed] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [linkSent, setLinkSent] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  // Returning from the emailed link: finish the sign-in straight away. If the
-  // link was opened on a different device the stored address is missing, and
-  // asking for it again is the documented fallback rather than an error.
-  useEffect(() => {
-    if (!isLinkSignIn(window.location.href)) return;
-    const stored = pendingEmail();
-    if (!stored) return;
-    completeLinkSignIn(window.location.href, stored).catch(() => {
-      setMessage(t('signInFailed'));
-    });
-  }, [t]);
-
   const emailValid = looksLikeEmail(email);
+  const problem = passwordProblem(password, email);
 
-  const submit = async () => {
+  const go = (next: Mode) => {
+    setMode(next);
+    setMessage(null);
+    setPassword('');
+    setRevealed(false);
+  };
+
+  const run = async (action: () => Promise<unknown>, forMode: AuthMode) => {
     setMessage(null);
     setBusy(true);
     try {
-      if (mode === 'link') {
-        await sendLink(email, window.location.origin);
-        setLinkSent(true);
-      } else {
-        await signInOrRegister(email, password);
-      }
-    } catch {
-      setMessage(t('signInFailed'));
+      await action();
+    } catch (error) {
+      const key = authErrorKey((error as { code?: string }).code, forMode);
+      // null means say nothing: closing the Google popup is somebody changing
+      // their mind, not a failure to report back at them.
+      setMessage(key ? t(key) : null);
     } finally {
       setBusy(false);
     }
   };
 
-  const withGoogle = async () => {
-    setMessage(null);
-    setBusy(true);
-    try {
-      await signInWithGoogle();
-    } catch {
-      // Includes the person simply closing the popup, which is not a failure
-      // worth a different message — they are still on the sign-in screen with
-      // every other way in available.
-      setMessage(t('signInFailed'));
-    } finally {
-      setBusy(false);
+  const submit = () => {
+    if (mode === 'reset') {
+      return run(async () => {
+        await resetPassword(email);
+        setMessage(t('authResetSent'));
+      }, 'signIn');
     }
+    return run(
+      () => (mode === 'register' ? register(email, password) : signIn(email, password)),
+      mode,
+    );
   };
 
-  const canSubmit = emailValid && (mode === 'link' || password.length >= 6) && !busy;
+  const canSubmit =
+    !busy && emailValid && (mode === 'reset' || (mode === 'signIn' ? password.length > 0 : problem === null));
+
+  const submitLabel =
+    mode === 'register' ? t('registerSubmit') : mode === 'reset' ? t('authResetSubmit') : t('signInSubmit');
+
+  const title =
+    mode === 'register' ? t('registerTitle') : mode === 'reset' ? t('authForgotPassword') : t('signInTitle');
 
   return (
     <Screen
-      title={t('signInTitle')}
+      // Each mode says what it is. "Welkom" over a password-reset form leaves
+      // the heading and the form describing different things.
+      title={title}
       action={
         <>
           <Button full disabled={!canSubmit} onClick={() => void submit()}>
-            {mode === 'link' ? t('signInSendLink') : t('signInSubmit')}
+            {submitLabel}
           </Button>
-          <Button
-            variant="quiet"
-            onClick={() => {
-              setMode(mode === 'link' ? 'password' : 'link');
-              setMessage(null);
-              setLinkSent(false);
-            }}
-          >
-            {mode === 'link' ? t('signInUsePassword') : t('signInUseLink')}
-          </Button>
-          {/* An equal option, not a promoted one. It is quicker for most
-              people and it tells Google this person opened luwte — which is
-              a real disclosure for an app holding health data, so the note
-              below says so rather than leaving it to be discovered. */}
-          <Button variant="quiet" disabled={busy} onClick={() => void withGoogle()}>
-            {t('signInGoogle')}
-          </Button>
+
+          {mode === 'reset' ? (
+            <Button variant="quiet" disabled={busy} onClick={() => go('signIn')}>
+              {t('authSwitchToSignIn')}
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="quiet"
+                disabled={busy}
+                onClick={() => go(mode === 'signIn' ? 'register' : 'signIn')}
+              >
+                {mode === 'signIn' ? t('authSwitchToRegister') : t('authSwitchToSignIn')}
+              </Button>
+
+              {/* An equal option, not a promoted one. It is quicker for most
+                  people and it tells Google this person opened luwte — which
+                  is a real disclosure for an app holding health data, so the
+                  note below says so rather than leaving it to be found. */}
+              <Button
+                variant="quiet"
+                disabled={busy}
+                onClick={() => void run(signInWithGoogle, mode)}
+              >
+                {t('signInGoogle')}
+              </Button>
+
+              {mode === 'signIn' ? (
+                <Button variant="quiet" disabled={busy} onClick={() => go('reset')}>
+                  {t('authForgotPassword')}
+                </Button>
+              ) : null}
+            </>
+          )}
         </>
       }
     >
       <p className={styles.tagline}>{t('appTagline')}</p>
+
+      {mode === 'reset' ? <p className={styles.note}>{t('authResetIntro')}</p> : null}
 
       <Field
         label={t('signInEmailLabel')}
@@ -116,20 +160,56 @@ export function SignIn() {
         onChange={(e) => setEmail(e.target.value)}
       />
 
-      {mode === 'password' ? (
-        <Field
-          label={t('signInPasswordLabel')}
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      ) : null}
+      {mode === 'reset' ? null : (
+        <>
+          <Field
+            label={mode === 'register' ? t('registerPasswordLabel') : t('signInPasswordLabel')}
+            type={revealed ? 'text' : 'password'}
+            /*
+             * `new-password` tells a password manager to offer a generated one
+             * and not to fill the existing entry over it. Getting this wrong is
+             * why so many sign-up forms silently receive the old password.
+             */
+            autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+            minLength={mode === 'register' ? MIN_PASSWORD_LENGTH : undefined}
+            value={password}
+            /*
+             * The requirement is shown while typing and only once something
+             * has been typed — a rule stated as a rejection after the fact is
+             * the thing this avoids. Never marked invalid on the way *to* a
+             * valid password, only described.
+             */
+            message={
+              mode === 'register'
+                ? password.length > 0 && problem
+                  ? t(PASSWORD_PROBLEM_COPY[problem])
+                  : t('registerPasswordHint')
+                : undefined
+            }
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-      <p className={styles.note}>{t('signInGoogleNote')}</p>
+          {/*
+            A labelled button rather than an eye icon. At 24px an eye is the
+            same unreadable smudge the applause icon was, and this audience
+            includes people whose hands shake — a word is unambiguous and the
+            Button primitive gives it a 48px target for free.
+          */}
+          <Button variant="quiet" onClick={() => setRevealed(!revealed)}>
+            {revealed ? t('authHidePassword') : t('authShowPassword')}
+          </Button>
+        </>
+      )}
 
-      {linkSent ? <p className={styles.note}>{t('signInLinkSent')}</p> : null}
-      {message ? <p className={styles.note}>{message}</p> : null}
+      {/* Only where there is a Google button to explain. On the reset screen
+          it described a control that is not there. */}
+      {mode === 'reset' ? null : <p className={styles.note}>{t('signInGoogleNote')}</p>}
+
+      {/* Announced when it appears, so it is not something only a sighted
+          person notices below the button they just pressed. */}
+      <p className={styles.note} role="status" aria-live="polite">
+        {message}
+      </p>
     </Screen>
   );
 }

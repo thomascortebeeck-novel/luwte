@@ -82,11 +82,32 @@ export const nl = {
   // Auth
   signInTitle: 'Welkom',
   signInEmailLabel: 'Je e-mailadres',
-  signInSendLink: 'Stuur me een link',
-  signInLinkSent: 'Kijk in je mailbox. De link blijft een uur geldig.',
-  signInUsePassword: 'Liever een wachtwoord',
-  signInUseLink: 'Liever een link in je mail',
   signInGoogle: 'Verder met Google',
+
+  // Een account maken, en aanmelden. Twee duidelijke paden in plaats van
+  // raden welke van de twee je bedoelde.
+  registerTitle: 'Account maken',
+  registerSubmit: 'Account maken',
+  registerPasswordLabel: 'Kies een wachtwoord',
+  registerPasswordHint: 'Minstens acht tekens. Kies iets dat je onthoudt.',
+  authSwitchToRegister: 'Nog geen account',
+  authSwitchToSignIn: 'Ik heb al een account',
+  authShowPassword: 'Toon wachtwoord',
+  authHidePassword: 'Verberg wachtwoord',
+  authForgotPassword: 'Wachtwoord vergeten',
+  authResetSubmit: 'Wachtwoord opnieuw instellen',
+  authResetIntro: 'We sturen je een mail waarmee je een nieuw wachtwoord kan kiezen.',
+  /*
+   * Zegt niet of het adres bestaat. Dat zou verklappen dat deze persoon een
+   * logboek bijhoudt, en dat kan iedereen navragen zonder wachtwoord.
+   */
+  authResetSent: 'Is er een account met dit adres, dan staat er nu een mail in je mailbox.',
+  authPasswordTooShort: 'Kies een wachtwoord van minstens acht tekens.',
+  authPasswordSameAsEmail: 'Kies iets anders dan je e-mailadres.',
+  authTooManyAttempts: 'Te veel pogingen na elkaar. Wacht even en probeer opnieuw.',
+  authOffline: 'Geen verbinding. Aanmelden lukt alleen online.',
+  authWrongCredentials: 'Dat e-mailadres of dat wachtwoord klopt niet.',
+  authRegisterFailed: 'Account maken lukte niet. Heb je hier al een account, meld je dan aan.',
   signInGoogleNote:
     'Kies je Google, dan weet Google dat je luwte gebruikt. Wat je hier schrijft, ziet Google niet.',
   signInPasswordLabel: 'Wachtwoord',

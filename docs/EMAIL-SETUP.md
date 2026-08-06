@@ -10,17 +10,22 @@ convince yourself the mail arrives before touching `luwte-prod`.
 
 ## What actually sends email
 
-Only one thing in luwte sends email: **Firebase Authentication**, for
-passwordless sign-in links (`sendSignInLinkToEmail` in
-`apps/web/src/firebase/auth.ts`) and, if you ever enable it, password resets.
+Only one thing in luwte sends email: **Firebase Authentication**, and since
+the passwordless sign-in link was removed there is exactly one case left —
+**a password reset**, asked for by the person, from the sign-in screen
+(`resetPassword` in `apps/web/src/firebase/auth.ts`).
+
+That one is not optional. With a password as the only address-based way in,
+somebody who forgets theirs would otherwise lose months of their own record —
+over the thing that illness and sedating medication make hardest.
 
 The app sends nothing else. There are no digests, no re-engagement mails, no
 notifications by email — PRD §8 rules those out, and adding one later would be
 a product decision, not a config change.
 
 **In development no mail is sent at all.** `VITE_USE_EMULATORS=true` points
-the app at the Auth emulator, which prints the sign-in link to the emulator
-console instead of delivering it. That is how the flow was tested.
+the app at the Auth emulator, which prints the reset link to the emulator
+console instead of delivering it.
 
 ---
 

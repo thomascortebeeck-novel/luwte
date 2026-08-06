@@ -260,7 +260,7 @@ patient and change what is prescribed; the calendar takes suggestions that
 never place themselves; finishing something planned shares it to the circle,
 who can only answer warmly.
 
-**603 unit tests plus 245 security-rules tests.** `pnpm verify` green.
+**621 unit tests plus 245 security-rules tests.** `pnpm verify` green.
 
 The product produces the thing that changes an appointment: a chart with
 medication changes as vertical rules, adherence as a count, and the person's
@@ -274,7 +274,7 @@ Every screen, by who it is for:
 
 | For | Screens |
 |---|---|
-| Everyone | sign-in (email link, password, **or Google**), onboarding (**three branches — see below**), consent (Art. 9 *or* confidentiality), crisis |
+| Everyone | sign-in and sign-up (**password or Google**), onboarding (**three branches — see below**), consent (Art. 9 *or* confidentiality), crisis |
 | The patient | Today (windline, check-in, medication with "iets anders genomen?", activities, practices), check-in with the weekly akathisia screen and the hopelessness path, medication with "ask for a change" and "weer zelf beheren", the calendar and its suggestions tray, Overview and the diary archive, the printable report, the feed, settings (**including the light/dark switch**), the circle screens, `/dokter` to add a doctor by code **or by name** |
 | A supporter | `/following` — who shares with them, their feed, their calendar, and a suggest form |
 | A clinician | `/console` — the verification application when unverified, otherwise their connection code, patient list, per-patient overview, medication editor, and the approve/decline of what a patient asked for |
@@ -469,6 +469,39 @@ For a post, **both sides must agree and the patient is asked first**: their
   cannot silently duplicate.
 - Nothing is pre-ticked on the consent screen and the action stays disabled
   until both required items are granted.
+
+### Two ways in, and the screen never says whether an address has an account
+
+**A password, or a Google account.** The emailed sign-in link was removed
+(2026-08-06, Thomas): it asked somebody who is unwell to leave the app, find a
+mail client and come back, and it broke the ways mail links always break —
+opened on another device, rewritten by a corporate scanner, expired after an
+hour.
+
+**Signing in and creating an account are separate paths.** The old screen
+guessed: `signInOrRegister` tried to sign in and created an account when that
+failed. Modern Firebase answers a wrong password *and* an unknown address with
+the same `auth/invalid-credential`, so mistyping your own password tried to
+register you, failed as already-in-use, and reported "signing in didn't work" —
+never *your password is wrong*, which was the one fact that would have helped.
+
+**No message reveals whether an address has an account**, and here that is a
+health disclosure rather than a security nicety: confirming it tells whoever
+asked that a named person keeps a logbook for psychosis and depression, and
+anybody can ask from a sign-up form with no password. So an unknown address and
+a wrong password give identical wording, registering over an existing address
+does not say it exists, and the reset screen says the same thing either way.
+`authErrorKey` in core is where that lives, with the tests that hold it.
+
+**Password reset is not optional now.** With a password as the only
+address-based way in, forgetting it would otherwise mean losing months of a
+person's own record. `resetPassword` deliberately does not throw for an
+unknown address, so it cannot be used to enumerate.
+
+Minimum eight characters and **no composition rules** — NIST SP 800-63B;
+demanding a symbol produces `Passw0rd!` and a note beside the bed, which is
+worse for somebody whose concentration is affected. The requirement is shown
+while typing rather than as a rejection afterwards.
 
 ### Three people arrive at onboarding, and they need different things said
 
@@ -844,6 +877,7 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-06 | **Sign-up and sign-in rebuilt around a password or Google, and the emailed link removed** (Thomas). Walking the old screen found a live defect: `signInOrRegister` tried to sign in and **created an account when that failed** — and modern Firebase answers a wrong password and an unknown address with the same `auth/invalid-credential`, so mistyping your own password tried to register you, failed as already-in-use, and said "signing in didn't work". Never *your password is wrong*. Splitting the two paths removes that whole class. **The property the tests are built around is that nothing reveals whether an address has an account**: here that is a health disclosure, not a security nicety — confirming it says a named person keeps a logbook for psychosis and depression, and anyone can ask from a sign-up form with no password. Unknown address and wrong password read identically, registering over an existing address does not say so, and the reset screen answers the same either way. **Password reset had to come with it**, since a password is now the only address-based way in and forgetting one would otherwise cost somebody months of their own record; it does not throw for an unknown address, so it cannot enumerate either. Eight characters minimum and **no composition rules** (NIST SP 800-63B) — demanding a symbol produces `Passw0rd!` and a note beside the bed. The requirement shows while typing rather than as a rejection afterwards, `autocomplete` is `new-password` on sign-up so a password manager offers a fresh one, reveal is a **labelled button rather than an eye icon** (24px anatomy again), and closing the Google popup now says nothing at all, because changing your mind is not a failure. **Walking it also caught a copy bug I had just written**: `network-request-failed` mapped to the general `offline` string, which promises *wat je invult wordt bewaard en later verstuurd* — true of a check-in, which Firestore queues, and flatly untrue of a sign-in. Verified over the wire against the emulator: account created and landed in onboarding, wrong password answered precisely without creating anything, and a repeat address refused without confirming it. 18 more unit tests (621). |
 | 2026-08-06 | **The accessibility pass's second half, and reflow was broken on the two screens that matter most.** At 320px — the width WCAG 1.4.10 requires, and what 400% zoom on a laptop comes to — the **check-in** scrolled sideways by 8px and the **crisis screen** by 4px. Both were arithmetic rather than judgement. Seven scale options at `min-width: 40px` plus six 4px gaps need 304px; the content box is 272px. And a 186px `nowrap` phone number beside "Centre de Prévention du Suicide" does not fit 224px of inner row. Fixed by dropping the scale floor to 32px — `flex: 1 1 0` still shares out the space, so options render 35px wide at 320px and larger everywhere else, and **the 48px tap height is untouched**, which is the dimension a thumb needs on a horizontal row — and by letting the crisis row **wrap rather than shrink**, because the number is the whole point of that screen. Also the **wordmark**, which rendered 24px tall while the crisis link beside it in the same bar carried `--tap-min`: two links, one sized for a thumb and one not. Two new guards, both proved by injection before being trusted: `ScaleInput.reflow.test.ts` does the arithmetic jsdom cannot (it does no layout), and `focus.test.ts` reads every stylesheet and fails on any `outline: none` — the cheapest accessibility failure to introduce and the hardest to notice, because whoever writes the CSS is holding a mouse. Checked and **already correct**: the windline honours `prefers-reduced-motion` (it is a `requestAnimationFrame` loop, so no media query could have done it), the breathing guide still guides when it cannot move because the phase word is driven by the timer rather than the transition, tab order matches visual order, and every control has an accessible name. 40 more unit tests (603). |
 | 2026-08-05 | **The watch-data layer, without a line of Android.** Model, rules, consent item, the platform seam and the import — everything that has to be right regardless of transport. **A night belongs to the day you wake up**, tested across both DST transitions, because keying it to the day you fell asleep prefills the wrong check-in and does so invisibly. Split sessions are summed; several resting readings take the **lowest, never an average**, since averaging in a reading taken on the stairs reports a number that never happened and this product may relay a measurement and never manufacture one. `source` is required by the schema *and* the rules: relaying a device's own result, attributed to it, is a conduit under MDCG 2019-11, and an unattributed number in luwte's voice is luwte making a measurement claim. Its **own consent item** — agreeing to keep a logbook is not agreeing to let an app read what your watch recorded while you slept — so `CONSENT_VERSION` moved to `2026-08-05`. The seam (`health/bridge.ts`) is three methods and the browser implementation reports itself **unavailable**, with `read` throwing rather than returning empty: empty would mean "the watch recorded nothing", which is a claim about somebody's night. Only sleep and resting heart rate are read, asserted by a test — steps invite the self-scoring BRAND refuses, and every type added is another Play justification. **The Android shell is deliberately not scaffolded**: no SDK on this machine, and a hundred generated files nobody can build is worse than none. 23 more unit tests (563), 7 more rules tests (245). |
 | 2026-08-05 | **GDPR export and erasure, both on the device** (P8.2), plus [docs/GDPR.md](docs/GDPR.md). The problem worth recording: this database refuses `delete` nearly everywhere **on purpose**, and a rule cannot tell an erasure from somebody deleting one inconvenient day. So `erasureStartedAt` goes on the patient document first and `erasing()` is what opens the door — normal operation keeps every refusal it had. **The order is the design**: invites, then the circle, then content, so a teardown interrupted by a flat battery leaves the person with their own data and nobody else's access to it rather than the reverse. Two conflicts decided out loud: a supporter's comment **goes with the post** it hangs on, and a *decided* verification request is **kept** under Art. 17(3)(e) — so a clinician erasing their account leaves that one document behind, which the docs say rather than bury. **`erasing()` was first written to also permit deletes when the patient document is missing**, reasoning that its absence proved erasure was under way; ten existing rules tests failed and every one was right, because no patient document is the ordinary state before onboarding finishes — that version quietly switched off delete-protection for anyone who had not got that far. The `users/{uid}` test asserting deletion was refused "because deletion must cascade" was **rewritten rather than deleted**: that cascade was a Cloud Function the project had already decided against, so Art. 17 was unimplementable and nobody had noticed. `PATIENT_SUBCOLLECTIONS` is enumerated with a guard that reads `paths.ts` — and it **earned its keep the same day**, failing within a minute of `health` being added. 23 more unit tests, 18 more rules tests. |

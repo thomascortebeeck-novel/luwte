@@ -80,11 +80,33 @@ export const en: Dictionary = {
   // Auth
   signInTitle: 'Welcome',
   signInEmailLabel: 'Your email address',
-  signInSendLink: 'Send me a link',
-  signInLinkSent: 'Check your inbox. The link stays valid for an hour.',
-  signInUsePassword: 'Use a password instead',
-  signInUseLink: 'Use a link in my email instead',
   signInGoogle: 'Continue with Google',
+
+  // Creating an account, and signing in. Two clear paths rather than guessing
+  // which of the two somebody meant.
+  registerTitle: 'Create an account',
+  registerSubmit: 'Create account',
+  registerPasswordLabel: 'Choose a password',
+  registerPasswordHint: 'At least eight characters. Choose something you will remember.',
+  authSwitchToRegister: 'I do not have an account yet',
+  authSwitchToSignIn: 'I already have an account',
+  authShowPassword: 'Show password',
+  authHidePassword: 'Hide password',
+  authForgotPassword: 'Forgotten your password',
+  authResetSubmit: 'Reset your password',
+  authResetIntro: 'We send you an email so you can choose a new password.',
+  /*
+   * Says nothing about whether the address exists. That would reveal this
+   * person keeps a logbook, and anyone can ask without a password.
+   */
+  authResetSent: 'If there is an account with this address, an email is on its way.',
+  authPasswordTooShort: 'Choose a password of at least eight characters.',
+  authPasswordSameAsEmail: 'Choose something other than your email address.',
+  authTooManyAttempts: 'Too many attempts in a row. Wait a moment and try again.',
+  authOffline: 'No connection. Signing in needs the internet.',
+  authWrongCredentials: 'That email address or that password is not right.',
+  authRegisterFailed:
+    'Creating an account did not work. If you already have one, sign in instead.',
   signInGoogleNote:
     'If you choose Google, Google knows you use luwte. What you write here, Google does not see.',
   signInPasswordLabel: 'Password',
