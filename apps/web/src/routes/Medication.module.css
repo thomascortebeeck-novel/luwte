@@ -5,6 +5,13 @@
   margin: 0;
 }
 
+.note {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
 .list {
   list-style: none;
   margin: 0;

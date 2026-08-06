@@ -7,6 +7,7 @@ import {
 import { Button, Choice, Field, Hairline, Screen } from '@luwte/ui';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { messageKeyFor, reportError } from '../errors';
 import { readCircle, type CircleMemberRecord } from '../firebase/circle';
 import {
   createMedication,
@@ -48,6 +49,7 @@ export function Medication() {
   const [busy, setBusy] = useState(false);
   const [proposing, setProposing] = useState<MedicationRecord | null>(null);
   const [proposal, setProposal] = useState({ dose: '', note: '', stopping: false });
+  const [message, setMessage] = useState<string | null>(null);
 
   const load = () => {
     if (!user) return;
@@ -83,6 +85,7 @@ export function Medication() {
   const save = async () => {
     if (!user || !canSave) return;
     setBusy(true);
+    setMessage(null);
     try {
       await createMedication(user.uid, {
         name: name.trim(),
@@ -96,6 +99,9 @@ export function Medication() {
       setPurpose('');
       setAdding(false);
       load();
+    } catch (error: unknown) {
+      reportError('createMedication', error);
+      setMessage(t(messageKeyFor(error)));
     } finally {
       setBusy(false);
     }
@@ -109,9 +115,13 @@ export function Medication() {
   const release = async (medication: MedicationRecord) => {
     if (!user || busy) return;
     setBusy(true);
+    setMessage(null);
     try {
       await releasePrescription(user.uid, medication);
       load();
+    } catch (error: unknown) {
+      reportError('releasePrescription', error);
+      setMessage(t(messageKeyFor(error)));
     } finally {
       setBusy(false);
     }
@@ -120,6 +130,7 @@ export function Medication() {
   const sendProposal = async () => {
     if (!user || !proposing || busy) return;
     setBusy(true);
+    setMessage(null);
     try {
       await proposeMedicationChange(user.uid, proposing.id, {
         ...(proposal.dose.trim() ? { dose: proposal.dose.trim() } : {}),
@@ -129,6 +140,9 @@ export function Medication() {
       setProposal({ dose: '', note: '', stopping: false });
       setProposing(null);
       load();
+    } catch (error: unknown) {
+      reportError('proposeMedicationChange', error);
+      setMessage(t(messageKeyFor(error)));
     } finally {
       setBusy(false);
     }
@@ -170,6 +184,11 @@ export function Medication() {
           value={proposal.note}
           onChange={(e) => setProposal({ ...proposal, note: e.target.value })}
         />
+        {/* Present even when empty, so a screen reader has the region
+            before a message ever lands in it. */}
+        <p className={styles.note} role="status" aria-live="polite">
+          {message}
+        </p>
       </Screen>
     );
   }
@@ -184,7 +203,13 @@ export function Medication() {
           </Button>
         ) : (
           <>
-            <Button full onClick={() => setAdding(true)}>
+            <Button
+              full
+              onClick={() => {
+                setMessage(null);
+                setAdding(true);
+              }}
+            >
               {t('medicationAdd')}
             </Button>
             {/* Offered where it becomes relevant rather than up front: this
@@ -270,7 +295,13 @@ export function Medication() {
                     {medication.pendingChange ? (
                       <span className={styles.purpose}>{t('medicationProposePending')}</span>
                     ) : (
-                      <Button variant="quiet" onClick={() => setProposing(medication)}>
+                      <Button
+                        variant="quiet"
+                        onClick={() => {
+                          setMessage(null);
+                          setProposing(medication);
+                        }}
+                      >
                         {t('medicationPropose')}
                       </Button>
                     )}
@@ -282,6 +313,12 @@ export function Medication() {
           ))}
         </ul>
       )}
+
+      {/* Present even when empty, so a screen reader has the region before
+          a message ever lands in it. */}
+      <p className={styles.note} role="status" aria-live="polite">
+        {message}
+      </p>
     </Screen>
   );
 }
