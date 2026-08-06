@@ -612,6 +612,7 @@ export const en: Dictionary = {
   followingCalendar: 'What is planned',
 
   // What helps, for whoever is looking on. General, never about this person.
+  supportTitle: 'What helps',
   supportTipAsk: 'Asking how things are helps more than guessing. Even when the answer is short.',
   supportTipListen:
     'Listening without fixing it is often enough. It does not have to get better from your answer.',

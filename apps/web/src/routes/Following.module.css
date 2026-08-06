@@ -1,0 +1,54 @@
+/*
+ * "Wat helpt" — general education for whoever is supporting, never advice
+ * about the person they follow. It sits below the people they came here to
+ * see, quiet on purpose: --surface rather than a border or a card that
+ * competes for attention, and --text-quiet on the daily items rather than
+ * --text throughout.
+ *
+ * Deliberately no accent colour. --self is the person's own data and
+ * --human is anywhere another human has been — this is the app talking, not
+ * a person, so neither belongs here.
+ */
+.support {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--surface);
+  border-radius: var(--radius-card);
+}
+
+.supportTitle {
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* One a day, rotating — the thing worth reading first, so it keeps full
+   text strength. */
+.tip {
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  color: var(--text);
+  margin: 0;
+}
+
+/*
+ * Three ordinary things, not a checklist — no marker, no numbering, nothing
+ * to tick off. There is no completion state here and never should be.
+ */
+.daily {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-quiet);
+}
+
+.dailyItem {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+}

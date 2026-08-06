@@ -620,6 +620,7 @@ export const nl = {
   followingCalendar: 'Wat gepland staat',
 
   // Wat helpt, voor wie meekijkt. Algemeen, nooit over deze persoon.
+  supportTitle: 'Wat helpt',
   supportTipAsk: 'Vragen hoe het gaat helpt meer dan raden. Ook als het antwoord kort is.',
   supportTipListen:
     'Luisteren zonder meteen op te lossen is vaak genoeg. Het hoeft niet beter te worden van jouw antwoord.',

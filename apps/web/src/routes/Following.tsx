@@ -1,9 +1,11 @@
 import {
   DEFAULT_TIMEZONE,
   RECURRENCES,
+  SUPPORT_DAILY,
   centredWeek,
   dateKey,
   onDay,
+  supportTipFor,
   type Activity,
   type CopyKey,
   type RecurrenceId,
@@ -16,6 +18,7 @@ import { readMemberships, type Membership } from '../firebase/circle';
 import { useAuth } from '../providers/AuthProvider';
 import { useLocale } from '../providers/LocaleProvider';
 import styles from './Calendar.module.css';
+import supportStyles from './Following.module.css';
 
 /*
  * The everyday shapes an offer takes. Deliberately shorter than the patient's
@@ -42,6 +45,8 @@ export function Following() {
   const navigate = useNavigate();
 
   const [people, setPeople] = useState<Membership[] | null>(null);
+  // No patient record of their own, so no personal timezone to read it from.
+  const today = useMemo(() => dateKey(new Date(), DEFAULT_TIMEZONE), []);
 
   useEffect(() => {
     if (!user) return;
@@ -93,6 +98,29 @@ export function Following() {
           ))}
         </ul>
       )}
+
+      <Hairline />
+
+      {/*
+       * General education for the supporter, never advice about the person
+       * they follow — the same guidance for everybody, every day. It reads
+       * no check-in, no mood, no medication, and it is not conditional on
+       * anything a patient's data says: a conclusion drawn about a named
+       * person from their health data is clinical monitoring, the line this
+       * product does not cross. See packages/core/src/model/supporting.ts.
+       */}
+      <section className={supportStyles.support}>
+        <h2 className={supportStyles.supportTitle}>{t('supportTitle')}</h2>
+        {/* One a day, rotating, so it does not become furniture. */}
+        <p className={supportStyles.tip}>{t(supportTipFor(today))}</p>
+        <ul className={supportStyles.daily}>
+          {SUPPORT_DAILY.map((key) => (
+            <li key={key} className={supportStyles.dailyItem}>
+              {t(key)}
+            </li>
+          ))}
+        </ul>
+      </section>
     </Screen>
   );
 }
