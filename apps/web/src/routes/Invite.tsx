@@ -11,6 +11,7 @@ import { Button, Choice, Field, Hairline, Screen } from '@luwte/ui';
 import type { CopyKey } from '@luwte/core';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import { messageKeyFor, reportError } from '../errors';
 import { createInvite } from '../firebase/circle';
 import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
@@ -46,6 +47,7 @@ export function Invite() {
   const [link, setLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
   const chooseRole = (next: CircleRole) => {
     setRole(next);
@@ -66,6 +68,7 @@ export function Invite() {
   const create = async () => {
     if (!user) return;
     setBusy(true);
+    setMessage(null);
     try {
       const invite = await createInvite(user.uid, {
         role,
@@ -77,6 +80,9 @@ export function Invite() {
         patientName: patient?.displayName ?? '',
       });
       setLink(inviteLink(window.location.origin, invite.code));
+    } catch (error: unknown) {
+      reportError('createInvite', error);
+      setMessage(t(messageKeyFor(error)));
     } finally {
       setBusy(false);
     }
@@ -164,6 +170,12 @@ export function Invite() {
           />
         ))}
       </div>
+
+      {/* Present even when empty, so a screen reader has the region before
+          a message ever lands in it. */}
+      <p className={styles.note} role="status" aria-live="polite">
+        {message}
+      </p>
     </Screen>
   );
 }
