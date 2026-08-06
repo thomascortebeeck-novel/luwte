@@ -1,8 +1,8 @@
-import { dictionaries } from '@luwte/core';
+import { dateKey, dictionaries, doseId } from '@luwte/core';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LocaleProvider } from '../providers/LocaleProvider';
 import { Today } from './Today';
 
@@ -80,6 +80,22 @@ vi.mock('../providers/AccountProvider', () => ({
 
 const nl = dictionaries.nl;
 
+/** Fixed so a computed doseId in a fixture matches what Today.tsx computes. */
+const TODAY = new Date('2026-08-05T09:00:00Z');
+const TODAY_KEY = dateKey(TODAY, PATIENT.timezone);
+
+const medication = {
+  id: 'med1',
+  name: 'Abilify',
+  dose: '10mg',
+  times: ['08:00'],
+  purpose: '',
+  activeFrom: new Date('2026-08-01T00:00:00Z'),
+  activeTo: null,
+  prescribedBy: null,
+  pendingChange: null,
+};
+
 const renderToday = () =>
   render(
     <LocaleProvider initialLocale="nl">
@@ -110,6 +126,8 @@ const fillAndSave = async (user: ReturnType<typeof userEvent.setup>, note: strin
 };
 
 beforeEach(() => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  vi.setSystemTime(TODAY);
   readCheckin.mockResolvedValue(null);
   saveCheckin.mockResolvedValue();
   readWindlineDays.mockResolvedValue([]);
@@ -121,6 +139,10 @@ beforeEach(() => {
   readActivities.mockResolvedValue([]);
   readCompletions.mockResolvedValue({});
   countCompletionsBefore.mockResolvedValue(0);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe('the check-in on Today', () => {
@@ -172,5 +194,49 @@ describe('the check-in on Today', () => {
     await fillAndSave(user, 'Een moeilijke dag.');
 
     expect(await screen.findByText(nl.errorNotAllowed)).toBeInTheDocument();
+  });
+});
+
+describe('a refused dose tick or dose note', () => {
+  /*
+   * Gap: these two writes were never covered by the error-handling sweep.
+   * Ticking a dose is optimistic and, before this fix, was never rolled
+   * back — and the tally it produces is the adherence count a psychiatrist
+   * reads at an appointment. A tick that silently did not land makes that
+   * count wrong, which is the one number this product exists to get right.
+   */
+  it('reverts a refused dose tick instead of leaving the mark standing, and says so', async () => {
+    readActiveMedications.mockResolvedValue([medication]);
+    setDose.mockRejectedValueOnce({ code: 'permission-denied' });
+    const user = userEvent.setup();
+    renderToday();
+
+    const dose = await screen.findByRole('button', { name: /Abilify/ });
+    expect(dose).toHaveAttribute('aria-pressed', 'false');
+
+    await user.click(dose);
+
+    expect(setDose).toHaveBeenCalledWith('uid-jonas', TODAY_KEY, 'med1', '08:00', 'taken');
+    expect(await screen.findByText(nl.errorNotAllowed)).toBeInTheDocument();
+    // Reverted rather than left marked taken.
+    expect(screen.getByRole('button', { name: /Abilify/ })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('reverts a refused dose note back to what it said before, not to a false success', async () => {
+    readActiveMedications.mockResolvedValue([medication]);
+    readDoseStatuses.mockResolvedValue({ [doseId(TODAY_KEY, 'med1', '08:00')]: 'taken' });
+    annotateDose.mockRejectedValueOnce({ code: 'permission-denied' });
+    const user = userEvent.setup();
+    renderToday();
+
+    await user.click(await screen.findByRole('button', { name: nl.doseNoteAsk }));
+    const note = within(await screen.findByRole('region', { name: nl.doseNoteTitle }));
+    await user.type(note.getByLabelText(nl.doseNoteActual), 'de helft');
+    await user.click(note.getByRole('button', { name: nl.ratingSave }));
+
+    expect(annotateDose).toHaveBeenCalled();
+    expect(await screen.findByText(nl.errorNotAllowed)).toBeInTheDocument();
+    // Back to "iets anders genomen?" — not still showing "de helft" as saved.
+    expect(await screen.findByRole('button', { name: nl.doseNoteAsk })).toBeInTheDocument();
   });
 });

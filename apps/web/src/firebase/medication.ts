@@ -192,6 +192,15 @@ export async function annotateDose(
 /**
  * Not awaited by the UI. Ticking a dose has to feel instant and has to work
  * with no signal; the keyed document id means a double sync records one dose.
+ *
+ * The returned promise does not settle until the server acknowledges the
+ * write, for the same reason `saveCheckin` returns one rather than
+ * discarding it with `void` — a caller must not await it before the tap
+ * feels done, but can attach its own `.catch` to hear about a genuine
+ * refusal. `doseId` is a pure function of its inputs, so a caller no longer
+ * needs this function's return value just to learn which key it wrote:
+ * Today.tsx computes that independently and synchronously, so it has it
+ * before this promise has any chance to settle.
  */
 export function setDose(
   uid: string,
@@ -199,9 +208,9 @@ export function setDose(
   medId: string,
   time: string,
   status: DoseStatus,
-): string {
+): Promise<void> {
   const id = doseId(dateKey, medId, time);
-  void setDoc(
+  return setDoc(
     doc(db, paths.dose(uid, id)),
     {
       date: dateKey,
@@ -212,7 +221,6 @@ export function setDose(
     },
     { merge: true },
   );
-  return id;
 }
 
 /**

@@ -11,3 +11,12 @@
   color: var(--text-quiet);
   margin: 0;
 }
+
+/* A refused dose tick or dose note. Quiet, not --amber — this is the app
+   talking, not another person. */
+.note {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+}

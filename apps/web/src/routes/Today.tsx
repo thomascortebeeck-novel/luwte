@@ -9,6 +9,7 @@ import {
 import { Button, HumanText, Screen, Windline } from '@luwte/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { messageKeyFor, reportError } from '../errors';
 import { readCheckin } from '../firebase/checkins';
 import { readWindlineDays } from '../firebase/history';
 import {
@@ -34,7 +35,7 @@ import {
 } from '../firebase/activities';
 import { onDay, shouldAskRating } from '@luwte/core';
 import { postCompletion } from '../firebase/feed';
-import { hasAnnotation, type DoseAnnotation, type DoseStatus } from '@luwte/core';
+import { doseId, hasAnnotation, type DoseAnnotation, type DoseStatus } from '@luwte/core';
 import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
 import { useLocale } from '../providers/LocaleProvider';
@@ -85,6 +86,13 @@ export function Today() {
   const [statuses, setStatuses] = useState<Record<string, DoseStatus>>({});
   const [annotations, setAnnotations] = useState<Record<string, DoseAnnotation>>({});
   const [annotating, setAnnotating] = useState<{ key: string; title: string } | null>(null);
+  /**
+   * A refused dose tick or dose note. Both are optimistic and both revert
+   * on failure — `statuses` is the adherence count a psychiatrist reads at
+   * an appointment, and a tick that silently did not land makes that count
+   * wrong, which is the one number this product exists to get right.
+   */
+  const [doseMessage, setDoseMessage] = useState<string | null>(null);
   const [activities, setActivities] = useState<ActivityRecord[]>([]);
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
   /** The activity just ticked, waiting to be asked about. Never blocks. */
@@ -128,10 +136,25 @@ export function Today() {
 
   const toggleDose = (medId: string, time: string, next: DoseStatus) => {
     if (!user) return;
-    const id = setDose(user.uid, today, medId, time, next);
+    const id = doseId(today, medId, time);
+    const previous = statuses[id];
     // Optimistic, because the write is queued locally and may not reach the
     // server for hours. Waiting would make a tap feel broken.
     setStatuses((prev) => ({ ...prev, [id]: next }));
+    setDoseMessage(null);
+    void setDose(user.uid, today, medId, time, next).catch((error: unknown) => {
+      reportError('setDose', error);
+      // Reverted, not left standing: this is the adherence count a
+      // psychiatrist reads at an appointment, and a tick that silently did
+      // not land makes that count wrong.
+      setStatuses((prev) => {
+        const reverted = { ...prev };
+        if (previous === undefined) delete reverted[id];
+        else reverted[id] = previous;
+        return reverted;
+      });
+      setDoseMessage(t(messageKeyFor(error)));
+    });
   };
 
   /*
@@ -142,7 +165,7 @@ export function Today() {
   const saveDoseNote = (annotation: DoseAnnotation) => {
     if (!user || !annotating) return;
     const key = annotating.key;
-    void annotateDose(user.uid, key, annotation);
+    const previous = annotations[key];
     setAnnotations((prev) => {
       const next = { ...prev };
       if (hasAnnotation(annotation)) next[key] = annotation;
@@ -150,6 +173,17 @@ export function Today() {
       return next;
     });
     setAnnotating(null);
+    setDoseMessage(null);
+    void annotateDose(user.uid, key, annotation).catch((error: unknown) => {
+      reportError('annotateDose', error);
+      setAnnotations((prev) => {
+        const next = { ...prev };
+        if (previous) next[key] = previous;
+        else delete next[key];
+        return next;
+      });
+      setDoseMessage(t(messageKeyFor(error)));
+    });
   };
 
   const plannedToday = useMemo(() => onDay(activities, today), [activities, today]);
@@ -281,6 +315,12 @@ export function Today() {
           onSkip={() => setAnnotating(null)}
         />
       ) : null}
+
+      {/* Present even when empty, so a screen reader has the region before
+          a message from a refused dose tick or dose note lands in it. */}
+      <p className={styles.note} role="status" aria-live="polite">
+        {doseMessage}
+      </p>
 
       <ActivitiesSection
         activities={plannedToday}
