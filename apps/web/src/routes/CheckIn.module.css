@@ -79,6 +79,15 @@
   margin: 0;
 }
 
+/* A write failure arriving after "Bewaard." already showed. Quiet, not
+   --amber — this is the app talking, not another person. */
+.note {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
 /* BRAND 3.6 — fade and settle. Nothing slides between questions. */
 .step {
   display: flex;

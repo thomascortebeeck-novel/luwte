@@ -13,6 +13,7 @@ import {
 import { Button, ScaleInput, Screen, type ScaleValue } from '@luwte/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { messageKeyFor, reportError } from '../errors';
 import { readWeekly, saveCheckin, saveWeekly } from '../firebase/checkins';
 import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
@@ -45,6 +46,14 @@ export function CheckIn() {
   const [step, setStep] = useState(0);
   const [weeklyDue, setWeeklyDue] = useState(false);
   const [saved, setSaved] = useState(false);
+  /*
+   * The write is fired and not awaited (see `saveCheckin`), so the person
+   * sees "Bewaard." in the same tick regardless of the network. A message
+   * here can only ever describe a failure that arrives after that — the
+   * genuinely broken case, not an offline one, since the confirmation screen
+   * stays up until the person taps away rather than navigating on its own.
+   */
+  const [message, setMessage] = useState<string | null>(null);
 
   /**
    * PRD 6.1 — the weekly extra appears on the same weekday each week. The
@@ -72,7 +81,7 @@ export function CheckIn() {
   const finish = () => {
     if (!user) return;
 
-    saveCheckin(user.uid, today, {
+    void saveCheckin(user.uid, today, {
       date: today,
       mood: answers.mood as Scale,
       arousal: answers.arousal as Scale,
@@ -80,6 +89,9 @@ export function CheckIn() {
       flatness: answers.flatness as Scale,
       ...(note.trim() ? { note: note.trim() } : {}),
       source: 'manual',
+    }).catch((error: unknown) => {
+      reportError('saveCheckin', error);
+      setMessage(t(messageKeyFor(error)));
     });
 
     if (weeklyDue) {
@@ -89,7 +101,10 @@ export function CheckIn() {
         sedation: answers.sedation as Scale,
         hopelessness: answers.hopelessness as Scale,
       };
-      saveWeekly(user.uid, thisWeek, weekly);
+      void saveWeekly(user.uid, thisWeek, weekly).catch((error: unknown) => {
+        reportError('saveWeekly', error);
+        setMessage(t(messageKeyFor(error)));
+      });
 
       /*
        * PRD 6.1 — a top-of-scale hopelessness answer shows the crisis screen
@@ -111,6 +126,11 @@ export function CheckIn() {
       <Screen action={<Button full onClick={() => navigate('/')}>{t('navToday')}</Button>}>
         {/* BRAND 4.2 — "Bewaard." Nothing more. No celebration, no summary. */}
         <p className={styles.done}>{t('checkinDone')}</p>
+        {/* Present even when empty, so a screen reader has the region before
+            a delayed write failure ever lands in it. */}
+        <p className={styles.note} role="status" aria-live="polite">
+          {message}
+        </p>
       </Screen>
     );
   }
