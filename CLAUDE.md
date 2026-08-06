@@ -260,7 +260,7 @@ patient and change what is prescribed; the calendar takes suggestions that
 never place themselves; finishing something planned shares it to the circle,
 who can only answer warmly.
 
-**624 unit tests plus 245 security-rules tests.** `pnpm verify` green.
+**626 unit tests plus 245 security-rules tests.** `pnpm verify` green.
 
 The product produces the thing that changes an appointment: a chart with
 medication changes as vertical rules, adherence as a count, and the person's
@@ -275,7 +275,7 @@ Every screen, by who it is for:
 | For | Screens |
 |---|---|
 | Everyone | sign-in and sign-up (**password or Google**), onboarding (**three branches — see below**), consent (Art. 9 *or* confidentiality), crisis |
-| The patient | Today (windline, check-in, medication with "iets anders genomen?", activities, practices), check-in with the weekly akathisia screen and the hopelessness path, medication with "ask for a change" and "weer zelf beheren", the calendar and its suggestions tray, Overview and the diary archive, the printable report, the feed, settings (**including the light/dark switch**), the circle screens, `/dokter` to add a doctor by code **or by name** |
+| The patient | Today (windline, **the check-in itself from the chosen hour**, medication with "iets anders genomen?", activities, practices), check-in with the weekly akathisia screen and the hopelessness path, medication with "ask for a change" and "weer zelf beheren", the calendar and its suggestions tray, Overview and the diary archive, the printable report, the feed, settings (**including the light/dark switch**), the circle screens, `/dokter` to add a doctor by code **or by name** |
 | A supporter | `/following` — who shares with them, their feed, their calendar, and a suggest form |
 | A clinician | `/console` — the verification application when unverified, otherwise their connection code, patient list, per-patient overview, medication editor, and the approve/decline of what a patient asked for |
 | An admin | `/admin` — the clinician verification queue. The **only** screen that writes `clinicians/` |
@@ -299,7 +299,9 @@ Done: **the accessibility pass** (P8.1), **GDPR export and erasure** (P8.2),
 and the paperwork as [docs/GDPR.md](docs/GDPR.md) (P8.5).
 
 Still open: the full rules matrix (P8.3), the error-handling sweep (P8.4), and
-the family pilot (P8.6). One thing P8.1 could not do here: a **real
+the family pilot (P8.6). Those two, plus the Stanley–Brown safety plan,
+personalised crisis contacts and supporter guidance, are planned in
+[docs/superpowers/plans/2026-08-06-safety-plan-supporters-and-hardening.md](docs/superpowers/plans/2026-08-06-safety-plan-supporters-and-hardening.md). One thing P8.1 could not do here: a **real
 screen-reader pass in Dutch** needs NVDA or VoiceOver driven by a person.
 Accessible names, tab order and focus are verified; how it *sounds* is not. **Exit is v1 live, and then the PRD's own rule applies — stop, and two
 months of real use before building anything else.**
@@ -487,13 +489,19 @@ the markup per breakpoint is how two navigations drift apart.
 own padding. Doing that per screen would hide exactly one control on whichever
 screen somebody forgot, and nobody would notice which.
 
-**Every icon keeps its word.** An icon-only bar asks somebody to decode five
-glyphs and concentration is the thing this app cannot assume. The current tab
-is marked by full-strength text *and* a rule above it — never colour alone
-(WCAG 1.4.1), the same reason there is no traffic-light coding anywhere. The
-active state is `--text` rather than an accent: `--self` means the person's
-own data and `--human` means somebody else was here, and which tab you are on
-is neither.
+**Icons only on the phone, and the word is still in the DOM.** Thomas asked
+for the labels off the tab bar; they are visually hidden rather than deleted,
+because a link with no accessible name is announced as "link" and nothing
+else, which would leave the whole bar unusable with a screen reader. Above
+768px they come back on screen, where there is room. If a sixth destination is
+ever added, reconsider — five glyphs is near the limit of what is recognisable
+without words, and concentration is the thing this app cannot assume.
+
+The current tab is marked by full-strength text *and* a rule above it — never
+colour alone (WCAG 1.4.1), the same reason there is no traffic-light coding
+anywhere. The active state is `--text` rather than an accent: `--self` means
+the person's own data and `--human` means somebody else was here, and which
+tab you are on is neither.
 
 **Google's button is Google's**, unaltered four-colour mark and all. It is the
 one place a colour outside the palette appears, and it appears because people
@@ -907,6 +915,7 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-06 | **The check-in moved onto Today, and the tab bar lost its words** (both Thomas). The complaint was that the check-in was too long, and **the length was the wizard rather than the questions**: four items and a diary line asked one per screen, five taps of "Verder", nine on the weekly day. On one page with every scale visible it is the same record for about a fifth of the effort, and saving replaces it with the acknowledgement rather than leaving a second button asking for the same thing. **No item was dropped, and that is a decision rather than an omission** — `mood` and `arousal` are the two axes of the circumplex and losing either stops the windline telling elated from agitated; `flatness` is not a point on that circle at all but the absence of a response, which is what antipsychotics blunt; `sleepHours` becomes automatic once Health Connect is wired. Fewer *items* would be a change to the clinical model and should be decided as one. `isCheckinTime` reuses **`checkinHour`, the hour already in Settings** — one setting rather than two that can disagree — and before that hour the screen says so while leaving the way in open, because somebody who goes to bed at six should not be told to come back later. The tab bar is now icons only on the phone, with the labels **visually hidden rather than removed**: a link with no accessible name is announced as "link" and nothing else. `/checkin` stays for editing a past day and for the weekly items, where one-per-screen is right. Also recorded: three suggestions declined with reasons — a motivational quote (positive self-statements *lower* mood in people with low self-esteem, Wood et al. 2009), mood prediction (Class IIa), and step counts (the self-scoring BRAND refuses). 2 more unit tests (626). |
 | 2026-08-06 | **The app got navigation** (Thomas asked for polish, and this was the polish). There had been **none**: Today ended in a stack of five full-width buttons and every other screen carried a single "Vandaag", so getting from the calendar to the feed meant going home first. Now five destinations in one `AppNav` — **a thumb-reachable tab bar under 768px, a row in the top bar above it**, one component and one render, because duplicating the markup per breakpoint is how two navigations drift apart. `--nav-height` is a token so `Screen` reserves the room centrally; per-screen padding would hide exactly one control on whichever screen somebody forgot. **Every icon keeps its word** — an icon-only bar asks somebody to decode five glyphs and concentration is what this app cannot assume — and the current tab is marked by full-strength text *and* a rule, never colour alone (1.4.1). The active state is `--text`, not an accent: `--self` is the person's own data and `--human` is where somebody else has been, and which tab you are on is neither. **Google's button is now Google's**, unaltered four-colour mark — the one place a colour outside the palette appears, because people recognise that control rather than read it, in luwte's own container so it does not shout over the primary action. And "wachtwoord vergeten" moved from a fourth footer button to small text beside "toon wachtwoord", under the field — which is where somebody is looking at the moment they realise they cannot remember it. Verified at 320, 375 and 1280: no horizontal scroll, tabs 64×58 at the narrowest, and the last action clears the bar by 23px once scrolled. |
 | 2026-08-06 | **Sign-up and sign-in rebuilt around a password or Google, and the emailed link removed** (Thomas). Walking the old screen found a live defect: `signInOrRegister` tried to sign in and **created an account when that failed** — and modern Firebase answers a wrong password and an unknown address with the same `auth/invalid-credential`, so mistyping your own password tried to register you, failed as already-in-use, and said "signing in didn't work". Never *your password is wrong*. Splitting the two paths removes that whole class. **The property the tests are built around is that nothing reveals whether an address has an account**: here that is a health disclosure, not a security nicety — confirming it says a named person keeps a logbook for psychosis and depression, and anyone can ask from a sign-up form with no password. Unknown address and wrong password read identically, registering over an existing address does not say so, and the reset screen answers the same either way. **Password reset had to come with it**, since a password is now the only address-based way in and forgetting one would otherwise cost somebody months of their own record; it does not throw for an unknown address, so it cannot enumerate either. Eight characters minimum and **no composition rules** (NIST SP 800-63B) — demanding a symbol produces `Passw0rd!` and a note beside the bed. The requirement shows while typing rather than as a rejection afterwards, `autocomplete` is `new-password` on sign-up so a password manager offers a fresh one, reveal is a **labelled button rather than an eye icon** (24px anatomy again), and closing the Google popup now says nothing at all, because changing your mind is not a failure. **Walking it also caught a copy bug I had just written**: `network-request-failed` mapped to the general `offline` string, which promises *wat je invult wordt bewaard en later verstuurd* — true of a check-in, which Firestore queues, and flatly untrue of a sign-in. Verified over the wire against the emulator: account created and landed in onboarding, wrong password answered precisely without creating anything, and a repeat address refused without confirming it. 18 more unit tests (621). |
 | 2026-08-06 | **The accessibility pass's second half, and reflow was broken on the two screens that matter most.** At 320px — the width WCAG 1.4.10 requires, and what 400% zoom on a laptop comes to — the **check-in** scrolled sideways by 8px and the **crisis screen** by 4px. Both were arithmetic rather than judgement. Seven scale options at `min-width: 40px` plus six 4px gaps need 304px; the content box is 272px. And a 186px `nowrap` phone number beside "Centre de Prévention du Suicide" does not fit 224px of inner row. Fixed by dropping the scale floor to 32px — `flex: 1 1 0` still shares out the space, so options render 35px wide at 320px and larger everywhere else, and **the 48px tap height is untouched**, which is the dimension a thumb needs on a horizontal row — and by letting the crisis row **wrap rather than shrink**, because the number is the whole point of that screen. Also the **wordmark**, which rendered 24px tall while the crisis link beside it in the same bar carried `--tap-min`: two links, one sized for a thumb and one not. Two new guards, both proved by injection before being trusted: `ScaleInput.reflow.test.ts` does the arithmetic jsdom cannot (it does no layout), and `focus.test.ts` reads every stylesheet and fails on any `outline: none` — the cheapest accessibility failure to introduce and the hardest to notice, because whoever writes the CSS is holding a mouse. Checked and **already correct**: the windline honours `prefers-reduced-motion` (it is a `requestAnimationFrame` loop, so no media query could have done it), the breathing guide still guides when it cannot move because the phase word is driven by the timer rather than the transition, tab order matches visual order, and every control has an accessible name. 40 more unit tests (603). |

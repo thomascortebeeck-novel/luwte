@@ -102,7 +102,12 @@ export const weeklySchema = z.object({
 export type Weekly = z.infer<typeof weeklySchema>;
 
 /**
- * The order the daily questions are asked in. One question per screen.
+ * The order the daily questions are asked in.
+ *
+ * **Two screens render this list, differently.** Today shows all of it at
+ * once, which is where the check-in normally happens; `/checkin` still asks
+ * one per screen, for editing a past day and for the weekly items, where the
+ * questions are rare enough to be worth slowing down for.
  *
  * Each carries its own scale ends, because they are not all the same shape.
  * Valence and flatness run from little to a lot; **arousal is bipolar** — both
