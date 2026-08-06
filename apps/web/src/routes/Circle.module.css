@@ -6,6 +6,15 @@
   margin: 0;
 }
 
+/* A write failure, shared by every screen in this module — Circle,
+   CircleMember, Invite and FindClinician all import this stylesheet. */
+.note {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
 .section {
   display: flex;
   flex-direction: column;

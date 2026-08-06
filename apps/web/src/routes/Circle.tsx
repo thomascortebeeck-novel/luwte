@@ -8,6 +8,7 @@ import {
 import { Button, Hairline, Screen } from '@luwte/ui';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { messageKeyFor, reportError } from '../errors';
 import {
   readCircle,
   readOpenInvites,
@@ -33,6 +34,7 @@ export function Circle() {
 
   const [members, setMembers] = useState<CircleMemberRecord[]>([]);
   const [invites, setInvites] = useState<InviteRecord[]>([]);
+  const [message, setMessage] = useState<string | null>(null);
 
   const load = () => {
     if (!user) return;
@@ -47,8 +49,14 @@ export function Circle() {
   useEffect(load, [user]);
 
   const withdraw = async (code: string) => {
-    await withdrawInvite(code);
-    load();
+    setMessage(null);
+    try {
+      await withdrawInvite(code);
+      load();
+    } catch (error: unknown) {
+      reportError('withdrawInvite', error);
+      setMessage(t(messageKeyFor(error)));
+    }
   };
 
   const nameOf = (member: CircleMemberRecord) =>
@@ -130,6 +138,12 @@ export function Circle() {
           </ul>
         </section>
       ) : null}
+
+      {/* Present even when empty, so a screen reader has the region before
+          a message ever lands in it. */}
+      <p className={styles.note} role="status" aria-live="polite">
+        {message}
+      </p>
     </Screen>
   );
 }
