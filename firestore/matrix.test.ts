@@ -79,6 +79,8 @@ const ALL_ON = Object.fromEntries(permissionKeys.map((k) => [k, true]));
 const ALL_OFF = Object.fromEntries(permissionKeys.map((k) => [k, false]));
 
 const DATE = '2026-08-05';
+/** The post `reactions` and `comments` below hang off. */
+const POST_ID = 'post-1';
 
 type Collection = {
   path: string;
@@ -92,6 +94,19 @@ type Collection = {
   selfMayDelete?: true;
   /** Why this row departs, in one sentence, next to the departure. */
   note?: string;
+  /**
+   * Skip create/update/delete generation entirely; read is still generated
+   * and still asserted. For a row whose write rule is not "the patient, or
+   * nobody" — `reactions` and `comments` are authored against the writer's
+   * own uid (`isSelf(memberUid)` / `request.resource.data.authorUid`), a
+   * different identity question than every other row's `isSelf(patientId)`,
+   * which `mayWrite` below has no way to ask generically without either
+   * misreporting the rule or duplicating it. Those writes are one of the
+   * three deliberate exceptions this matrix documents rather than
+   * reproduces (see the note on `posts` below), and are covered by name in
+   * `rules.test.ts` instead.
+   */
+  readOnly?: true;
 };
 
 const COLLECTIONS: readonly Collection[] = [
@@ -174,12 +189,41 @@ const COLLECTIONS: readonly Collection[] = [
   },
   {
     path: 'posts',
-    doc: 'post-1',
+    doc: POST_ID,
     permission: 'feed',
     // Reacting and commenting are the other two deliberate exceptions. They
-    // live in subcollections of this document and are excluded for the same
-    // reason as the suggestion above.
+    // live in subcollections of this document, rowed separately below —
+    // read only, for the reason `readOnly` explains.
     payload: { kind: 'completion', activityId: 'act-1', createdAt: new Date() },
+  },
+  /*
+   * `reactions` and `comments` hang off a post rather than directly off the
+   * patient, which is why `path` below has two collection/document pairs in
+   * it rather than one. That works with no change to `ref()` or
+   * `seedTarget()`: Firestore's `doc()` accepts a path with internal
+   * slashes the same way it accepts separate segments, so
+   * `patients/{pid}/posts/post-1/reactions/{doc}` is built exactly as it
+   * would be from four separate arguments.
+   *
+   * Read is a uniform question here, same as everywhere else in this table:
+   * `firestore.rules` gates both (`match /reactions/{memberUid}` and
+   * `match /comments/{commentId}`, nested under `match /posts/{postId}`) on
+   * `canRead(patientId, 'feed')`, so the reader expectations follow this
+   * table exactly. Write does not fit the table — see `readOnly`.
+   */
+  {
+    path: `posts/${POST_ID}/reactions`,
+    doc: 'reactor-1',
+    permission: 'feed',
+    payload: { type: 'heart', at: new Date() },
+    readOnly: true,
+  },
+  {
+    path: `posts/${POST_ID}/comments`,
+    doc: 'comment-1',
+    permission: 'feed',
+    payload: { authorUid: THIRD_PARTY, text: 'Fijn dat het lukte.', at: new Date() },
+    readOnly: true,
   },
   {
     path: 'plan',
@@ -280,6 +324,22 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+  /*
+   * This file and `rules.test.ts` share `PROJECT_ID` and both call
+   * `clearFirestore()` here — inert while there was only one rules test
+   * file, load-bearing now there are two. `vitest.rules.config.ts` sets
+   * `fileParallelism: false` so the two files never run concurrently;
+   * without it, one file's `clearFirestore()` mid-run would wipe the
+   * fixtures the other had just seeded.
+   *
+   * The failure mode if that guard were ever removed is noisy rather than
+   * silent, worth stating precisely rather than left to guesswork: `canRead`
+   * never inspects `resource`, only the circle document and the reader's own
+   * identity, so a wiped fixture makes the `assertSucceeds` cells fail loudly
+   * — document not found — rather than making an `assertFails` cell quietly
+   * pass for the wrong reason. Flaky, not a false green, which is why a
+   * comment naming the dependency is enough and no code change is needed.
+   */
   await testEnv.clearFirestore();
 });
 
@@ -345,24 +405,46 @@ const assertThat = (allowed: boolean) => (allowed ? assertSucceeds : assertFails
  * second: a collection with no matrix row is a subtree whose access nobody
  * checked, holding Article 9 data, with nothing on either side to show it.
  */
-function declaredSubcollections(): string[] {
-  const source = readFileSync(
-    join(process.cwd(), 'packages', 'core', 'src', 'model', 'erasure.ts'),
-    'utf8',
-  );
-  const body = source
-    .split('export const PATIENT_SUBCOLLECTIONS = [')[1]
-    ?.split('] as const;')[0];
-  if (body === undefined) throw new Error('PATIENT_SUBCOLLECTIONS not found in erasure.ts');
+function parseConstArray(source: string, constName: string): string[] {
+  const body = source.split(`export const ${constName} = [`)[1]?.split('] as const;')[0];
+  if (body === undefined) throw new Error(`${constName} not found in erasure.ts`);
   return [...body.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '').matchAll(/'([^']+)'/g)].map(
-    (m) => m[1],
+    (m) => m[1]!,
+  );
+}
+
+const erasureSource = () =>
+  readFileSync(join(process.cwd(), 'packages', 'core', 'src', 'model', 'erasure.ts'), 'utf8');
+
+function declaredSubcollections(): string[] {
+  return parseConstArray(erasureSource(), 'PATIENT_SUBCOLLECTIONS');
+}
+
+/**
+ * `POST_SUBCOLLECTIONS` from the same file: `reactions` and `comments`, which
+ * hang off a post rather than directly off the patient. `posts` is itself in
+ * `PATIENT_SUBCOLLECTIONS` and already has a row above; this is the two
+ * documents nested inside it, mapped to the depth a `COLLECTIONS` row
+ * actually builds a reference from.
+ *
+ * Without this, `firestore.rules` had two match blocks with their own
+ * `allow read` — `reactions` and `comments`, both nested under `posts` — and
+ * no guard would ever have said so: `declaredSubcollections` only read the
+ * array one level up, so these two were invisible to the exact mechanism
+ * built to make that impossible.
+ */
+function declaredPostSubcollections(): string[] {
+  return parseConstArray(erasureSource(), 'POST_SUBCOLLECTIONS').map(
+    (name) => `posts/${POST_ID}/${name}`,
   );
 }
 
 describe('the matrix covers the schema', () => {
   it('has a row for every sub-collection under a patient', () => {
     const covered = new Set(COLLECTIONS.map((c) => c.path));
-    const missing = declaredSubcollections().filter((name) => !covered.has(name));
+    const missing = [...declaredSubcollections(), ...declaredPostSubcollections()].filter(
+      (name) => !covered.has(name),
+    );
     if (missing.length > 0) {
       throw new Error(
         `No access matrix row for: ${missing.join(', ')}. `
@@ -373,11 +455,12 @@ describe('the matrix covers the schema', () => {
   });
 
   it('has no row for a sub-collection that no longer exists', () => {
-    const declared = new Set(declaredSubcollections());
+    const declared = new Set([...declaredSubcollections(), ...declaredPostSubcollections()]);
     const stale = COLLECTIONS.map((c) => c.path).filter((path) => !declared.has(path));
     if (stale.length > 0) {
       throw new Error(
-        `Matrix rows for collections that are not in PATIENT_SUBCOLLECTIONS: ${stale.join(', ')}. `
+        'Matrix rows for collections that are not declared in PATIENT_SUBCOLLECTIONS or '
+          + `POST_SUBCOLLECTIONS: ${stale.join(', ')}. `
           + 'Either the collection was removed and this row is dead, or it was added to the '
           + 'rules and never to erasure — which would be health data outliving an Art. 17 request.',
       );
@@ -397,6 +480,9 @@ for (const c of COLLECTIONS) {
         await seedTarget(c);
         await assertThat(mayRead(c, reader))(getDoc(ref()));
       });
+
+      // `readOnly` rows stop here — see the field's doc comment on `Collection`.
+      if (c.readOnly) continue;
 
       it(`${reader} · create → ${verdict(mayWrite(c, reader, 'create'))}`, async () => {
         // No target seeded: a `set` on an absent document is a create.
