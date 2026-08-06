@@ -10,6 +10,7 @@ import {
 import { Button, Choice, Field, Hairline, Screen } from '@luwte/ui';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
+import { messageKeyFor, reportError } from '../errors';
 import {
   readCircleMember,
   restoreMember,
@@ -42,6 +43,7 @@ export function CircleMember() {
 
   const [member, setMember] = useState<CircleMemberRecord | null>(null);
   const [relation, setRelation] = useState('');
+  const [message, setMessage] = useState<string | null>(null);
   /** A clinical permission waiting to be confirmed in words. */
   const [confirming, setConfirming] = useState<{
     key: ClinicalKey;
@@ -66,7 +68,11 @@ export function CircleMember() {
     if (!user) return;
     const was = { permissions: member.permissions, relation: member.relation ?? '' };
     setMember({ ...member, permissions });
-    void saveMemberPermissions(user.uid, memberUid, permissions, was);
+    setMessage(null);
+    void saveMemberPermissions(user.uid, memberUid, permissions, was).catch((error: unknown) => {
+      reportError('saveMemberPermissions', error);
+      setMessage(t(messageKeyFor(error)));
+    });
   };
 
   /*
@@ -88,13 +94,23 @@ export function CircleMember() {
 
   const commitRelation = () => {
     if (!user || relation === member.relation) return;
-    void saveMemberRelation(user.uid, memberUid, relation.trim());
+    setMessage(null);
+    void saveMemberRelation(user.uid, memberUid, relation.trim()).catch((error: unknown) => {
+      reportError('saveMemberRelation', error);
+      setMessage(t(messageKeyFor(error)));
+    });
   };
 
   const setAccess = async (revoked: boolean) => {
     if (!user) return;
-    await (revoked ? revokeMember : restoreMember)(user.uid, memberUid);
-    setMember({ ...member, revokedAt: revoked ? new Date() : null });
+    setMessage(null);
+    try {
+      await (revoked ? revokeMember : restoreMember)(user.uid, memberUid);
+      setMember({ ...member, revokedAt: revoked ? new Date() : null });
+    } catch (error: unknown) {
+      reportError(revoked ? 'revokeMember' : 'restoreMember', error);
+      setMessage(t(messageKeyFor(error)));
+    }
   };
 
   const title =
@@ -179,6 +195,12 @@ export function CircleMember() {
       <Button variant="quiet" onClick={() => void setAccess(live)}>
         {t(live ? 'circleRevoke' : 'circleRestore')}
       </Button>
+
+      {/* Present even when empty, so a screen reader has the region before
+          a message from any of the three writes above lands in it. */}
+      <p className={styles.note} role="status" aria-live="polite">
+        {message}
+      </p>
     </Screen>
   );
 }
