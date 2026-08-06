@@ -260,7 +260,7 @@ patient and change what is prescribed; the calendar takes suggestions that
 never place themselves; finishing something planned shares it to the circle,
 who can only answer warmly.
 
-**626 unit tests plus 245 security-rules tests.** `pnpm verify` green.
+**626 unit tests plus 535 security-rules tests.** `pnpm verify` green.
 
 The product produces the thing that changes an appointment: a chart with
 medication changes as vertical rules, adherence as a count, and the person's
@@ -296,9 +296,10 @@ Android SDK is installed here.
 which also covers the Android app.
 
 Done: **the accessibility pass** (P8.1), **GDPR export and erasure** (P8.2),
-and the paperwork as [docs/GDPR.md](docs/GDPR.md) (P8.5).
+**the full rules matrix** (P8.3), and the paperwork as
+[docs/GDPR.md](docs/GDPR.md) (P8.5).
 
-Still open: the full rules matrix (P8.3), the error-handling sweep (P8.4), and
+Still open: the error-handling sweep (P8.4) and
 the family pilot (P8.6). Those two, plus the Stanley–Brown safety plan,
 personalised crisis contacts and supporter guidance, are planned in
 [docs/superpowers/plans/2026-08-06-safety-plan-supporters-and-hardening.md](docs/superpowers/plans/2026-08-06-safety-plan-supporters-and-hardening.md). One thing P8.1 could not do here: a **real
@@ -599,10 +600,25 @@ function would additionally guarantee single use under a race, where this
 relies on the client transaction. Revisit if invites become more than a family
 sharing a link.
 
-**Most of the 186 rules tests are written as the attacks someone would
-actually try**, and named that way. **Add to them rather than trimming them.**
-If one starts failing, the question is what broke, not whether the test is
-too strict.
+**Most of `rules.test.ts` is written as the attacks someone would actually
+try**, and named that way. **Add to them rather than trimming them.** If one
+starts failing, the question is what broke, not whether the test is too strict.
+
+**`matrix.test.ts` is the complement, and it is generated rather than
+remembered.** Every reader × collection × operation cell — six readers, twelve
+sub-collections, read/create/update/delete — so a collection nobody wrote a
+test for shows as a failing cell instead of as silence. It reads
+`PATIENT_SUBCOLLECTIONS` from the source and **fails when a collection exists
+there and has no row**, the same guard shape as `contrast.test.ts` and
+`erasure.test.ts`; both halves were proved by injection before being trusted.
+Two things stay out of it on purpose. **Shape rules** — a date matching its
+document id, a required `source` — belong in `rules.test.ts`, because a
+generated suite that checks them needs a valid fixture per collection and
+becomes a second implementation of the app. And the **three deliberate write
+exceptions** (a verified clinician writing medication, a member creating a
+`suggested` activity, a member reacting or commenting) are excluded rather than
+encoded: a generated suite that quietly reproduces an exception stops being a
+check on it.
 
 **On invites, `get` and `list` are split, and the split is the security.**
 Naming a code is the capability — that is what a shared link is, so any
@@ -915,6 +931,7 @@ segments after `{path=**}` are not.
 
 | Date | Change |
 |---|---|
+| 2026-08-06 | **P8.3 — the access matrix, generated rather than remembered.** `rules.test.ts` is 245 attacks somebody would actually try, each written the day its feature landed, and the gap in that is structural: it can only cover what somebody thought of. `matrix.test.ts` enumerates instead — six readers × twelve sub-collections × four operations, 288 cells, plus a guard that reads `PATIENT_SUBCOLLECTIONS` and **fails when a collection exists there and has no row**. That guard is the point of the exercise: without it the table is a second thing to remember, and remembering is what was already failing. Both halves proved by injection before being trusted. **It found one wrong expectation and no wrong rule.** The plan keyed `completions` to `calendar` — a completion hangs off an activity, so that is what you would expect — and the rules say self-only; injecting `calendar` back made the cell fail, which is the rules being right. Pleasure and mastery are somebody rating their own day rather than a plan for it, and sharing one is what the feed is for, per item and by choice. The row now reads `null`, which turns the reader holding *every* permission into a standing assertion that the narrow reading holds. Two things stay out on purpose: **shape rules** (a date matching its id, a required `source`) belong in `rules.test.ts`, because checking them generically needs a valid fixture per collection and that is how a generated suite becomes a second implementation of the app; and the **three deliberate write exceptions** are excluded rather than encoded, since a generated suite that quietly reproduces an exception stops being a check on it. The delete cells run with **no `erasureStartedAt` on a patient document that exists**, so each one is refused because the record is a record — not because the fixture happened to be missing, which is the exact confusion that made `erasing()` wrong once already. 290 more rules tests (535). |
 | 2026-08-06 | **The check-in moved onto Today, and the tab bar lost its words** (both Thomas). The complaint was that the check-in was too long, and **the length was the wizard rather than the questions**: four items and a diary line asked one per screen, five taps of "Verder", nine on the weekly day. On one page with every scale visible it is the same record for about a fifth of the effort, and saving replaces it with the acknowledgement rather than leaving a second button asking for the same thing. **No item was dropped, and that is a decision rather than an omission** — `mood` and `arousal` are the two axes of the circumplex and losing either stops the windline telling elated from agitated; `flatness` is not a point on that circle at all but the absence of a response, which is what antipsychotics blunt; `sleepHours` becomes automatic once Health Connect is wired. Fewer *items* would be a change to the clinical model and should be decided as one. `isCheckinTime` reuses **`checkinHour`, the hour already in Settings** — one setting rather than two that can disagree — and before that hour the screen says so while leaving the way in open, because somebody who goes to bed at six should not be told to come back later. The tab bar is now icons only on the phone, with the labels **visually hidden rather than removed**: a link with no accessible name is announced as "link" and nothing else. `/checkin` stays for editing a past day and for the weekly items, where one-per-screen is right. Also recorded: three suggestions declined with reasons — a motivational quote (positive self-statements *lower* mood in people with low self-esteem, Wood et al. 2009), mood prediction (Class IIa), and step counts (the self-scoring BRAND refuses). 2 more unit tests (626). |
 | 2026-08-06 | **The app got navigation** (Thomas asked for polish, and this was the polish). There had been **none**: Today ended in a stack of five full-width buttons and every other screen carried a single "Vandaag", so getting from the calendar to the feed meant going home first. Now five destinations in one `AppNav` — **a thumb-reachable tab bar under 768px, a row in the top bar above it**, one component and one render, because duplicating the markup per breakpoint is how two navigations drift apart. `--nav-height` is a token so `Screen` reserves the room centrally; per-screen padding would hide exactly one control on whichever screen somebody forgot. **Every icon keeps its word** — an icon-only bar asks somebody to decode five glyphs and concentration is what this app cannot assume — and the current tab is marked by full-strength text *and* a rule, never colour alone (1.4.1). The active state is `--text`, not an accent: `--self` is the person's own data and `--human` is where somebody else has been, and which tab you are on is neither. **Google's button is now Google's**, unaltered four-colour mark — the one place a colour outside the palette appears, because people recognise that control rather than read it, in luwte's own container so it does not shout over the primary action. And "wachtwoord vergeten" moved from a fourth footer button to small text beside "toon wachtwoord", under the field — which is where somebody is looking at the moment they realise they cannot remember it. Verified at 320, 375 and 1280: no horizontal scroll, tabs 64×58 at the narrowest, and the last action clears the bar by 23px once scrolled. |
 | 2026-08-06 | **Sign-up and sign-in rebuilt around a password or Google, and the emailed link removed** (Thomas). Walking the old screen found a live defect: `signInOrRegister` tried to sign in and **created an account when that failed** — and modern Firebase answers a wrong password and an unknown address with the same `auth/invalid-credential`, so mistyping your own password tried to register you, failed as already-in-use, and said "signing in didn't work". Never *your password is wrong*. Splitting the two paths removes that whole class. **The property the tests are built around is that nothing reveals whether an address has an account**: here that is a health disclosure, not a security nicety — confirming it says a named person keeps a logbook for psychosis and depression, and anyone can ask from a sign-up form with no password. Unknown address and wrong password read identically, registering over an existing address does not say so, and the reset screen answers the same either way. **Password reset had to come with it**, since a password is now the only address-based way in and forgetting one would otherwise cost somebody months of their own record; it does not throw for an unknown address, so it cannot enumerate either. Eight characters minimum and **no composition rules** (NIST SP 800-63B) — demanding a symbol produces `Passw0rd!` and a note beside the bed. The requirement shows while typing rather than as a rejection afterwards, `autocomplete` is `new-password` on sign-up so a password manager offers a fresh one, reveal is a **labelled button rather than an eye icon** (24px anatomy again), and closing the Google popup now says nothing at all, because changing your mind is not a failure. **Walking it also caught a copy bug I had just written**: `network-request-failed` mapped to the general `offline` string, which promises *wat je invult wordt bewaard en later verstuurd* — true of a check-in, which Firestore queues, and flatly untrue of a sign-in. Verified over the wire against the emulator: account created and landed in onboarding, wrong password answered precisely without creating anything, and a repeat address refused without confirming it. 18 more unit tests (621). |
