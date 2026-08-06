@@ -1,5 +1,6 @@
 import { NavLink, Route, Routes, useLocation } from 'react-router';
 import styles from './App.module.css';
+import { AppNav } from './components/AppNav';
 import { useLocale } from './providers/LocaleProvider';
 import { Breathing } from './routes/Breathing';
 import { Calendar } from './routes/Calendar';
@@ -41,16 +42,21 @@ export function App() {
 
   return (
     <div className={styles.shell}>
-      <nav className={styles.bar}>
+      <header className={styles.bar}>
         <NavLink to="/" className={styles.wordmark}>
           luwte
         </NavLink>
+
+        {/* Desktop puts the sections here; on a phone the same markup is
+            pinned to the bottom, within thumb reach. See AppNav.module.css. */}
+        <AppNav />
+
         {onCrisis ? null : (
           <NavLink to="/crisis" className={styles.crisisLink}>
             {t('navCrisis')}
           </NavLink>
         )}
-      </nav>
+      </header>
       <Routes>
         {/* Reachable without an account and without passing the gate. */}
         <Route path="/crisis" element={<Crisis />} />

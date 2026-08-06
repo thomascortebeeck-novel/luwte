@@ -5,7 +5,7 @@ import {
   passwordProblem,
   type AuthMode,
 } from '@luwte/core';
-import { Button, Field, Screen } from '@luwte/ui';
+import { Button, Field, GoogleButton, Screen } from '@luwte/ui';
 import { useState } from 'react';
 import {
   looksLikeEmail,
@@ -123,23 +123,16 @@ export function SignIn() {
                 {mode === 'signIn' ? t('authSwitchToRegister') : t('authSwitchToSignIn')}
               </Button>
 
-              {/* An equal option, not a promoted one. It is quicker for most
-                  people and it tells Google this person opened luwte — which
-                  is a real disclosure for an app holding health data, so the
-                  note below says so rather than leaving it to be found. */}
-              <Button
-                variant="quiet"
+              {/* An equal option, not a promoted one. Google's own mark,
+                  because people recognise this control rather than read it —
+                  and it tells Google this person opened luwte, which is a real
+                  disclosure for an app holding health data, so the note below
+                  says so rather than leaving it to be found. */}
+              <GoogleButton
+                label={t('signInGoogle')}
                 disabled={busy}
                 onClick={() => void run(signInWithGoogle, mode)}
-              >
-                {t('signInGoogle')}
-              </Button>
-
-              {mode === 'signIn' ? (
-                <Button variant="quiet" disabled={busy} onClick={() => go('reset')}>
-                  {t('authForgotPassword')}
-                </Button>
-              ) : null}
+              />
             </>
           )}
         </>
@@ -190,14 +183,34 @@ export function SignIn() {
           />
 
           {/*
-            A labelled button rather than an eye icon. At 24px an eye is the
+            The two things you need *while looking at the password field*,
+            beside it rather than at the bottom of the screen.
+
+            Reveal is a word rather than an eye icon: at 24px an eye is the
             same unreadable smudge the applause icon was, and this audience
-            includes people whose hands shake — a word is unambiguous and the
-            Button primitive gives it a 48px target for free.
+            includes people whose hands shake.
+
+            "Wachtwoord vergeten" belongs here too. It was a fourth button in
+            the footer, below Google, which is nowhere near the moment you
+            realise you cannot remember it. Small text, but the padding takes
+            each of these past the tap floor — looking quiet and being hard to
+            hit are different things.
           */}
-          <Button variant="quiet" onClick={() => setRevealed(!revealed)}>
-            {revealed ? t('authHidePassword') : t('authShowPassword')}
-          </Button>
+          <div className={styles.inlineActions}>
+            <button
+              type="button"
+              className={styles.inlineAction}
+              onClick={() => setRevealed(!revealed)}
+            >
+              {revealed ? t('authHidePassword') : t('authShowPassword')}
+            </button>
+
+            {mode === 'signIn' ? (
+              <button type="button" className={styles.inlineAction} onClick={() => go('reset')}>
+                {t('authForgotPassword')}
+              </button>
+            ) : null}
+          </div>
         </>
       )}
 

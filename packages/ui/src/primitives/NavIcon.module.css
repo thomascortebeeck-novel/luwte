@@ -1,0 +1,11 @@
+/*
+ * Sized in `em` like the reaction icons, so it grows with the type at 200%
+ * zoom rather than shrinking into a dot beside a big word.
+ */
+.icon {
+  display: block;
+  width: 1.5em;
+  height: 1.5em;
+  color: inherit;
+  flex: none;
+}

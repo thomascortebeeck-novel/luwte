@@ -3,7 +3,9 @@ export { Button, type ButtonProps } from './primitives/Button';
 export { Card, type CardProps } from './primitives/Card';
 export { Choice, type ChoiceProps } from './primitives/Choice';
 export { Field, type FieldProps } from './primitives/Field';
+export { GoogleButton, type GoogleButtonProps } from './primitives/GoogleButton';
 export { Hairline } from './primitives/Hairline';
+export { NavIcon, type NavIconName, type NavIconProps } from './primitives/NavIcon';
 export { HumanText, type HumanTextProps } from './primitives/HumanText';
 export {
   ReactionIcon,

@@ -1,0 +1,50 @@
+/*
+ * Google's sign-in button, in luwte's container.
+ *
+ * Deliberately **not** a `.primary` button. There is one primary action on
+ * this screen and it is signing in with what you typed; Google is an equal
+ * alternative, not a louder one. A bordered surface says "another way" where
+ * a filled accent would say "do this instead".
+ */
+
+.button {
+  min-height: var(--tap-min);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Google asks for clear space around the mark. This is theirs, not ours. */
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+  font: inherit;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface);
+  /* A control edge, so 3:1 — `--line` would be decoration here. */
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-action);
+  cursor: pointer;
+  /* BRAND 3.6 — opacity only. Nothing moves when a button is pressed. */
+  transition: opacity var(--dur-quick) var(--ease-settle);
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.button:not(:disabled):hover {
+  opacity: 0.85;
+}
+
+/*
+ * Fixed at 18px, which is Google's own ratio against a 40px button and reads
+ * correctly at any text size. It must not scale with the label: a stretched
+ * or shrunken G is an altered mark.
+ */
+.mark {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}

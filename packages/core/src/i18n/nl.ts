@@ -57,6 +57,7 @@ export const nl = {
   crisisCallAction: 'Bellen',
 
   navToday: 'Vandaag',
+  navSections: 'Navigatie',
   navCrisis: 'Hulp nu',
   navBack: 'Terug',
 

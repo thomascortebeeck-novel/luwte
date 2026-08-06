@@ -127,6 +127,10 @@
      functional requirement, not a compliance checkbox. */
   --tap-min: 48px;
 
+  /* The bottom tab bar on a phone. Shared so `Screen` can leave room for it
+     rather than guessing, and so the two cannot drift apart. */
+  --nav-height: 58px;
+
   /* BRAND 3.6 — decelerating, arriving softly. Fade and settle, never slide. */
   --ease-settle: cubic-bezier(0.22, 0.61, 0.36, 1);
   --dur-quick: 400ms;

@@ -160,27 +160,23 @@ export function Today() {
   // Nothing is claimed until it is known, so there is no flash of the wrong state.
   if (done === null) return <Screen title={patient?.displayName || undefined}>{null}</Screen>;
 
+  /*
+   * One action in the footer, not six.
+   *
+   * It used to carry the check-in **and** a stack of four quiet buttons to
+   * the calendar, the feed, the overview and settings — a wall of five
+   * full-width controls in which the one thing this screen is for had to
+   * compete with navigation. Those four are the tab bar now, present on every
+   * screen rather than only this one, so getting from the calendar to the
+   * feed no longer means going home first.
+   */
   return (
     <Screen
       title={patient?.displayName || undefined}
       action={
-        <>
-          <Button full onClick={() => navigate('/checkin')}>
-            {done ? t('checkinEdit') : t('checkinStart')}
-          </Button>
-          <Button variant="quiet" onClick={() => navigate('/calendar')}>
-            {t('calendarTitle')}
-          </Button>
-          <Button variant="quiet" onClick={() => navigate('/feed')}>
-            {t('feedTitle')}
-          </Button>
-          <Button variant="quiet" onClick={() => navigate('/insights')}>
-            {t('insightsTitle')}
-          </Button>
-          <Button variant="quiet" onClick={() => navigate('/settings')}>
-            {t('settingsTitle')}
-          </Button>
-        </>
+        <Button full onClick={() => navigate('/checkin')}>
+          {done ? t('checkinEdit') : t('checkinStart')}
+        </Button>
       }
     >
       {/* BRAND 3.7 — the windline sits above everything else on the home

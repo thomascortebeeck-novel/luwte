@@ -1,0 +1,139 @@
+/*
+ * One navigation, two placements.
+ *
+ * **Phone: a bar along the bottom.** BRAND 5 asks that the app work
+ * one-handed, and the bottom of the screen is the only part of a modern phone
+ * a thumb reaches without regripping. This is also simply what people expect
+ * an app to do.
+ *
+ * **Desktop: a row in the top bar.** A bar pinned to the bottom of a 1400px
+ * window is a phone idiom stranded on furniture — the pointer is already at
+ * the top, and the vertical space is not scarce.
+ *
+ * The switch is one media query, and nothing about the markup changes.
+ */
+
+.nav {
+  /* Phone: pinned, above the content, out of the way of the home indicator. */
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 10;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.list {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+.item {
+  flex: 1 1 0;
+  /*
+   * Five destinations at 320px gives 64px each, comfortably past the 48px
+   * floor. `min-width: 0` lets a long label ellipsis rather than push the
+   * bar wider than the screen — the reflow bug the check-in already had.
+   */
+  min-width: 0;
+}
+
+.link {
+  min-height: var(--tap-min);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: var(--space-1) 2px;
+  text-decoration: none;
+  /* Inactive is quiet; active is full strength. **Not an accent** — `--self`
+     means the person's own data and `--human` means somebody else was here.
+     Which tab you are on is neither, it is furniture. */
+  color: var(--text-quiet);
+  transition: color var(--dur-quick) var(--ease-settle);
+}
+
+.active {
+  color: var(--text);
+}
+
+/*
+ * The word, always. An icon-only bar asks somebody to decode five glyphs, and
+ * concentration is exactly what this app cannot assume.
+ */
+.label {
+  font-size: 11px;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * A second mark for the current tab, because colour alone is never the only
+ * signal — WCAG 1.4.1, and it is the same reason this product has no
+ * traffic-light coding anywhere.
+ */
+.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 24px;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: currentColor;
+}
+
+.link {
+  position: relative;
+}
+
+@media (min-width: 768px) {
+  /* Desktop: back into the flow of the top bar. */
+  .nav {
+    position: static;
+    background: none;
+    border-top: 0;
+    padding-bottom: 0;
+  }
+
+  .list {
+    gap: var(--space-1);
+    max-width: none;
+  }
+
+  .item {
+    flex: 0 0 auto;
+  }
+
+  .link {
+    flex-direction: row;
+    gap: var(--space-1);
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-input);
+  }
+
+  .label {
+    font-size: var(--text-sm);
+    line-height: var(--leading-sm);
+  }
+
+  /* The underline belongs to a tab bar. Up here the weight of the text and a
+     quiet surface do the same job without drawing a line across the header. */
+  .active::before {
+    display: none;
+  }
+
+  .active {
+    background: var(--surface);
+  }
+}

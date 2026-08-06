@@ -11,3 +11,42 @@
   color: var(--text-quiet);
   margin: 0;
 }
+
+/*
+ * The two small controls under the password field.
+ *
+ * Deliberately not Buttons: a Button here would be a third full-width block
+ * competing with the action it sits above. These are text, sized like text,
+ * and the vertical padding is what makes them safely tappable — 44px of
+ * target under 15px of type. Looking quiet and being hard to hit are
+ * different things, and only the first one is wanted.
+ */
+.inlineActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1);
+  /* Pull up towards the field they belong to, so they read as part of it. */
+  margin-top: calc(var(--space-2) * -1);
+}
+
+.inlineAction {
+  min-height: 44px;
+  padding: var(--space-1) 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color var(--dur-quick) var(--ease-settle);
+}
+
+.inlineAction:hover {
+  color: var(--text);
+}

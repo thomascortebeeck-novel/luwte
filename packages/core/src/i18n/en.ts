@@ -55,6 +55,7 @@ export const en: Dictionary = {
   crisisCallAction: 'Call',
 
   navToday: 'Today',
+  navSections: 'Navigation',
   navCrisis: 'Help now',
   navBack: 'Back',
 
