@@ -15,6 +15,7 @@ import {
 import { Button, Field, Hairline, Screen, ScaleInput, type ScaleValue } from '@luwte/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { messageKeyFor, reportError } from '../errors';
 import { createActivity, readActivities, type ActivityRecord } from '../firebase/activities';
 import { useAccount } from '../providers/AccountProvider';
 import { useAuth } from '../providers/AuthProvider';
@@ -88,6 +89,7 @@ export function Calendar() {
   const [expectedPleasure, setExpectedPleasure] = useState<ScaleValue | null>(null);
   const [expectedMastery, setExpectedMastery] = useState<ScaleValue | null>(null);
   const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
   const stepLabels = useMemo(() => SCALE_STEP_KEYS.map((key) => t(key)), [t]);
 
@@ -109,6 +111,7 @@ export function Calendar() {
   const save = async () => {
     if (!user || !adding || draft.title.trim().length === 0 || busy) return;
     setBusy(true);
+    setMessage(null);
     try {
       await createActivity(
         user.uid,
@@ -129,6 +132,9 @@ export function Calendar() {
       setExpectedMastery(null);
       setAdding(null);
       load();
+    } catch (error: unknown) {
+      reportError('createActivity', error);
+      setMessage(t(messageKeyFor(error)));
     } finally {
       setBusy(false);
     }
@@ -220,6 +226,12 @@ export function Calendar() {
           highLabel={t('scaleHigh')}
           stepLabels={stepLabels}
         />
+
+        {/* Present even when empty, so a screen reader has the region
+            before a message ever lands in it. */}
+        <p className={styles.note} role="status" aria-live="polite">
+          {message}
+        </p>
       </Screen>
     );
   }
@@ -329,7 +341,13 @@ export function Calendar() {
           )}
 
           <Hairline />
-          <Button variant="quiet" onClick={() => setAdding(anchor)}>
+          <Button
+            variant="quiet"
+            onClick={() => {
+              setMessage(null);
+              setAdding(anchor);
+            }}
+          >
             {t('calendarAdd')}
           </Button>
         </section>

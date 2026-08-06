@@ -5,6 +5,13 @@
   margin: 0;
 }
 
+.note {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-quiet);
+  margin: 0;
+}
+
 .sectionTitle {
   font-size: var(--text-lg);
   line-height: var(--leading-lg);
