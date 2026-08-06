@@ -2143,7 +2143,7 @@ describe('patients/{patientId}/doses', () => {
  * is a different decision from sharing how a Tuesday felt.
  */
 describe('the early-warning-signs plan', () => {
-  const entry = { sign: 'Ik slaap minder dan vijf uur.', action: 'Ik bel mijn zus.' };
+  const entry = { section: 'warning', label: 'Ik slaap minder dan vijf uur.', detail: 'Ik bel mijn zus.' };
 
   const seedEntry = () =>
     testEnv.withSecurityRulesDisabled(async (ctx) => {

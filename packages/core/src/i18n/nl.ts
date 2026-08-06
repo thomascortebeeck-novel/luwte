@@ -209,6 +209,37 @@ export const nl = {
   planExampleMedication: 'Ik denk dat ik mijn medicatie niet meer nodig heb.',
   planShared: 'Wat deze persoon geschreven heeft voor als het minder gaat.',
 
+  // De zes stappen van een veiligheidsplan (Stanley en Brown).
+  planWarningTitle: 'Wat je merkt',
+  planWarningIntro: 'Waar merk je zelf het eerst aan dat het minder gaat?',
+  planWarningLabel: 'Wat je merkt',
+  planWarningDetail: 'Wat je dan doet',
+  planCopingTitle: 'Wat je alleen kan doen',
+  planCopingIntro: 'Dingen die je zonder iemand anders kan doen om het te laten zakken.',
+  planCopingLabel: 'Wat je doet',
+  planCopingDetail: 'Waarom het helpt',
+  planDistractionTitle: 'Waar je heen kan',
+  planDistractionIntro: 'Plekken of mensen die je gedachten even ergens anders brengen.',
+  planDistractionLabel: 'Waar of bij wie',
+  planDistractionDetail: 'Wanneer dat past',
+  planHelpTitle: 'Wie je kan bellen',
+  planHelpIntro: 'Mensen die je mag bellen als het zwaar wordt. Zet er hun nummer bij.',
+  planHelpLabel: 'Wie',
+  planHelpDetail: 'Nummer',
+  planProfessionalTitle: 'Je hulpverleners',
+  planProfessionalIntro: 'Je dokter, je begeleider of de wachtdienst. Met hun nummer.',
+  planProfessionalLabel: 'Wie',
+  planProfessionalDetail: 'Nummer',
+  planSaferTitle: 'Wat je afsprak',
+  /*
+   * Vraagt niet wat iemand zou gebruiken. In het protocol gebeurt die stap
+   * samen met een hulpverlener, en een app die daar alleen naar vraagt doet
+   * iets anders. Dit is een notitie over wat al geregeld is.
+   */
+  planSaferIntro: 'Afspraken die je maakte om het jezelf veiliger te maken.',
+  planSaferLabel: 'De afspraak',
+  planSaferDetail: 'Met wie',
+
   // Verification — the admin's side
   adminTitle: 'Aanvragen',
   adminEmpty: 'Er wacht niemand.',

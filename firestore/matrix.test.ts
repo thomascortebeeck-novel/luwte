@@ -185,7 +185,7 @@ const COLLECTIONS: readonly Collection[] = [
     path: 'plan',
     doc: 'plan-1',
     permission: 'plan',
-    payload: { notice: 'ik slaap slechter', action: 'ik bel mijn zus' },
+    payload: { notice: 'ik slaap slechter', detail: 'ik bel mijn zus' },
     selfMayDelete: true,
     note:
       'The rest of this database is a record of what happened and refuses delete. A plan '

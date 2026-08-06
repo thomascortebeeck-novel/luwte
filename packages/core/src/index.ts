@@ -232,9 +232,13 @@ export {
 } from './model/erasure';
 export {
   PLAN_EXAMPLE_KEYS,
+  PLAN_SECTIONS,
+  PLAN_SECTION_COPY,
+  entriesInSection,
   hasPlan,
   planEntrySchema,
   type PlanEntry,
+  type PlanSection,
 } from './model/plan';
 export {
   CHECKIN_STEPS,

@@ -1,4 +1,4 @@
-import { paths, type PlanEntry } from '@luwte/core';
+import { paths, type PlanEntry, type PlanSection } from '@luwte/core';
 import {
   collection,
   deleteDoc,
@@ -28,8 +28,11 @@ export async function readPlan(uid: string): Promise<PlanEntryRecord[]> {
       const data = document.data();
       return {
         id: document.id,
-        sign: (data.sign ?? '') as string,
-        action: (data.action ?? '') as string,
+        // Absent on every entry written before the other five steps existed
+        // — same default the schema itself applies, not a guess made here.
+        section: (data.section ?? 'warning') as PlanSection,
+        label: (data.label ?? '') as string,
+        detail: (data.detail ?? '') as string,
         createdAt: data.createdAt?.toDate?.() ?? new Date(0),
       };
     })
@@ -38,7 +41,7 @@ export async function readPlan(uid: string): Promise<PlanEntryRecord[]> {
 
 export async function addPlanEntry(
   uid: string,
-  values: { sign: string; action: string },
+  values: { label: string; detail: string },
 ): Promise<void> {
   const id = doc(collection(db, paths.plan(uid))).id;
   await setDoc(doc(db, paths.planEntry(uid, id)), { ...values, createdAt: serverTimestamp() });
@@ -47,7 +50,7 @@ export async function addPlanEntry(
 export async function updatePlanEntry(
   uid: string,
   id: string,
-  values: { sign: string; action: string },
+  values: { label: string; detail: string },
 ): Promise<void> {
   await updateDoc(doc(db, paths.planEntry(uid, id)), values);
 }

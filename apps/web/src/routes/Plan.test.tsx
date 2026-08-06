@@ -23,8 +23,9 @@ vi.mock('../providers/AuthProvider', () => ({
 
 const entry = (overrides: Partial<PlanEntryRecord> = {}): PlanEntryRecord => ({
   id: 'p1',
-  sign: 'Ik slaap minder dan vijf uur.',
-  action: 'Ik bel mijn zus.',
+  section: 'warning',
+  label: 'Ik slaap minder dan vijf uur.',
+  detail: 'Ik bel mijn zus.',
   createdAt: new Date('2026-08-01T10:00:00Z'),
   ...overrides,
 });
@@ -94,8 +95,8 @@ describe('the early-warning-signs plan', () => {
     await user.click(screen.getByRole('button', { name: 'Bewaren' }));
 
     expect(addPlanEntry).toHaveBeenCalledWith('uid-jonas', {
-      sign: 'Ik ga niet meer buiten',
-      action: '',
+      label: 'Ik ga niet meer buiten',
+      detail: '',
     });
   });
 

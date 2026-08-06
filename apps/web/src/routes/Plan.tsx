@@ -46,7 +46,7 @@ export function Plan() {
   const mine = !patientId;
 
   const [entries, setEntries] = useState<PlanEntryRecord[] | null>(null);
-  const [draft, setDraft] = useState<{ id: string | null; sign: string; action: string } | null>(
+  const [draft, setDraft] = useState<{ id: string | null; label: string; detail: string } | null>(
     null,
   );
   const [busy, setBusy] = useState(false);
@@ -61,10 +61,10 @@ export function Plan() {
   useEffect(load, [uid]);
 
   const save = async () => {
-    if (!user || !draft || draft.sign.trim().length === 0 || busy) return;
+    if (!user || !draft || draft.label.trim().length === 0 || busy) return;
     setBusy(true);
     try {
-      const values = { sign: draft.sign.trim(), action: draft.action.trim() };
+      const values = { label: draft.label.trim(), detail: draft.detail.trim() };
       await (draft.id ? updatePlanEntry(user.uid, draft.id, values) : addPlanEntry(user.uid, values));
       setDraft(null);
       load();
@@ -86,7 +86,7 @@ export function Plan() {
         title={t('planTitle')}
         action={
           <>
-            <Button full disabled={draft.sign.trim().length === 0 || busy} onClick={() => void save()}>
+            <Button full disabled={draft.label.trim().length === 0 || busy} onClick={() => void save()}>
               {t('planSave')}
             </Button>
             {draft.id ? (
@@ -102,14 +102,14 @@ export function Plan() {
       >
         <Field
           label={t('planSign')}
-          value={draft.sign}
-          onChange={(e) => setDraft({ ...draft, sign: e.target.value })}
+          value={draft.label}
+          onChange={(e) => setDraft({ ...draft, label: e.target.value })}
         />
         <Field
           label={t('planAction')}
           message={t('planActionHint')}
-          value={draft.action}
-          onChange={(e) => setDraft({ ...draft, action: e.target.value })}
+          value={draft.detail}
+          onChange={(e) => setDraft({ ...draft, detail: e.target.value })}
         />
 
         <Hairline />
@@ -131,7 +131,7 @@ export function Plan() {
       action={
         <>
           {mine ? (
-            <Button full onClick={() => setDraft({ id: null, sign: '', action: '' })}>
+            <Button full onClick={() => setDraft({ id: null, label: '', detail: '' })}>
               {t('planAdd')}
             </Button>
           ) : null}
@@ -149,12 +149,12 @@ export function Plan() {
         <ul className={styles.list}>
           {entries.map((entry) => (
             <li key={entry.id} className={styles.item}>
-              <span className={styles.sign}>{entry.sign}</span>
-              {entry.action ? <span className={styles.action}>{entry.action}</span> : null}
+              <span className={styles.sign}>{entry.label}</span>
+              {entry.detail ? <span className={styles.action}>{entry.detail}</span> : null}
               {mine ? (
                 <Button
                   variant="quiet"
-                  onClick={() => setDraft({ id: entry.id, sign: entry.sign, action: entry.action })}
+                  onClick={() => setDraft({ id: entry.id, label: entry.label, detail: entry.detail })}
                 >
                   {t('circleChange')}
                 </Button>
