@@ -1,4 +1,11 @@
-import { DEFAULT_TIMEZONE, dateKey, windlineSeries, type WindlineDay } from '@luwte/core';
+import {
+  DEFAULT_CHECKIN_HOUR,
+  DEFAULT_TIMEZONE,
+  dateKey,
+  isCheckinTime,
+  windlineSeries,
+  type WindlineDay,
+} from '@luwte/core';
 import { Button, HumanText, Screen, Windline } from '@luwte/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -14,6 +21,7 @@ import {
 } from '../firebase/medication';
 import { ActivitiesSection, MedicationSection, PracticesSection } from './TodaySections';
 import { ActivityRating } from './ActivityRating';
+import { TodayCheckin } from './TodayCheckin';
 import { DoseNote } from './DoseNote';
 import {
   completeActivity,
@@ -46,6 +54,17 @@ export function Today() {
   const timezone = patient?.timezone ?? DEFAULT_TIMEZONE;
   const today = useMemo(() => dateKey(new Date(), timezone), [timezone]);
   const [note, setNote] = useState<string | null>(null);
+  /*
+   * Asking in the morning how the day went asks somebody to invent an answer,
+   * so the form appears from the hour they chose in Settings. Recomputed on
+   * render rather than on a timer: the screen is revisited constantly and a
+   * ticking clock to reveal a form is machinery nobody needs.
+   */
+  const timeToAsk = isCheckinTime(
+    new Date(),
+    patient?.checkinHour ?? DEFAULT_CHECKIN_HOUR,
+    timezone,
+  );
   const [done, setDone] = useState<boolean | null>(null);
   const [history, setHistory] = useState<(WindlineDay | null)[]>([]);
   const [medications, setMedications] = useState<MedicationRecord[]>([]);
@@ -174,22 +193,50 @@ export function Today() {
     <Screen
       title={patient?.displayName || undefined}
       action={
-        <Button full onClick={() => navigate('/checkin')}>
-          {done ? t('checkinEdit') : t('checkinStart')}
-        </Button>
+        /*
+         * Nothing in the footer while the check-in is on the screen — the
+         * form has its own save, and a second full-width button under it
+         * asking for the same thing is how a screen starts feeling long.
+         */
+        done ? (
+          <Button full variant="quiet" onClick={() => navigate('/checkin')}>
+            {t('checkinEdit')}
+          </Button>
+        ) : timeToAsk ? undefined : (
+          // Before the chosen hour, still reachable: somebody who goes to bed
+          // at six should not be told to come back later.
+          <Button full onClick={() => navigate('/checkin')}>
+            {t('checkinStart')}
+          </Button>
+        )
       }
     >
       {/* BRAND 3.7 — the windline sits above everything else on the home
           screen. Above medication and activities when those arrive. */}
       <Windline series={series} label={t('windlineLabel')} />
 
+      {/*
+        The check-in itself, here rather than behind a tap.
+        `isCheckinTime` uses the hour already chosen in Settings, so there is
+        one setting rather than two that can disagree, and nobody is asked at
+        nine in the morning how their day was.
+      */}
       {done ? (
         <>
           <p className={styles.line}>{t('checkinDoneToday')}</p>
           {note ? <HumanText>{note}</HumanText> : null}
         </>
+      ) : timeToAsk && user ? (
+        <TodayCheckin
+          uid={user.uid}
+          today={today}
+          onSaved={(saved) => {
+            setDone(true);
+            setNote(saved);
+          }}
+        />
       ) : (
-        <p className={styles.prompt}>{t('checkinEntry')}</p>
+        <p className={styles.prompt}>{t('checkinLater')}</p>
       )}
 
       {/* PRD 6.2 ordering: medication first because it is time-critical,

@@ -239,6 +239,7 @@ export {
 export {
   CHECKIN_STEPS,
   HOPELESSNESS_CRISIS_THRESHOLD,
+  isCheckinTime,
   SCALE_STEP_KEYS,
   WEEKLY_STEPS,
   checkinSchema,

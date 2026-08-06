@@ -268,6 +268,7 @@ export const en: Dictionary = {
   checkinSleepHours: 'How many hours did you sleep?',
   checkinHoursSuffix: 'hours',
   checkinStart: 'Fill it in',
+  checkinLater: 'Later today we will ask how it went.',
   checkinSave: 'Save',
   checkinBack: 'Back',
   checkinSkip: 'Skip',

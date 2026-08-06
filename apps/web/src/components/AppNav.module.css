@@ -65,16 +65,23 @@
 }
 
 /*
- * The word, always. An icon-only bar asks somebody to decode five glyphs, and
- * concentration is exactly what this app cannot assume.
+ * Icons only on the phone (Thomas, 2026-08-06), and the word is **still
+ * there** — moved out of sight rather than deleted.
+ *
+ * A link with no accessible name is announced as "link" and nothing else, so
+ * removing the text outright would make the whole bar unusable with a screen
+ * reader. This is the standard visually-hidden clip: no width, no height, no
+ * effect on layout, fully present to assistive technology. On desktop the
+ * rules below put it back on screen, where there is room for it.
  */
 .label {
-  font-size: 11px;
-  line-height: 1.25;
-  letter-spacing: 0.01em;
-  max-width: 100%;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
+  clip-path: inset(50%);
   white-space: nowrap;
 }
 
@@ -122,7 +129,15 @@
     border-radius: var(--radius-input);
   }
 
+  /* Back on screen: a pointer has no thumb to get out of the way of, and the
+     top bar has room the tab bar does not. */
   .label {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
     font-size: var(--text-sm);
     line-height: var(--leading-sm);
   }

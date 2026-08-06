@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { localHour } from '../reminders';
 
 /** Every subjective item in the product is 1..7. Never shown as a number. */
 export const scaleSchema = z.number().int().min(1).max(7);
@@ -141,6 +142,24 @@ export const CHECKIN_STEPS = [
     highKey: 'scaleHigh',
   },
 ] as const;
+
+/**
+ * Whether the day is far enough along to ask how it went.
+ *
+ * The check-in now sits on Today rather than behind a button, so something
+ * has to decide when it appears — and asking somebody at nine in the morning
+ * how their day was is asking them to invent an answer.
+ *
+ * The threshold is **the hour they already chose** in Settings for their
+ * reminder. One setting rather than two that can disagree, and the question
+ * turns up on the screen at the same time the nudge would arrive.
+ *
+ * Computed in the patient's zone, like every other time decision in this
+ * product, so somebody travelling still gets their own evening.
+ */
+export function isCheckinTime(now: Date, checkinHour: number, timeZone: string): boolean {
+  return localHour(now, timeZone) >= checkinHour;
+}
 
 export const WEEKLY_STEPS = [
   { id: 'restlessness', questionKey: 'weeklyRestlessness' },

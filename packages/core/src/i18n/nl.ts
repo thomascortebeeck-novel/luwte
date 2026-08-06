@@ -270,6 +270,7 @@ export const nl = {
   checkinSleepHours: 'Hoeveel uur heb je geslapen?',
   checkinHoursSuffix: 'uur',
   checkinStart: 'Invullen',
+  checkinLater: 'Later vandaag vragen we hoe het ging.',
   checkinSave: 'Bewaren',
   checkinBack: 'Terug',
   checkinSkip: 'Overslaan',
