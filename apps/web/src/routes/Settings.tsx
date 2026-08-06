@@ -225,6 +225,7 @@ export function Settings() {
             explanation={t('shareCompletionsExplanation')}
             checked={share.shareCompletions}
             onChange={(checked) => {
+              const previous = share;
               const next = { shareCompletions: checked };
               setShare(next);
               setMessage(null);
@@ -233,6 +234,15 @@ export function Settings() {
                   .then(reload)
                   .catch((error: unknown) => {
                     reportError('saveShareSettings', error);
+                    /*
+                     * Same rule as CircleMember's `apply`: Today.tsx reads
+                     * the server's `patient.share`, not this screen's state,
+                     * so a failed write here must not leave the toggle
+                     * reading OFF while sharing is still on underneath it —
+                     * completions would keep posting to the circle while
+                     * this screen claimed otherwise. Revert to what it was.
+                     */
+                    setShare(previous);
                     setMessage(t(messageKeyFor(error)));
                   });
               }
