@@ -21,7 +21,7 @@ import {
 } from '../firebase/medication';
 import { ActivitiesSection, MedicationSection, PracticesSection } from './TodaySections';
 import { ActivityRating } from './ActivityRating';
-import { TodayCheckin } from './TodayCheckin';
+import { TodayCheckin, type CheckinDraft } from './TodayCheckin';
 import { DoseNote } from './DoseNote';
 import {
   completeActivity,
@@ -66,6 +66,20 @@ export function Today() {
     timezone,
   );
   const [done, setDone] = useState<boolean | null>(null);
+  /*
+   * What was on the check-in form when a save was refused, and what to say
+   * about it. Both clear the moment a save actually lands.
+   *
+   * Firestore queues offline writes, so a rejection here is a real refusal,
+   * not a network blip — and by the time it arrives, the `TodayCheckin`
+   * instance that held the answers is already unmounted: `onSaved` below
+   * flips `done` to `true` optimistically, in the same tick, before any
+   * rejection could ever land. Handing the draft back in through props is
+   * what lets the next mount reopen exactly where the person left off,
+   * instead of an empty form or a false "Je hebt vandaag ingevuld".
+   */
+  const [checkinDraft, setCheckinDraft] = useState<CheckinDraft | undefined>(undefined);
+  const [checkinMessage, setCheckinMessage] = useState<string | null>(null);
   const [history, setHistory] = useState<(WindlineDay | null)[]>([]);
   const [medications, setMedications] = useState<MedicationRecord[]>([]);
   const [statuses, setStatuses] = useState<Record<string, DoseStatus>>({});
@@ -230,9 +244,18 @@ export function Today() {
         <TodayCheckin
           uid={user.uid}
           today={today}
+          draft={checkinDraft}
+          message={checkinMessage}
           onSaved={(saved) => {
+            setCheckinDraft(undefined);
+            setCheckinMessage(null);
             setDone(true);
             setNote(saved);
+          }}
+          onFailed={(message, draft) => {
+            setCheckinDraft(draft);
+            setCheckinMessage(message);
+            setDone(false);
           }}
         />
       ) : (

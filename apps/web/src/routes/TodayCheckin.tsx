@@ -12,10 +12,31 @@ import { saveCheckin } from '../firebase/checkins';
 import { useLocale } from '../providers/LocaleProvider';
 import styles from './TodayCheckin.module.css';
 
+/** What was on the form, kept so a refusal can hand it back rather than an empty one. */
+export type CheckinDraft = {
+  answers: Record<string, number>;
+  note: string;
+};
+
 export type TodayCheckinProps = {
   uid: string;
   today: DateKey;
   onSaved: (note: string | null) => void;
+  /**
+   * Fires when the write `onSaved` already treated as done turns out to have
+   * been refused. Firestore queues offline writes, so a rejection here is a
+   * real refusal — a permission denial, a rules change, a stale session —
+   * never a network blip that quietly resolves. Carries the translated
+   * message and what was on the form, so `Today.tsx` can revert `done` and
+   * hand a fresh mount of this component its own answers and note back,
+   * rather than leaving the person on an acknowledgement for a check-in that
+   * was never written.
+   */
+  onFailed: (message: string, draft: CheckinDraft) => void;
+  /** Set after a failed attempt, so the next mount reopens where it left off. */
+  draft?: CheckinDraft;
+  /** A failure message from the attempt that just preceded this mount. */
+  message?: string | null;
 };
 
 /**
@@ -40,20 +61,17 @@ export type TodayCheckinProps = {
  * items, where one-per-screen is right: those are asked rarely and are worth
  * slowing down for.
  */
-export function TodayCheckin({ uid, today, onSaved }: TodayCheckinProps) {
+export function TodayCheckin({
+  uid,
+  today,
+  onSaved,
+  onFailed,
+  draft,
+  message = null,
+}: TodayCheckinProps) {
   const { t } = useLocale();
-  const [answers, setAnswers] = useState<Record<string, number>>({});
-  const [note, setNote] = useState('');
-  /*
-   * `onSaved` below fires in the same tick as the write, before any
-   * rejection could ever arrive — Today.tsx swaps this component out for
-   * "Vandaag ingevuld" the instant it runs. So this message is logged via
-   * `reportError` reliably, but can only ever be seen on screen in the rare
-   * case this component is still mounted when a fast failure lands. Kept
-   * anyway, present and empty, rather than dropped: the region is cheap and
-   * correct, and the log line is not.
-   */
-  const [message, setMessage] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<Record<string, number>>(() => draft?.answers ?? {});
+  const [note, setNote] = useState(() => draft?.note ?? '');
 
   const scaleLabels = useMemo(
     () => [1, 2, 3, 4, 5, 6, 7].map((n) => t(`scaleStep${n}` as CopyKey)),
@@ -69,6 +87,7 @@ export function TodayCheckin({ uid, today, onSaved }: TodayCheckinProps) {
     Number.isFinite(answers.sleepHours);
 
   const save = () => {
+    const pending: CheckinDraft = { answers, note };
     void saveCheckin(uid, today, {
       date: today,
       mood: answers.mood as Scale,
@@ -79,10 +98,15 @@ export function TodayCheckin({ uid, today, onSaved }: TodayCheckinProps) {
       source: 'manual',
     }).catch((error: unknown) => {
       reportError('saveCheckin', error);
-      setMessage(t(messageKeyFor(error)));
+      // This instance is already unmounted by now — onSaved below already
+      // ran and Today.tsx swapped in the acknowledgement. onFailed is how
+      // the refusal still reaches the screen: Today.tsx reverts `done` and
+      // hands a fresh mount of this component back its own answers and note.
+      onFailed(t(messageKeyFor(error)), pending);
     });
     // Nothing waits on the network: the write goes to the local cache and
-    // syncs later, which is the whole point of PRD 5.6.
+    // syncs later, which is the whole point of PRD 5.6. onFailed above is
+    // what makes the rare genuine refusal honest rather than a false "saved".
     onSaved(note.trim() || null);
   };
 
@@ -149,7 +173,10 @@ export function TodayCheckin({ uid, today, onSaved }: TodayCheckinProps) {
       </Button>
 
       {/* Present even when empty, so a screen reader has the region before
-          any message lands in it. */}
+          any message lands in it. Filled from the `message` prop on the
+          mount that follows a refusal — this instance's own write can never
+          reach here, since Today.tsx has already swapped it out by the time
+          a rejection arrives. */}
       <p className={styles.message} role="status" aria-live="polite">
         {message}
       </p>
