@@ -141,6 +141,45 @@ describe('what one person may see', () => {
     expect(screen.queryByText('Wat dit betekent')).not.toBeInTheDocument();
     expect(saveMemberPermissions).toHaveBeenCalled();
   });
+
+  it('reverts a failed narrowing, instead of leaving the toggle reading off while the grant is still live', async () => {
+    /*
+     * Regression: apply() set member.permissions optimistically and never
+     * reverted on failure. Narrowing is the dangerous direction here — D29
+     * makes turning access off instant and silent by design, so a failed
+     * write must not leave the toggle reading OFF while the permission is
+     * still granted underneath it. The person would believe they had closed
+     * off their own Article 9 data to this person and be wrong, with a
+     * message beside the toggle that nobody reads as "and it didn't work".
+     */
+    readCircleMember.mockResolvedValue(
+      brother({ permissions: { ...DEFAULT_PERMISSIONS, doses: true } }),
+    );
+    saveMemberPermissions.mockRejectedValueOnce({ code: 'permission-denied' });
+    renderMember();
+    const toggle = await screen.findByRole('checkbox', {
+      name: 'Kan zien of je je medicatie nam.',
+    });
+    expect(toggle).toBeChecked();
+
+    await tick('Kan zien of je je medicatie nam.');
+
+    expect(
+      await screen.findByRole('checkbox', { name: 'Kan zien of je je medicatie nam.' }),
+    ).toBeChecked();
+  });
+
+  it('reverts a failed widening the same way, back to unchecked rather than a false on', async () => {
+    saveMemberPermissions.mockRejectedValueOnce({ code: 'permission-denied' });
+    renderMember();
+    await screen.findByRole('checkbox', { name: 'Kan zien hoe je je voelde.' });
+
+    await tick('Kan zien hoe je je voelde.');
+
+    expect(
+      await screen.findByRole('checkbox', { name: 'Kan zien hoe je je voelde.' }),
+    ).not.toBeChecked();
+  });
 });
 
 describe('the record of what was given', () => {

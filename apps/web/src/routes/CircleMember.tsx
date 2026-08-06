@@ -71,6 +71,14 @@ export function CircleMember() {
     setMessage(null);
     void saveMemberPermissions(user.uid, memberUid, permissions, was).catch((error: unknown) => {
       reportError('saveMemberPermissions', error);
+      /*
+       * The dangerous direction is narrowing: D29 makes turning access off
+       * instant and silent, on purpose, so a failed write here must not
+       * leave the toggle reading OFF while the grant is still live — the
+       * person would believe they closed access to their own Article 9 data
+       * and be wrong. Revert to what it was, same as setAccess below.
+       */
+      setMember({ ...member, permissions: was.permissions });
       setMessage(t(messageKeyFor(error)));
     });
   };
